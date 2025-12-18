@@ -64,46 +64,121 @@ export type Database = {
       }
       companies: {
         Row: {
+          about_company: string | null
+          address: string | null
+          awards: string[] | null
+          certifications: string[] | null
+          city: string | null
+          company_profile_url: string | null
+          contact_person_designation: string | null
+          contact_person_email: string | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
+          country: string | null
+          cover_image_url: string | null
           created_at: string
+          declaration_accepted: boolean | null
           description: string | null
+          domain_category: string | null
           employee_count: string | null
+          facebook_url: string | null
           founded_year: number | null
+          gst_pan: string | null
           id: string
           industry: string | null
+          instagram_url: string | null
           is_verified: boolean | null
+          linkedin_url: string | null
           location: string | null
           logo_url: string | null
+          long_description: string | null
           name: string
+          postal_code: string | null
+          registration_profile_url: string | null
+          short_description: string | null
+          state: string | null
+          terms_accepted: boolean | null
+          twitter_url: string | null
           updated_at: string
           user_id: string
           website: string | null
         }
         Insert: {
+          about_company?: string | null
+          address?: string | null
+          awards?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          company_profile_url?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          country?: string | null
+          cover_image_url?: string | null
           created_at?: string
+          declaration_accepted?: boolean | null
           description?: string | null
+          domain_category?: string | null
           employee_count?: string | null
+          facebook_url?: string | null
           founded_year?: number | null
+          gst_pan?: string | null
           id?: string
           industry?: string | null
+          instagram_url?: string | null
           is_verified?: boolean | null
+          linkedin_url?: string | null
           location?: string | null
           logo_url?: string | null
+          long_description?: string | null
           name: string
+          postal_code?: string | null
+          registration_profile_url?: string | null
+          short_description?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          twitter_url?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
         }
         Update: {
+          about_company?: string | null
+          address?: string | null
+          awards?: string[] | null
+          certifications?: string[] | null
+          city?: string | null
+          company_profile_url?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          country?: string | null
+          cover_image_url?: string | null
           created_at?: string
+          declaration_accepted?: boolean | null
           description?: string | null
+          domain_category?: string | null
           employee_count?: string | null
+          facebook_url?: string | null
           founded_year?: number | null
+          gst_pan?: string | null
           id?: string
           industry?: string | null
+          instagram_url?: string | null
           is_verified?: boolean | null
+          linkedin_url?: string | null
           location?: string | null
           logo_url?: string | null
+          long_description?: string | null
           name?: string
+          postal_code?: string | null
+          registration_profile_url?: string | null
+          short_description?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          twitter_url?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
