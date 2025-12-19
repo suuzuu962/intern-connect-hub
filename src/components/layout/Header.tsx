@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, Users, Plus, Building2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -80,10 +80,38 @@ export const Header = () => {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
                       <Link to={getDashboardLink()} className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
+                        <LayoutDashboard className="h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
+                    {role === 'company' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/company/dashboard?section=applicants" className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Applicants
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/company/dashboard?section=create-internship" className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Create Internship
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/company/dashboard?section=profile" className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            Company Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/company/dashboard?section=change-password" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Change Password
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,9 @@ type ActiveSection = 'dashboard' | 'applicants' | 'create-internship' | 'profile
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
+  const [searchParams] = useSearchParams();
+  const sectionParam = searchParams.get('section') as ActiveSection | null;
+  const [activeSection, setActiveSection] = useState<ActiveSection>(sectionParam || 'dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     totalInternships: 0,
     activeInternships: 0,
@@ -39,6 +42,12 @@ const CompanyDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
+
+  useEffect(() => {
+    if (sectionParam && ['dashboard', 'applicants', 'create-internship', 'profile', 'change-password'].includes(sectionParam)) {
+      setActiveSection(sectionParam);
+    }
+  }, [sectionParam]);
 
   useEffect(() => {
     if (user) {
