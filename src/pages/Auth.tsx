@@ -85,6 +85,8 @@ const Auth = () => {
       toast({ title: 'Welcome back!' });
       if (roleData?.role === 'company') {
         navigate('/company/dashboard');
+      } else if (roleData?.role === 'student') {
+        navigate('/student/dashboard');
       } else {
         navigate('/');
       }
@@ -189,7 +191,7 @@ const Auth = () => {
       }
 
       toast({ title: 'Account Verified!', description: 'Your account has been created successfully' });
-      navigate(role === 'company' ? '/company/dashboard' : '/');
+      navigate(role === 'company' ? '/company/dashboard' : '/student/dashboard');
     }
 
     setLoading(false);
