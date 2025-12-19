@@ -3,15 +3,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Check, X, Building2, Globe, MapPin, ExternalLink, ChevronDown, ChevronUp,
   Mail, Phone, User, Calendar, FileText, Linkedin, Facebook, Twitter, Instagram,
-  Award, Shield, Users, Hash
+  Award, Shield, Users, Hash, Trash2, Plus, Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Company {
   id: string;
@@ -50,12 +74,40 @@ interface Company {
   certifications: string[] | null;
   terms_accepted: boolean | null;
   declaration_accepted: boolean | null;
+  user_id: string;
 }
+
+interface VerificationState {
+  basicInfo: boolean;
+  contactPerson: boolean;
+  companyDetails: boolean;
+  documents: boolean;
+  socialLinks: boolean;
+  termsDeclaration: boolean;
+}
+
+const initialVerificationState: VerificationState = {
+  basicInfo: false,
+  contactPerson: false,
+  companyDetails: false,
+  documents: false,
+  socialLinks: false,
+  termsDeclaration: false,
+};
 
 export const CompanyApprovalManagement = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+  const [verificationStates, setVerificationStates] = useState<Record<string, VerificationState>>({});
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    industry: '',
+    location: '',
+    website: '',
+    description: '',
+  });
 
   const fetchCompanies = async () => {
     try {
@@ -79,6 +131,14 @@ export const CompanyApprovalManagement = () => {
   }, []);
 
   const handleApprove = async (companyId: string) => {
+    const verification = verificationStates[companyId] || initialVerificationState;
+    const allVerified = Object.values(verification).every(v => v);
+    
+    if (!allVerified) {
+      toast.error('Please verify all sections before approving');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('companies')
@@ -87,6 +147,11 @@ export const CompanyApprovalManagement = () => {
 
       if (error) throw error;
       toast.success('Company approved successfully');
+      setVerificationStates(prev => {
+        const newState = { ...prev };
+        delete newState[companyId];
+        return newState;
+      });
       fetchCompanies();
     } catch (error: any) {
       toast.error('Failed to approve company');
@@ -110,8 +175,75 @@ export const CompanyApprovalManagement = () => {
     }
   };
 
+  const handleDelete = async (companyId: string) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyId);
+
+      if (error) throw error;
+      toast.success('Company deleted successfully');
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Failed to delete company');
+      console.error('Error deleting company:', error);
+    }
+  };
+
+  const handleAddCompany = async () => {
+    if (!newCompany.name.trim()) {
+      toast.error('Company name is required');
+      return;
+    }
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to add a company');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('companies')
+        .insert({
+          name: newCompany.name,
+          industry: newCompany.industry || null,
+          location: newCompany.location || null,
+          website: newCompany.website || null,
+          description: newCompany.description || null,
+          user_id: user.id,
+          is_verified: true, // Admin-added companies are pre-verified
+        });
+
+      if (error) throw error;
+      toast.success('Company added successfully');
+      setAddCompanyOpen(false);
+      setNewCompany({ name: '', industry: '', location: '', website: '', description: '' });
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Failed to add company');
+      console.error('Error adding company:', error);
+    }
+  };
+
   const toggleExpanded = (companyId: string) => {
     setExpandedCompanyId(expandedCompanyId === companyId ? null : companyId);
+  };
+
+  const updateVerification = (companyId: string, field: keyof VerificationState, value: boolean) => {
+    setVerificationStates(prev => ({
+      ...prev,
+      [companyId]: {
+        ...(prev[companyId] || initialVerificationState),
+        [field]: value,
+      },
+    }));
+  };
+
+  const getVerificationState = (companyId: string): VerificationState => {
+    return verificationStates[companyId] || initialVerificationState;
   };
 
   const pendingCompanies = companies.filter(c => c.is_verified === null || c.is_verified === false);
@@ -126,8 +258,77 @@ export const CompanyApprovalManagement = () => {
     );
   }
 
-  const CompanyDetailsCard = ({ company, showActions = true }: { company: Company; showActions?: boolean }) => {
+  const VerificationCheckbox = ({ 
+    companyId, 
+    field, 
+    label 
+  }: { 
+    companyId: string; 
+    field: keyof VerificationState; 
+    label: string;
+  }) => {
+    const verification = getVerificationState(companyId);
+    return (
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={`${companyId}-${field}`}
+          checked={verification[field]}
+          onCheckedChange={(checked) => updateVerification(companyId, field, checked as boolean)}
+        />
+        <label 
+          htmlFor={`${companyId}-${field}`}
+          className={`text-sm font-medium cursor-pointer ${verification[field] ? 'text-green-600' : 'text-muted-foreground'}`}
+        >
+          {verification[field] && <Check className="h-3 w-3 inline mr-1" />}
+          {label}
+        </label>
+      </div>
+    );
+  };
+
+  const DocumentViewer = ({ url, title }: { url: string; title: string }) => {
+    const isPdf = url.toLowerCase().endsWith('.pdf');
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+
+    return (
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted/50 px-3 py-2 flex items-center justify-between">
+          <span className="text-sm font-medium">{title}</span>
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline text-sm flex items-center gap-1"
+          >
+            Open <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+        {isImage ? (
+          <img src={url} alt={title} className="w-full h-48 object-contain bg-background" />
+        ) : isPdf ? (
+          <iframe src={url} className="w-full h-64" title={title} />
+        ) : (
+          <div className="p-4 text-center text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-2" />
+            <p className="text-sm">Document preview not available</p>
+            <a 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-sm"
+            >
+              Download to view
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const CompanyDetailsCard = ({ company, isPending = false }: { company: Company; isPending?: boolean }) => {
     const isExpanded = expandedCompanyId === company.id;
+    const verification = getVerificationState(company.id);
+    const allVerified = Object.values(verification).every(v => v);
     const fullAddress = [company.address, company.city, company.state, company.postal_code, company.country]
       .filter(Boolean)
       .join(', ');
@@ -170,28 +371,51 @@ export const CompanyApprovalManagement = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {showActions && (
-                <>
-                  {!company.is_verified && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleApprove(company.id)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Approve
-                    </Button>
-                  )}
-                  <Button 
-                    size="sm" 
-                    variant={company.is_verified ? "outline" : "destructive"}
-                    onClick={() => handleReject(company.id)}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    {company.is_verified ? 'Revoke' : 'Reject'}
-                  </Button>
-                </>
+              {isPending && (
+                <Button 
+                  size="sm" 
+                  onClick={() => handleApprove(company.id)}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={!allVerified}
+                  title={!allVerified ? 'Verify all sections before approving' : 'Approve company'}
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Approve
+                </Button>
               )}
+              <Button 
+                size="sm" 
+                variant={company.is_verified ? "outline" : "destructive"}
+                onClick={() => handleReject(company.id)}
+              >
+                <X className="h-4 w-4 mr-1" />
+                {company.is_verified ? 'Revoke' : 'Reject'}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Company</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{company.name}"? This action cannot be undone. 
+                      All internships and applications associated with this company will also be affected.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => handleDelete(company.id)}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
                 variant="ghost"
                 size="sm"
@@ -205,54 +429,114 @@ export const CompanyApprovalManagement = () => {
               </Button>
             </div>
           </div>
+          
+          {/* Verification Progress for pending companies */}
+          {isPending && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm font-medium mb-2">
+                Verification Progress: {Object.values(verification).filter(v => v).length}/6
+              </p>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-600 transition-all"
+                  style={{ width: `${(Object.values(verification).filter(v => v).length / 6) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Expanded details */}
         {isExpanded && (
           <CardContent className="pt-4">
-            <ScrollArea className="max-h-[600px]">
+            <ScrollArea className="max-h-[700px]">
               <div className="grid gap-6">
-                {/* Cover Image */}
-                {company.cover_image_url && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Cover Image</h4>
-                    <img 
-                      src={company.cover_image_url} 
-                      alt="Company cover" 
-                      className="w-full h-48 object-cover rounded-lg border"
-                    />
-                  </div>
-                )}
+                {/* Cover Image & Logo */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {company.logo_url && (
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="bg-muted/50 px-3 py-2">
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          Company Logo
+                        </span>
+                      </div>
+                      <img src={company.logo_url} alt="Logo" className="w-full h-40 object-contain bg-background p-4" />
+                    </div>
+                  )}
+                  {company.cover_image_url && (
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="bg-muted/50 px-3 py-2">
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          Cover Image
+                        </span>
+                      </div>
+                      <img src={company.cover_image_url} alt="Cover" className="w-full h-40 object-cover" />
+                    </div>
+                  )}
+                </div>
 
-                {/* About Section */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      About Company
-                    </h4>
-                    <p className="text-sm">
-                      {company.about_company || company.long_description || company.description || 'No description provided'}
-                    </p>
-                  </div>
+                <Separator />
 
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Address
+                {/* Basic Info Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      Basic Information
                     </h4>
-                    <p className="text-sm">{fullAddress || company.location || 'Not provided'}</p>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="basicInfo" 
+                        label="Verified" 
+                      />
+                    )}
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Company Name</p>
+                      <p className="font-medium">{company.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Industry</p>
+                      <p className="font-medium">{company.industry || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Domain Category</p>
+                      <p className="font-medium">{company.domain_category || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> Address
+                      </p>
+                      <p className="font-medium">{fullAddress || company.location || '-'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-muted-foreground">About Company</p>
+                      <p className="text-sm">{company.about_company || company.long_description || company.description || '-'}</p>
+                    </div>
                   </div>
                 </div>
 
                 <Separator />
 
-                {/* Contact Person */}
+                {/* Contact Person Section */}
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Contact Person
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <User className="h-4 w-4 text-primary" />
+                      Contact Person
+                    </h4>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="contactPerson" 
+                        label="Verified" 
+                      />
+                    )}
+                  </div>
                   <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-muted/50 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground">Name</p>
@@ -291,12 +575,21 @@ export const CompanyApprovalManagement = () => {
 
                 <Separator />
 
-                {/* Company Details */}
+                {/* Company Details Section */}
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Company Details
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Company Details
+                    </h4>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="companyDetails" 
+                        label="Verified" 
+                      />
+                    )}
+                  </div>
                   <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-muted/50 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -323,16 +616,88 @@ export const CompanyApprovalManagement = () => {
                       <p className="font-medium">{new Date(company.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
+                  
+                  {/* Awards & Certifications */}
+                  {((company.awards && company.awards.length > 0) || (company.certifications && company.certifications.length > 0)) && (
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      {company.awards && company.awards.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                            <Award className="h-3 w-3" /> Awards
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {company.awards.map((award, index) => (
+                              <Badge key={index} variant="secondary">{award}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {company.certifications && company.certifications.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Certifications
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {company.certifications.map((cert, index) => (
+                              <Badge key={index} variant="outline">{cert}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
 
-                {/* Links */}
+                {/* Documents Section */}
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    Links & Social Media
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Uploaded Documents
+                    </h4>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="documents" 
+                        label="Verified" 
+                      />
+                    )}
+                  </div>
+                  {company.company_profile_url || company.registration_profile_url ? (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {company.company_profile_url && (
+                        <DocumentViewer url={company.company_profile_url} title="Company Profile Document" />
+                      )}
+                      {company.registration_profile_url && (
+                        <DocumentViewer url={company.registration_profile_url} title="Registration Document" />
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 text-center">
+                      No documents uploaded
+                    </p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Social Links Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-primary" />
+                      Links & Social Media
+                    </h4>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="socialLinks" 
+                        label="Verified" 
+                      />
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {company.website && (
                       <a 
@@ -396,102 +761,44 @@ export const CompanyApprovalManagement = () => {
                     )}
                   </div>
                   {!company.website && !company.linkedin_url && !company.facebook_url && !company.twitter_url && !company.instagram_url && (
-                    <p className="text-sm text-muted-foreground">No links provided</p>
+                    <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 text-center">No links provided</p>
                   )}
                 </div>
 
-                {/* Documents */}
-                {(company.company_profile_url || company.registration_profile_url) && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Documents
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {company.company_profile_url && (
-                          <a 
-                            href={company.company_profile_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-sm"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Company Profile
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                        {company.registration_profile_url && (
-                          <a 
-                            href={company.registration_profile_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-sm"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Registration Document
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Awards & Certifications */}
-                {((company.awards && company.awards.length > 0) || (company.certifications && company.certifications.length > 0)) && (
-                  <>
-                    <Separator />
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {company.awards && company.awards.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                            <Award className="h-4 w-4" />
-                            Awards
-                          </h4>
-                          <div className="flex flex-wrap gap-1">
-                            {company.awards.map((award, index) => (
-                              <Badge key={index} variant="secondary">{award}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {company.certifications && company.certifications.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Certifications
-                          </h4>
-                          <div className="flex flex-wrap gap-1">
-                            {company.certifications.map((cert, index) => (
-                              <Badge key={index} variant="outline">{cert}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Terms & Declaration */}
                 <Separator />
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    {company.terms_accepted ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <X className="h-4 w-4 text-destructive" />
+
+                {/* Terms & Declaration Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      Terms & Declaration
+                    </h4>
+                    {isPending && (
+                      <VerificationCheckbox 
+                        companyId={company.id} 
+                        field="termsDeclaration" 
+                        label="Verified" 
+                      />
                     )}
-                    <span className="text-sm">Terms Accepted</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {company.declaration_accepted ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <X className="h-4 w-4 text-destructive" />
-                    )}
-                    <span className="text-sm">Declaration Accepted</span>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                      {company.terms_accepted ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <X className="h-4 w-4 text-destructive" />
+                      )}
+                      <span className="text-sm">Terms Accepted</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                      {company.declaration_accepted ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <X className="h-4 w-4 text-destructive" />
+                      )}
+                      <span className="text-sm">Declaration Accepted</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -504,6 +811,82 @@ export const CompanyApprovalManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Add Company Button */}
+      <div className="flex justify-end">
+        <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Company
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add New Company</DialogTitle>
+              <DialogDescription>
+                Add a new company directly. Admin-added companies are pre-approved.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Company Name *</Label>
+                <Input
+                  id="name"
+                  value={newCompany.name}
+                  onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
+                  placeholder="Enter company name"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="industry">Industry</Label>
+                <Input
+                  id="industry"
+                  value={newCompany.industry}
+                  onChange={(e) => setNewCompany({ ...newCompany, industry: e.target.value })}
+                  placeholder="e.g., Technology, Healthcare"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={newCompany.location}
+                  onChange={(e) => setNewCompany({ ...newCompany, location: e.target.value })}
+                  placeholder="e.g., New York, USA"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={newCompany.website}
+                  onChange={(e) => setNewCompany({ ...newCompany, website: e.target.value })}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newCompany.description}
+                  onChange={(e) => setNewCompany({ ...newCompany, description: e.target.value })}
+                  placeholder="Brief description of the company"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddCompany}>
+                Add Company
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {/* Pending Approvals */}
       <Card>
         <CardHeader>
@@ -518,7 +901,7 @@ export const CompanyApprovalManagement = () => {
           ) : (
             <div className="space-y-4">
               {pendingCompanies.map((company) => (
-                <CompanyDetailsCard key={company.id} company={company} />
+                <CompanyDetailsCard key={company.id} company={company} isPending={true} />
               ))}
             </div>
           )}
@@ -539,7 +922,7 @@ export const CompanyApprovalManagement = () => {
           ) : (
             <div className="space-y-4">
               {approvedCompanies.map((company) => (
-                <CompanyDetailsCard key={company.id} company={company} />
+                <CompanyDetailsCard key={company.id} company={company} isPending={false} />
               ))}
             </div>
           )}
