@@ -69,8 +69,26 @@ const Auth = () => {
     const { error } = await signIn(email, password);
     if (error) {
       toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
-    } else {
+      setLoading(false);
+      return;
+    }
+    
+    // Fetch user role to redirect appropriately
+    const { data: session } = await supabase.auth.getSession();
+    if (session?.session?.user) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.session.user.id)
+        .single();
+      
       toast({ title: 'Welcome back!' });
+      if (roleData?.role === 'company') {
+        navigate('/company/dashboard');
+      } else {
+        navigate('/');
+      }
+    } else {
       navigate('/');
     }
     setLoading(false);
