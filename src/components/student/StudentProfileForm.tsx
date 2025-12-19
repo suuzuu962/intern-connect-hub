@@ -25,6 +25,55 @@ const DOMAIN_OPTIONS = [
   'Finance', 'Human Resources', 'Business Development', 'Research & Development'
 ];
 
+const DEPARTMENT_OPTIONS = [
+  'Computer Science & Engineering',
+  'Information Science & Engineering',
+  'Electronics & Communication Engineering',
+  'Electrical & Electronics Engineering',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Chemical Engineering',
+  'Biotechnology',
+  'Aeronautical Engineering',
+  'Automobile Engineering',
+  'Information Technology',
+  'Artificial Intelligence & Machine Learning',
+  'Data Science',
+  'Business Administration',
+  'Commerce',
+  'Arts',
+  'Science',
+  'Law',
+  'Medicine',
+  'Pharmacy',
+  'Architecture',
+  'Other'
+];
+
+const COUNTRY_OPTIONS = [
+  'India',
+  'United States',
+  'United Kingdom',
+  'Canada',
+  'Australia',
+  'Germany',
+  'France',
+  'Singapore',
+  'United Arab Emirates',
+  'Other'
+];
+
+const INDIA_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+  'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+];
+
 interface StudentProfileFormProps {
   onSuccess?: () => void;
 }
@@ -44,6 +93,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   // Academic Info
   const [usn, setUsn] = useState('');
+  const [college, setCollege] = useState('');
   const [university, setUniversity] = useState('');
   const [department, setDepartment] = useState('');
   const [semester, setSemester] = useState('');
@@ -99,6 +149,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setDob(studentData.dob || '');
         setGender(studentData.gender || '');
         setUsn(studentData.usn || '');
+        setCollege(studentData.college || '');
         setUniversity(studentData.university || '');
         setDepartment(studentData.department || '');
         setSemester(studentData.semester?.toString() || '');
@@ -180,7 +231,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     }
 
     // Validate required fields
-    if (!usn || !university || !department || !semester) {
+    if (!usn || !college || !university || !department || !semester) {
       toast.error('Please complete all academic information fields');
       return;
     }
@@ -213,6 +264,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         dob: dob || null,
         gender: gender || null,
         usn: usn || null,
+        college: college || null,
         university: university || null,
         department: department || null,
         semester: semester ? parseInt(semester) : null,
@@ -323,9 +375,20 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="university">College / University <span className="text-destructive">*</span></Label>
+            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
+            <Input
+              id="college"
+              placeholder="Enter your college name"
+              value={college}
+              onChange={(e) => setCollege(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="university">University <span className="text-destructive">*</span></Label>
             <Input
               id="university"
+              placeholder="Enter your university name"
               value={university}
               onChange={(e) => setUniversity(e.target.value)}
               required
@@ -333,16 +396,22 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="department">Department / Branch <span className="text-destructive">*</span></Label>
-            <Input
-              id="department"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              required
-            />
+            <Select value={department} onValueChange={setDepartment}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {DEPARTMENT_OPTIONS.map((dept) => (
+                  <SelectItem key={dept} value={dept}>
+                    {dept}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="semester">Semester <span className="text-destructive">*</span></Label>
-            <Select value={semester} onValueChange={setSemester} required>
+            <Select value={semester} onValueChange={setSemester}>
               <SelectTrigger>
                 <SelectValue placeholder="Select semester" />
               </SelectTrigger>
@@ -378,26 +447,49 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
-            <Input
-              id="country"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              required
-            />
+            <Select value={country} onValueChange={(value) => { setCountry(value); setState(''); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="state">State <span className="text-destructive">*</span></Label>
-            <Input
-              id="state"
-              value={state}
-              onChange={(e) => setState(e.target.value)}
-              required
-            />
+            {country === 'India' ? (
+              <Select value={state} onValueChange={setState}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {INDIA_STATES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="state"
+                placeholder="Enter your state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                required
+              />
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
             <Input
               id="city"
+              placeholder="Enter your city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               required

@@ -391,6 +391,7 @@ export type Database = {
           address: string | null
           bio: string | null
           city: string | null
+          college: string | null
           country: string | null
           created_at: string
           degree: string | null
@@ -417,6 +418,7 @@ export type Database = {
           address?: string | null
           bio?: string | null
           city?: string | null
+          college?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
@@ -443,6 +445,7 @@ export type Database = {
           address?: string | null
           bio?: string | null
           city?: string | null
+          college?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
