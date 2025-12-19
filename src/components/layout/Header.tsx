@@ -61,6 +61,19 @@ export const Header = () => {
                 {link.label}
               </Link>
             ))}
+            {user && role === 'company' && (
+              <Link
+                to="/company/dashboard"
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  location.pathname === '/company/dashboard'
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                Dashboard
+              </Link>
+            )}
           </nav>
 
           {/* Right Side Actions */}
