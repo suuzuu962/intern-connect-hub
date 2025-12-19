@@ -179,6 +179,22 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       return;
     }
 
+    // Validate required fields
+    if (!usn || !university || !department || !semester) {
+      toast.error('Please complete all academic information fields');
+      return;
+    }
+
+    if (!address || !country || !state || !city) {
+      toast.error('Please complete all location fields');
+      return;
+    }
+
+    if (!resumeUrl) {
+      toast.error('Please upload your resume');
+      return;
+    }
+
     setLoading(true);
     try {
       // Update profile
@@ -298,32 +314,35 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="usn">USN / Roll Number</Label>
+            <Label htmlFor="usn">USN / Roll Number <span className="text-destructive">*</span></Label>
             <Input
               id="usn"
               value={usn}
               onChange={(e) => setUsn(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="university">College / University</Label>
+            <Label htmlFor="university">College / University <span className="text-destructive">*</span></Label>
             <Input
               id="university"
               value={university}
               onChange={(e) => setUniversity(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="department">Department / Branch</Label>
+            <Label htmlFor="department">Department / Branch <span className="text-destructive">*</span></Label>
             <Input
               id="department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="semester">Semester</Label>
-            <Select value={semester} onValueChange={setSemester}>
+            <Label htmlFor="semester">Semester <span className="text-destructive">*</span></Label>
+            <Select value={semester} onValueChange={setSemester} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select semester" />
               </SelectTrigger>
@@ -349,35 +368,39 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">Address <span className="text-destructive">*</span></Label>
             <Input
               id="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
+            <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
             <Input
               id="country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="state">State</Label>
+            <Label htmlFor="state">State <span className="text-destructive">*</span></Label>
             <Input
               id="state"
               value={state}
               onChange={(e) => setState(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
             <Input
               id="city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
+              required
             />
           </div>
         </CardContent>
@@ -457,7 +480,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Resume (PDF, max 5MB)</Label>
+            <Label>Resume (PDF, max 5MB) <span className="text-destructive">*</span></Label>
             <div className="flex items-center gap-4">
               <Input
                 type="file"
