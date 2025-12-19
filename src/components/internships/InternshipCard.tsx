@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Briefcase, DollarSign, Building2 } from 'lucide-react';
+import { MapPin, Clock, Briefcase, DollarSign, Building2, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Internship } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { ApplyModal } from './ApplyModal';
 
 interface InternshipCardProps {
   internship: Internship;
@@ -23,8 +27,17 @@ const internshipTypeLabels = {
 };
 
 export const InternshipCard = ({ internship, className }: InternshipCardProps) => {
+  const { user, role } = useAuth();
+  const [showApplyModal, setShowApplyModal] = useState(false);
+
+  const handleApplyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowApplyModal(true);
+  };
+
   return (
-    <Link to={`/internships/${internship.id}`}>
+    <>
       <Card className={cn("hover-lift cursor-pointer group overflow-hidden", className)}>
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
@@ -111,10 +124,41 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                   {internship.short_description}
                 </p>
               )}
+
+              {/* Apply Button - Only show for students or logged out users */}
+              {(!user || role === 'student') && (
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    className="gradient-primary border-0"
+                    onClick={handleApplyClick}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Apply Now
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
-    </Link>
+
+      {user && role === 'student' && (
+        <ApplyModal
+          internship={internship}
+          open={showApplyModal}
+          onOpenChange={setShowApplyModal}
+        />
+      )}
+
+      {/* If not logged in, redirect to auth on apply click */}
+      {!user && showApplyModal && (
+        <ApplyModal
+          internship={internship}
+          open={showApplyModal}
+          onOpenChange={setShowApplyModal}
+        />
+      )}
+    </>
   );
 };
