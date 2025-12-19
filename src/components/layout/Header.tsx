@@ -112,6 +112,34 @@ export const Header = () => {
                         </DropdownMenuItem>
                       </>
                     )}
+                    {role === 'student' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/student/dashboard?section=profile" className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            My Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/student/dashboard?section=applied" className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Applied Internships
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/student/dashboard?section=diary" className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Internship Diary
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/student/dashboard?section=change-password" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Change Password
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />

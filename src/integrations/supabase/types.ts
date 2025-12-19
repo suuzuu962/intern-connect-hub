@@ -387,46 +387,82 @@ export type Database = {
       }
       students: {
         Row: {
+          accuracy_confirmation: boolean | null
+          address: string | null
           bio: string | null
+          city: string | null
+          country: string | null
           created_at: string
           degree: string | null
+          department: string | null
+          dob: string | null
+          gender: string | null
           github_url: string | null
           graduation_year: number | null
           id: string
+          interested_domains: string[] | null
           linkedin_url: string | null
           resume_url: string | null
+          semester: number | null
           skills: string[] | null
+          state: string | null
+          terms_accepted: boolean | null
           university: string | null
           updated_at: string
           user_id: string
+          usn: string | null
         }
         Insert: {
+          accuracy_confirmation?: boolean | null
+          address?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           degree?: string | null
+          department?: string | null
+          dob?: string | null
+          gender?: string | null
           github_url?: string | null
           graduation_year?: number | null
           id?: string
+          interested_domains?: string[] | null
           linkedin_url?: string | null
           resume_url?: string | null
+          semester?: number | null
           skills?: string[] | null
+          state?: string | null
+          terms_accepted?: boolean | null
           university?: string | null
           updated_at?: string
           user_id: string
+          usn?: string | null
         }
         Update: {
+          accuracy_confirmation?: boolean | null
+          address?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           degree?: string | null
+          department?: string | null
+          dob?: string | null
+          gender?: string | null
           github_url?: string | null
           graduation_year?: number | null
           id?: string
+          interested_domains?: string[] | null
           linkedin_url?: string | null
           resume_url?: string | null
+          semester?: number | null
           skills?: string[] | null
+          state?: string | null
+          terms_accepted?: boolean | null
           university?: string | null
           updated_at?: string
           user_id?: string
+          usn?: string | null
         }
         Relationships: []
       }
