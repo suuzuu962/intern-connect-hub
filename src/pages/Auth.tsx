@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building2, GraduationCap, Phone, Mail, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Building2, GraduationCap, Phone, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ const passwordSchema = z.string().min(6, 'Password must be at least 6 characters
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
 
 type SignupStep = 'details' | 'verify-email' | 'complete';
+type ForgotPasswordStep = 'email' | 'verify-otp' | 'new-password' | 'success';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -27,7 +28,7 @@ const Auth = () => {
   const initialMode = searchParams.get('mode') || 'login';
   const initialRole = (searchParams.get('role') as AppRole) || 'student';
 
-  const [mode, setMode] = useState<'login' | 'signup'>(initialMode as 'login' | 'signup');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(initialMode as 'login' | 'signup');
   const [role, setRole] = useState<AppRole>(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,6 +41,11 @@ const Auth = () => {
   const [signupStep, setSignupStep] = useState<SignupStep>('details');
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Forgot password state
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<ForgotPasswordStep>('email');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const startResendCooldown = () => {
     setResendCooldown(60);
@@ -215,21 +221,312 @@ const Auth = () => {
     setLoading(false);
   };
 
+  // Forgot Password Handlers
+  const handleForgotPasswordRequest = async () => {
+    try {
+      emailSchema.parse(email);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
+        return;
+      }
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+
+    toast({ title: 'Reset Code Sent', description: 'Check your email for the verification code' });
+    setForgotPasswordStep('verify-otp');
+    startResendCooldown();
+    setLoading(false);
+  };
+
+  const handleVerifyResetOtp = async () => {
+    if (otp.length !== 6) {
+      toast({ title: 'Error', description: 'Please enter a valid 6-digit code', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'recovery',
+    });
+
+    if (error) {
+      toast({ title: 'Verification Failed', description: error.message, variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+
+    if (data.session) {
+      setForgotPasswordStep('new-password');
+    }
+    setLoading(false);
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      passwordSchema.parse(newPassword);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
+        return;
+      }
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+
+    setForgotPasswordStep('success');
+    setLoading(false);
+  };
+
+  const handleResendResetOtp = async () => {
+    if (resendCooldown > 0) return;
+
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Code Resent', description: 'A new verification code has been sent to your email' });
+      startResendCooldown();
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (mode === 'login') {
       await handleLogin();
-    } else if (signupStep === 'details') {
-      await handleSignupSubmit();
-    } else if (signupStep === 'verify-email') {
-      await handleVerifyOtp();
+    } else if (mode === 'signup') {
+      if (signupStep === 'details') {
+        await handleSignupSubmit();
+      } else if (signupStep === 'verify-email') {
+        await handleVerifyOtp();
+      }
     }
   };
 
   const resetToDetails = () => {
     setSignupStep('details');
     setOtp('');
+  };
+
+  const resetToLogin = () => {
+    setMode('login');
+    setForgotPasswordStep('email');
+    setOtp('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const getTitle = () => {
+    if (mode === 'forgot-password') {
+      switch (forgotPasswordStep) {
+        case 'email': return 'Forgot Password';
+        case 'verify-otp': return 'Verify Your Email';
+        case 'new-password': return 'Set New Password';
+        case 'success': return 'Password Reset Complete';
+      }
+    }
+    if (mode === 'login') return 'Welcome Back';
+    if (signupStep === 'verify-email') return 'Verify Your Email';
+    return 'Create Account';
+  };
+
+  const getDescription = () => {
+    if (mode === 'forgot-password') {
+      switch (forgotPasswordStep) {
+        case 'email': return 'Enter your email to receive a reset code';
+        case 'verify-otp': return `Enter the 6-digit code sent to ${email}`;
+        case 'new-password': return 'Create a new secure password';
+        case 'success': return 'Your password has been updated successfully';
+      }
+    }
+    if (mode === 'login') return 'Sign in to your account';
+    if (signupStep === 'verify-email') return `Enter the 6-digit code sent to ${email}`;
+    return 'Join Economic Labs today';
+  };
+
+  // Render Forgot Password Flow
+  const renderForgotPassword = () => {
+    switch (forgotPasswordStep) {
+      case 'email':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-center mb-6">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <KeyRound className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <div>
+              <Label>Email <span className="text-destructive">*</span></Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+            <Button
+              onClick={handleForgotPasswordRequest}
+              className="w-full gradient-primary border-0"
+              disabled={loading}
+            >
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : 'Send Reset Code'}
+            </Button>
+            <button
+              onClick={resetToLogin}
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 w-full mt-4"
+            >
+              <ArrowLeft className="h-3 w-3" /> Back to Sign In
+            </button>
+          </div>
+        );
+
+      case 'verify-otp':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <InputOTP value={otp} onChange={setOtp} maxLength={6}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              onClick={handleVerifyResetOtp}
+              className="w-full gradient-primary border-0"
+              disabled={loading || otp.length !== 6}
+            >
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
+            </Button>
+
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Didn't receive the code?{' '}
+                <button
+                  onClick={handleResendResetOtp}
+                  disabled={resendCooldown > 0 || loading}
+                  className="text-primary font-medium disabled:opacity-50"
+                >
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                </button>
+              </p>
+              <button
+                onClick={() => setForgotPasswordStep('email')}
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 w-full"
+              >
+                <ArrowLeft className="h-3 w-3" /> Change email address
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'new-password':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-center mb-6">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <KeyRound className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <div>
+              <Label>New Password <span className="text-destructive">*</span></Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label>Confirm Password <span className="text-destructive">*</span></Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <Button
+              onClick={handleResetPassword}
+              className="w-full gradient-primary border-0"
+              disabled={loading}
+            >
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</> : 'Update Password'}
+            </Button>
+          </div>
+        );
+
+      case 'success':
+        return (
+          <div className="space-y-6 text-center">
+            <div className="flex justify-center">
+              <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </div>
+            <p className="text-muted-foreground">
+              Your password has been reset successfully. You can now sign in with your new password.
+            </p>
+            <Button onClick={resetToLogin} className="w-full gradient-primary border-0">
+              Sign In
+            </Button>
+          </div>
+        );
+    }
   };
 
   return (
@@ -243,24 +540,14 @@ const Auth = () => {
               <span className="text-xl font-bold text-primary-foreground">EL</span>
             </div>
           </Link>
-          <CardTitle className="text-2xl font-heading">
-            {mode === 'login' 
-              ? 'Welcome Back' 
-              : signupStep === 'verify-email' 
-                ? 'Verify Your Email' 
-                : 'Create Account'}
-          </CardTitle>
-          <CardDescription>
-            {mode === 'login' 
-              ? 'Sign in to your account' 
-              : signupStep === 'verify-email'
-                ? `Enter the 6-digit code sent to ${email}`
-                : 'Join Economic Labs today'}
-          </CardDescription>
+          <CardTitle className="text-2xl font-heading">{getTitle()}</CardTitle>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
 
         <CardContent>
-          {mode === 'signup' && signupStep === 'verify-email' ? (
+          {mode === 'forgot-password' ? (
+            renderForgotPassword()
+          ) : mode === 'signup' && signupStep === 'verify-email' ? (
             <div className="space-y-6">
               <div className="flex justify-center">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -385,6 +672,19 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
+
+                {mode === 'login' && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot-password')}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full gradient-primary border-0" disabled={loading}>
                   {loading ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Please wait...</>
