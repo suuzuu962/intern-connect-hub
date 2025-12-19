@@ -92,16 +92,16 @@ export const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-background/70 text-sm">
-                  123 Innovation Street, Tech Hub, City 12345
+                  Shastri Nagar 1st Cross 3rd House, Bellary, Karnataka, India - 583101
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-background/70 text-sm">+1 (555) 123-4567</span>
+                <span className="text-background/70 text-sm">+91 8147 747 147</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-background/70 text-sm">hello@economiclabs.com</span>
+                <span className="text-background/70 text-sm">econfinexplorationpvtltd@gmail.com</span>
               </li>
             </ul>
           </div>
