@@ -350,6 +350,7 @@ export type Database = {
           is_read: boolean | null
           link: string | null
           message: string
+          target_role: string | null
           title: string
           type: string
           user_id: string
@@ -360,6 +361,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message: string
+          target_role?: string | null
           title: string
           type: string
           user_id: string
@@ -370,6 +372,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message?: string
+          target_role?: string | null
           title?: string
           type?: string
           user_id?: string
