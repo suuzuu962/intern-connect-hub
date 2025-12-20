@@ -90,6 +90,7 @@ export interface Notification {
   type: string;
   is_read: boolean;
   link: string | null;
+  target_role: string | null;
   created_at: string;
 }
 
