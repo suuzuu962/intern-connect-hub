@@ -1,15 +1,39 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Download, Users, Building2, Briefcase, FileText, Loader2 } from 'lucide-react';
+import { Download, Users, Building2, Briefcase, FileText, Loader2, CalendarIcon, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type ExportType = 'students' | 'companies' | 'internships' | 'applications';
 
 export const DataExport = () => {
   const [exporting, setExporting] = useState<ExportType | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  const getDateRangeLabel = () => {
+    if (startDate && endDate) {
+      return `${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    if (startDate) {
+      return `From ${format(startDate, 'MMM d, yyyy')}`;
+    }
+    if (endDate) {
+      return `Until ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    return 'All time';
+  };
+
+  const clearDateRange = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
 
   const convertToCSV = (data: any[], headers: string[]): string => {
     const headerRow = headers.join(',');
@@ -39,14 +63,29 @@ export const DataExport = () => {
     document.body.removeChild(link);
   };
 
+  const getFilenameWithDateRange = (prefix: string) => {
+    const datePart = new Date().toISOString().split('T')[0];
+    if (startDate && endDate) {
+      return `${prefix}_${format(startDate, 'yyyy-MM-dd')}_to_${format(endDate, 'yyyy-MM-dd')}.csv`;
+    }
+    return `${prefix}_export_${datePart}.csv`;
+  };
+
   const exportStudents = async () => {
     setExporting('students');
     try {
-      const { data: students, error: studentsError } = await supabase
-        .from('students')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('students').select('*').order('created_at', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
+      }
 
+      const { data: students, error: studentsError } = await query;
       if (studentsError) throw studentsError;
 
       const userIds = students?.map(s => s.user_id) || [];
@@ -76,7 +115,7 @@ export const DataExport = () => {
 
       const headers = ['full_name', 'email', 'phone', 'college', 'university', 'department', 'degree', 'graduation_year', 'city', 'state', 'skills', 'linkedin_url', 'github_url', 'created_at'];
       const csv = convertToCSV(exportData, headers);
-      downloadCSV(csv, `students_export_${new Date().toISOString().split('T')[0]}.csv`);
+      downloadCSV(csv, getFilenameWithDateRange('students'));
       toast.success(`Exported ${exportData.length} students`);
     } catch (error) {
       console.error('Export error:', error);
@@ -89,11 +128,18 @@ export const DataExport = () => {
   const exportCompanies = async () => {
     setExporting('companies');
     try {
-      const { data: companies, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('companies').select('*').order('created_at', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
+      }
 
+      const { data: companies, error } = await query;
       if (error) throw error;
 
       const exportData = companies?.map(c => ({
@@ -116,7 +162,7 @@ export const DataExport = () => {
 
       const headers = ['name', 'industry', 'location', 'city', 'state', 'country', 'website', 'employee_count', 'founded_year', 'is_verified', 'contact_person_name', 'contact_person_email', 'contact_person_phone', 'linkedin_url', 'created_at'];
       const csv = convertToCSV(exportData, headers);
-      downloadCSV(csv, `companies_export_${new Date().toISOString().split('T')[0]}.csv`);
+      downloadCSV(csv, getFilenameWithDateRange('companies'));
       toast.success(`Exported ${exportData.length} companies`);
     } catch (error) {
       console.error('Export error:', error);
@@ -129,11 +175,18 @@ export const DataExport = () => {
   const exportInternships = async () => {
     setExporting('internships');
     try {
-      const { data: internships, error } = await supabase
-        .from('internships')
-        .select('*, company:companies(name)')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('internships').select('*, company:companies(name)').order('created_at', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('created_at', startDate.toISOString());
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
+      }
 
+      const { data: internships, error } = await query;
       if (error) throw error;
 
       const exportData = internships?.map(i => ({
@@ -157,7 +210,7 @@ export const DataExport = () => {
 
       const headers = ['title', 'company_name', 'domain', 'location', 'internship_type', 'work_mode', 'duration', 'stipend', 'is_paid', 'positions_available', 'is_active', 'skills', 'application_deadline', 'start_date', 'views_count', 'created_at'];
       const csv = convertToCSV(exportData, headers);
-      downloadCSV(csv, `internships_export_${new Date().toISOString().split('T')[0]}.csv`);
+      downloadCSV(csv, getFilenameWithDateRange('internships'));
       toast.success(`Exported ${exportData.length} internships`);
     } catch (error) {
       console.error('Export error:', error);
@@ -170,11 +223,18 @@ export const DataExport = () => {
   const exportApplications = async () => {
     setExporting('applications');
     try {
-      const { data: applications, error } = await supabase
-        .from('applications')
-        .select('*')
-        .order('applied_at', { ascending: false });
+      let query = supabase.from('applications').select('*').order('applied_at', { ascending: false });
+      
+      if (startDate) {
+        query = query.gte('applied_at', startDate.toISOString());
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('applied_at', endOfDay.toISOString());
+      }
 
+      const { data: applications, error } = await query;
       if (error) throw error;
 
       // Fetch related data
@@ -220,7 +280,7 @@ export const DataExport = () => {
 
       const headers = ['student_name', 'student_email', 'internship_title', 'company_name', 'status', 'cover_letter', 'resume_url', 'applied_at', 'updated_at'];
       const csv = convertToCSV(exportData, headers);
-      downloadCSV(csv, `applications_export_${new Date().toISOString().split('T')[0]}.csv`);
+      downloadCSV(csv, getFilenameWithDateRange('applications'));
       toast.success(`Exported ${exportData.length} applications`);
     } catch (error) {
       console.error('Export error:', error);
@@ -234,7 +294,7 @@ export const DataExport = () => {
     {
       type: 'students' as ExportType,
       title: 'Students',
-      description: 'Export all registered students with their profile information, education details, and skills.',
+      description: 'Export registered students with their profile information, education details, and skills.',
       icon: Users,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/20',
@@ -243,7 +303,7 @@ export const DataExport = () => {
     {
       type: 'companies' as ExportType,
       title: 'Companies',
-      description: 'Export all companies with their profile, contact information, and verification status.',
+      description: 'Export companies with their profile, contact information, and verification status.',
       icon: Building2,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
@@ -252,7 +312,7 @@ export const DataExport = () => {
     {
       type: 'internships' as ExportType,
       title: 'Internships',
-      description: 'Export all internship listings with details like duration, stipend, and requirements.',
+      description: 'Export internship listings with details like duration, stipend, and requirements.',
       icon: Briefcase,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
@@ -261,7 +321,7 @@ export const DataExport = () => {
     {
       type: 'applications' as ExportType,
       title: 'Applications',
-      description: 'Export all student applications with status, student details, and internship information.',
+      description: 'Export student applications with status, student details, and internship information.',
       icon: FileText,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100 dark:bg-orange-900/20',
@@ -280,6 +340,89 @@ export const DataExport = () => {
           Download CSV reports of platform data for analysis and record-keeping.
         </p>
       </div>
+
+      {/* Date Range Filter */}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+            Date Range Filter
+          </CardTitle>
+          <CardDescription>
+            Select a date range to export data from a specific time period. Leave empty to export all data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">From:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : "Start date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    disabled={(date) => (endDate ? date > endDate : false) || date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">To:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : "End date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={(date) => (startDate ? date < startDate : false) || date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {(startDate || endDate) && (
+              <Button variant="ghost" size="sm" onClick={clearDateRange} className="text-muted-foreground">
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            )}
+
+            <Badge variant="secondary" className="ml-auto">
+              {getDateRangeLabel()}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         {exportOptions.map((option) => (
@@ -328,9 +471,9 @@ export const DataExport = () => {
           <h3 className="font-semibold mb-2">Export Information</h3>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• All exports are in CSV format compatible with Excel, Google Sheets, and other spreadsheet applications.</li>
-            <li>• Data is exported with the current date in the filename for easy tracking.</li>
+            <li>• When a date range is selected, only records created within that period are exported.</li>
+            <li>• The filename includes the selected date range for easy tracking.</li>
             <li>• Arrays (like skills) are exported as semicolon-separated values within quotes.</li>
-            <li>• All available records are included in each export.</li>
           </ul>
         </CardContent>
       </Card>
