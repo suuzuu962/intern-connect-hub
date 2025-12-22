@@ -94,6 +94,37 @@ const InternshipDetails = () => {
           Back to Internships
         </Link>
 
+        {/* Apply Section at Top */}
+        <Card className="mb-8">
+          <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-heading font-semibold text-lg">{internship.title}</h2>
+              <p className="text-muted-foreground">{internship.company?.name}</p>
+            </div>
+            
+            {!user ? (
+              <Link to="/auth?mode=signup&role=student">
+                <Button className="gradient-primary border-0">
+                  <Send className="h-4 w-4 mr-2" />
+                  Sign Up to Apply
+                </Button>
+              </Link>
+            ) : role === 'student' ? (
+              <Button 
+                className="gradient-primary border-0"
+                onClick={() => setShowApplyModal(true)}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Apply Now
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Only students can apply for internships.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -243,37 +274,6 @@ const InternshipDetails = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Apply Card - Only for students */}
-            <Card className="sticky top-24">
-              <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-lg mb-4">Interested in this role?</h3>
-                
-                {!user ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">Sign up as a student to apply for this internship.</p>
-                    <Link to="/auth?mode=signup&role=student">
-                      <Button className="w-full gradient-primary border-0">
-                        <Send className="h-4 w-4 mr-2" />
-                        Sign Up to Apply
-                      </Button>
-                    </Link>
-                  </div>
-                ) : role === 'student' ? (
-                  <Button 
-                    className="w-full gradient-primary border-0"
-                    onClick={() => setShowApplyModal(true)}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Apply Now
-                  </Button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Only students can apply for internships. You're currently logged in as a {role}.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Company Info Card */}
             {internship.company && (
               <Card>
