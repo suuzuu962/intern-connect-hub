@@ -9,8 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const ITEMS_PER_PAGE = 24;
 
+interface CompanyWithCount extends Company {
+  internshipCount: number;
+}
+
 const Companies = () => {
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -29,7 +33,30 @@ const Companies = () => {
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
     query = query.range(from, from + ITEMS_PER_PAGE - 1);
     const { data, count, error } = await query;
-    if (!error && data) { setCompanies(data as Company[]); setTotalCount(count || 0); }
+    
+    if (!error && data) {
+      // Fetch internship counts for these companies
+      const companyIds = data.map(c => c.id);
+      const { data: internships } = await supabase
+        .from('internships')
+        .select('company_id')
+        .in('company_id', companyIds)
+        .eq('is_active', true);
+
+      // Count internships per company
+      const countMap: Record<string, number> = {};
+      internships?.forEach(i => {
+        countMap[i.company_id] = (countMap[i.company_id] || 0) + 1;
+      });
+
+      const companiesWithCount = data.map(company => ({
+        ...company,
+        internshipCount: countMap[company.id] || 0,
+      })) as CompanyWithCount[];
+
+      setCompanies(companiesWithCount);
+      setTotalCount(count || 0);
+    }
     setLoading(false);
   };
 
@@ -46,7 +73,7 @@ const Companies = () => {
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
           {loading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />) : companies.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">No companies found.</div>
-          ) : companies.map((company) => <CompanyCard key={company.id} company={company} />)}
+          ) : companies.map((company) => <CompanyCard key={company.id} company={company} internshipCount={company.internshipCount} />)}
         </div>
         {totalPages > 1 && (
           <Pagination className="mt-12">
