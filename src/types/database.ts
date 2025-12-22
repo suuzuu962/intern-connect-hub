@@ -22,6 +22,9 @@ export interface Company {
   location: string | null;
   website: string | null;
   description: string | null;
+  short_description: string | null;
+  long_description: string | null;
+  about_company: string | null;
   employee_count: string | null;
   founded_year: number | null;
   is_verified: boolean;

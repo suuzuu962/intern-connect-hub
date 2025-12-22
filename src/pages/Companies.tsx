@@ -22,7 +22,7 @@ const Companies = () => {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    let query = supabase.from('companies').select('*', { count: 'exact' });
+    let query = supabase.from('companies').select('*', { count: 'exact' }).eq('is_verified', true);
     if (filters.search) query = query.or(`name.ilike.%${filters.search}%,industry.ilike.%${filters.search}%`);
     if (filters.location && filters.location !== 'Any Location') query = query.ilike('location', `%${filters.location}%`);
     query = query.order('created_at', { ascending: filters.sortBy === 'oldest' });
