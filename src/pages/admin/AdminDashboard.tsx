@@ -8,7 +8,8 @@ import { CompanyApprovalManagement } from '@/components/admin/CompanyApprovalMan
 import { InternshipManagement } from '@/components/admin/InternshipManagement';
 import { StudentManagement } from '@/components/admin/StudentManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell } from 'lucide-react';
+import { DataExport } from '@/components/admin/DataExport';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
@@ -69,7 +70,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -89,6 +90,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Reports</span>
             </TabsTrigger>
           </TabsList>
 
@@ -110,6 +115,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="notifications">
             <NotificationManagement />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <DataExport />
           </TabsContent>
         </Tabs>
       </div>
