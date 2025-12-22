@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Internships from "./pages/Internships";
 import Companies from "./pages/Companies";
+import CompanyDetails from "./pages/CompanyDetails";
 import About from "./pages/About";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/internships" element={<Internships />} />
             <Route path="/companies" element={<Companies />} />
+            <Route path="/companies/:id" element={<CompanyDetails />} />
             <Route path="/about" element={<About />} />
             <Route path="/company/dashboard" element={<CompanyDashboard />} />
             <Route path="/student/dashboard" element={<StudentDashboard />} />
