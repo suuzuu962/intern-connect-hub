@@ -93,7 +93,7 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <AdminOverview />
+            <AdminOverview onNavigate={handleTabChange} />
           </TabsContent>
 
           <TabsContent value="companies">
