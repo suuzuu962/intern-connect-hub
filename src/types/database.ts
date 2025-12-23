@@ -1,4 +1,4 @@
-export type AppRole = 'company' | 'student';
+export type AppRole = 'company' | 'student' | 'admin';
 export type InternshipType = 'full_time' | 'part_time' | 'contract';
 export type WorkMode = 'remote' | 'onsite' | 'hybrid';
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
@@ -9,6 +9,7 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  phone_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +41,8 @@ export interface Student {
   bio: string | null;
   linkedin_url: string | null;
   github_url: string | null;
+  college: string | null;
+  department: string | null;
   created_at: string;
   updated_at: string;
 }
