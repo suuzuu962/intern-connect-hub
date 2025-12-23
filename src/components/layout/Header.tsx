@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, Users, Plus, Building2, Settings, Shield, Briefcase, GraduationCap } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, Users, Plus, Building2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,7 +26,6 @@ export const Header = () => {
   const { user, role, signOut } = useAuth();
 
   const getDashboardLink = () => {
-    if (role === 'admin') return '/admin/dashboard';
     if (role === 'company') return '/company/dashboard';
     if (role === 'student') return '/student/dashboard';
     return '/';
@@ -73,19 +72,6 @@ export const Header = () => {
                 )}
               >
                 Dashboard
-              </Link>
-            )}
-            {user && role === 'admin' && (
-              <Link
-                to="/admin/dashboard"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname.startsWith('/admin')
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )}
-              >
-                Admin Panel
               </Link>
             )}
           </nav>
@@ -163,28 +149,6 @@ export const Header = () => {
                           <Link to="/student/dashboard?section=change-password" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
                             Change Password
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {role === 'admin' && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin/dashboard?section=companies" className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4" />
-                            Manage Companies
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin/dashboard?section=internships" className="flex items-center gap-2">
-                            <Briefcase className="h-4 w-4" />
-                            Manage Internships
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin/dashboard?section=students" className="flex items-center gap-2">
-                            <GraduationCap className="h-4 w-4" />
-                            Manage Students
                           </Link>
                         </DropdownMenuItem>
                       </>

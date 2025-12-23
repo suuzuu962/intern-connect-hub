@@ -1,4 +1,4 @@
-export type AppRole = 'admin' | 'company' | 'student';
+export type AppRole = 'company' | 'student';
 export type InternshipType = 'full_time' | 'part_time' | 'contract';
 export type WorkMode = 'remote' | 'onsite' | 'hybrid';
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
