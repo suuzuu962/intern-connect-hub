@@ -79,6 +79,10 @@ export type Database = {
           created_at: string
           declaration_accepted: boolean | null
           description: string | null
+          designation_email: string | null
+          designation_name: string | null
+          designation_phone: string | null
+          designation_title: string | null
           domain_category: string | null
           employee_count: string | null
           facebook_url: string | null
@@ -87,6 +91,9 @@ export type Database = {
           id: string
           industry: string | null
           instagram_url: string | null
+          internship_domain: string | null
+          internship_duration: string | null
+          internship_mode: string | null
           is_verified: boolean | null
           linkedin_url: string | null
           location: string | null
@@ -97,6 +104,7 @@ export type Database = {
           registration_profile_url: string | null
           short_description: string | null
           state: string | null
+          stipend_offered: string | null
           terms_accepted: boolean | null
           twitter_url: string | null
           updated_at: string
@@ -119,6 +127,10 @@ export type Database = {
           created_at?: string
           declaration_accepted?: boolean | null
           description?: string | null
+          designation_email?: string | null
+          designation_name?: string | null
+          designation_phone?: string | null
+          designation_title?: string | null
           domain_category?: string | null
           employee_count?: string | null
           facebook_url?: string | null
@@ -127,6 +139,9 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram_url?: string | null
+          internship_domain?: string | null
+          internship_duration?: string | null
+          internship_mode?: string | null
           is_verified?: boolean | null
           linkedin_url?: string | null
           location?: string | null
@@ -137,6 +152,7 @@ export type Database = {
           registration_profile_url?: string | null
           short_description?: string | null
           state?: string | null
+          stipend_offered?: string | null
           terms_accepted?: boolean | null
           twitter_url?: string | null
           updated_at?: string
@@ -159,6 +175,10 @@ export type Database = {
           created_at?: string
           declaration_accepted?: boolean | null
           description?: string | null
+          designation_email?: string | null
+          designation_name?: string | null
+          designation_phone?: string | null
+          designation_title?: string | null
           domain_category?: string | null
           employee_count?: string | null
           facebook_url?: string | null
@@ -167,6 +187,9 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram_url?: string | null
+          internship_domain?: string | null
+          internship_duration?: string | null
+          internship_mode?: string | null
           is_verified?: boolean | null
           linkedin_url?: string | null
           location?: string | null
@@ -177,6 +200,7 @@ export type Database = {
           registration_profile_url?: string | null
           short_description?: string | null
           state?: string | null
+          stipend_offered?: string | null
           terms_accepted?: boolean | null
           twitter_url?: string | null
           updated_at?: string
@@ -326,6 +350,7 @@ export type Database = {
           is_read: boolean | null
           link: string | null
           message: string
+          target_role: string | null
           title: string
           type: string
           user_id: string
@@ -336,6 +361,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message: string
+          target_role?: string | null
           title: string
           type: string
           user_id: string
@@ -346,6 +372,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message?: string
+          target_role?: string | null
           title?: string
           type?: string
           user_id?: string
@@ -392,6 +419,7 @@ export type Database = {
           bio: string | null
           city: string | null
           college: string | null
+          college_id_url: string | null
           country: string | null
           created_at: string
           degree: string | null
@@ -419,6 +447,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
+          college_id_url?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
@@ -446,6 +475,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
+          college_id_url?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
