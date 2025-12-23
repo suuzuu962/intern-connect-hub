@@ -248,6 +248,7 @@ export const CompanyProfileForm = () => {
         registration_profile_url: company.registration_profile_url,
         terms_accepted: company.terms_accepted,
         declaration_accepted: company.declaration_accepted,
+        is_verified: false, // Reset verification on any profile edit
       })
       .eq('id', company.id);
 
