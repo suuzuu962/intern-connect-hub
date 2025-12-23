@@ -22,6 +22,7 @@ interface StudentData {
   skills: string[];
   interestedDomains: string[];
   resumeUrl: string;
+  collegeIdUrl: string;
 }
 
 interface StudentProfileViewProps {
@@ -183,21 +184,41 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
             Documents
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {data.resumeUrl ? (
-            <a
-              href={data.resumeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              View Resume
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          ) : (
-            <p className="text-muted-foreground">No resume uploaded</p>
-          )}
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">Resume</p>
+            {data.resumeUrl ? (
+              <a
+                href={data.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                View Resume
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            ) : (
+              <p className="text-muted-foreground">No resume uploaded</p>
+            )}
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">College ID</p>
+            {data.collegeIdUrl ? (
+              <a
+                href={data.collegeIdUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                View College ID
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            ) : (
+              <p className="text-muted-foreground">No college ID uploaded</p>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
