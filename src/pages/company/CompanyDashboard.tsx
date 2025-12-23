@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, Loader2 } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, Loader2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
@@ -249,6 +250,20 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
 
   return (
     <div className="space-y-6">
+      {/* Verification Warning Banner */}
+      {!company?.is_verified && (
+        <Alert variant="destructive" className="border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400">
+          <AlertTriangle className="h-5 w-5 text-orange-500" />
+          <AlertTitle className="text-orange-700 dark:text-orange-400 font-semibold">
+            Verification Pending
+          </AlertTitle>
+          <AlertDescription className="text-orange-600 dark:text-orange-300">
+            Your company profile is under review. Any profile edits require admin re-approval. 
+            Once verified, your internships will be visible to students.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Company Header */}
       <Card>
         <CardContent className="p-6">
@@ -311,18 +326,6 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
           </div>
         </CardContent>
       </Card>
-
-      {!company?.is_verified && (
-        <Card className="border-orange-500/50 bg-orange-500/5">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-orange-500 mb-2">⏳ Verification Pending</h3>
-            <p className="text-sm text-muted-foreground">
-              Your company profile is under review. Once verified, your internships will be visible to students.
-              Please ensure your profile is complete with all required information.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
