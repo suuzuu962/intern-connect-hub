@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, CreditCard } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Application {
   id: string;
@@ -15,6 +17,9 @@ interface Application {
     title: string;
     domain: string | null;
     location: string | null;
+    stipend: number | null;
+    is_paid: boolean | null;
+    fees: number | null;
     company: {
       name: string;
       logo_url: string | null;
@@ -49,6 +54,9 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title,
             domain,
             location,
+            stipend,
+            is_paid,
+            fees,
             company:companies(name, logo_url)
           )
         `)
@@ -65,6 +73,9 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title: app.internship?.title || 'Unknown',
             domain: app.internship?.domain,
             location: app.internship?.location,
+            stipend: app.internship?.stipend,
+            is_paid: app.internship?.is_paid,
+            fees: app.internship?.fees,
             company: {
               name: app.internship?.company?.name || 'Unknown',
               logo_url: app.internship?.company?.logo_url,
@@ -115,6 +126,15 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
           </Badge>
         );
     }
+  };
+
+  const requiresPayment = (app: Application) => {
+    return app.status === 'approved' && app.internship.is_paid && app.internship.fees && app.internship.fees > 0;
+  };
+
+  const handlePayment = (app: Application) => {
+    // For now, show a toast since payment integration isn't set up yet
+    toast.info(`Payment of ₹${app.internship.fees} required for ${app.internship.title}. Payment gateway coming soon!`);
   };
 
   if (loading) {
@@ -213,6 +233,16 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                   </div>
 
                   <div className="flex items-center gap-3">
+                    {requiresPayment(app) && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handlePayment(app)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CreditCard className="h-4 w-4 mr-1" />
+                        Pay ₹{app.internship.fees}
+                      </Button>
+                    )}
                     {getStatusBadge(app.status)}
                   </div>
                 </div>

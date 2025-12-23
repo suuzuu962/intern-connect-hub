@@ -113,6 +113,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   // Documents
   const [resumeUrl, setResumeUrl] = useState('');
+  const [collegeIdUrl, setCollegeIdUrl] = useState('');
+  const [uploadingCollegeId, setUploadingCollegeId] = useState(false);
   const [accuracyConfirmation, setAccuracyConfirmation] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -161,6 +163,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setSkills(studentData.skills || []);
         setInterestedDomains(studentData.interested_domains || []);
         setResumeUrl(studentData.resume_url || '');
+        setCollegeIdUrl((studentData as any).college_id_url || '');
         setAccuracyConfirmation(studentData.accuracy_confirmation || false);
         setTermsAccepted(studentData.terms_accepted || false);
       }
@@ -203,6 +206,45 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       toast.error('Failed to upload resume');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCollegeIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPG, PNG, or PDF files are allowed');
+      return;
+    }
+
+    setUploadingCollegeId(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${user?.id}/college_id_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-files')
+        .getPublicUrl(fileName);
+
+      setCollegeIdUrl(publicUrl);
+      toast.success('College ID uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading college ID:', error);
+      toast.error('Failed to upload college ID');
+    } finally {
+      setUploadingCollegeId(false);
     }
   };
 
@@ -276,6 +318,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         skills,
         interested_domains: interestedDomains,
         resume_url: resumeUrl || null,
+        college_id_url: collegeIdUrl || null,
         accuracy_confirmation: accuracyConfirmation,
         terms_accepted: termsAccepted,
       };
@@ -530,15 +573,20 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             <Label>Skills (Select all that apply)</Label>
             <div className="flex flex-wrap gap-2">
               {SKILL_OPTIONS.map((skill) => (
-                <Badge
+                <button
                   key={skill}
-                  variant={skills.includes(skill) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
+                  type="button"
                   onClick={() => toggleSkill(skill)}
+                  className="inline-block"
                 >
-                  {skill}
-                  {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
-                </Badge>
+                  <Badge
+                    variant={skills.includes(skill) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors hover:opacity-80"
+                  >
+                    {skill}
+                    {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                  </Badge>
+                </button>
               ))}
             </div>
           </div>
@@ -547,15 +595,20 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             <Label>Interested Domains</Label>
             <div className="flex flex-wrap gap-2">
               {DOMAIN_OPTIONS.map((domain) => (
-                <Badge
+                <button
                   key={domain}
-                  variant={interestedDomains.includes(domain) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
+                  type="button"
                   onClick={() => toggleDomain(domain)}
+                  className="inline-block"
                 >
-                  {domain}
-                  {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
-                </Badge>
+                  <Badge
+                    variant={interestedDomains.includes(domain) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors hover:opacity-80"
+                  >
+                    {domain}
+                    {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                  </Badge>
+                </button>
               ))}
             </div>
           </div>
@@ -594,6 +647,32 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
                 </a>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>College ID Card (JPG, PNG or PDF, max 5MB)</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleCollegeIdUpload}
+                disabled={uploadingCollegeId}
+                className="max-w-xs"
+              />
+              {uploadingCollegeId && <Loader2 className="h-4 w-4 animate-spin" />}
+              {collegeIdUrl && (
+                <a
+                  href={collegeIdUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  View College ID
+                </a>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Upload your valid college ID for verification</p>
           </div>
 
           <div className="space-y-4 pt-4 border-t">
