@@ -168,36 +168,64 @@ const Auth = () => {
       return;
     }
 
-    if (data.user) {
+    if (data.user && data.session) {
       // Create profile with phone number
-      await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').insert({
         user_id: data.user.id,
         email,
         full_name: fullName,
         phone_number: phoneNumber,
       });
 
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        toast({ title: 'Error', description: 'Failed to create profile. Please try again.', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+
       // Create user role
-      await supabase.from('user_roles').insert({
+      const { error: roleError } = await supabase.from('user_roles').insert({
         user_id: data.user.id,
         role: role,
       });
 
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+        toast({ title: 'Error', description: 'Failed to create user role. Please try again.', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+
       // Create company or student record
       if (role === 'company') {
-        await supabase.from('companies').insert({
+        const { error: companyError } = await supabase.from('companies').insert({
           user_id: data.user.id,
           name: fullName,
           contact_person_phone: phoneNumber,
         });
+        if (companyError) {
+          console.error('Error creating company:', companyError);
+          toast({ title: 'Error', description: 'Failed to create company profile. Please try again.', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
       } else {
-        await supabase.from('students').insert({
+        const { error: studentError } = await supabase.from('students').insert({
           user_id: data.user.id,
         });
+        if (studentError) {
+          console.error('Error creating student:', studentError);
+          toast({ title: 'Error', description: 'Failed to create student profile. Please try again.', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
       }
 
       toast({ title: 'Account Verified!', description: 'Your account has been created successfully' });
       navigate(role === 'company' ? '/company/dashboard' : '/student/dashboard');
+    } else {
+      toast({ title: 'Error', description: 'Verification successful but session not created. Please try logging in.', variant: 'destructive' });
     }
 
     setLoading(false);
