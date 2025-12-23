@@ -26,6 +26,16 @@ const internshipTypeLabels = {
   contract: 'Contract',
 };
 
+const getPaymentType = (internship: Internship) => {
+  if (internship.stipend && internship.stipend > 0) {
+    return { label: 'Stipended', color: 'bg-green-500 text-white', description: `₹${internship.stipend}/month` };
+  }
+  if (internship.is_paid || (internship.fees && internship.fees > 0)) {
+    return { label: 'Paid', color: 'bg-orange-500 text-white', description: internship.fees ? `₹${internship.fees} fees` : 'Fees apply' };
+  }
+  return { label: 'Free', color: 'bg-blue-500 text-white', description: 'No cost' };
+};
+
 const InternshipDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user, role } = useAuth();
@@ -160,11 +170,8 @@ const InternshipDetails = () => {
                           )}
                         </Link>
                       </div>
-                      <Badge
-                        variant={internship.is_paid ? 'default' : 'secondary'}
-                        className={internship.is_paid ? 'gradient-primary border-0 text-base px-4 py-1' : 'text-base px-4 py-1'}
-                      >
-                        {internship.is_paid ? 'Paid' : 'Unpaid'}
+                      <Badge className={`${getPaymentType(internship).color} text-base px-4 py-1`}>
+                        {getPaymentType(internship).label}
                       </Badge>
                     </div>
                   </div>
@@ -207,12 +214,20 @@ const InternshipDetails = () => {
                       <span className="font-medium">{internship.duration}</span>
                     </div>
                   )}
-                  {internship.stipend && (
+                  {internship.stipend && internship.stipend > 0 && (
                     <div className="flex flex-col gap-1">
                       <span className="text-sm text-muted-foreground flex items-center gap-2">
                         <DollarSign className="h-4 w-4" /> Stipend
                       </span>
-                      <span className="font-medium">${internship.stipend}/month</span>
+                      <span className="font-medium text-green-600">₹{internship.stipend}/month</span>
+                    </div>
+                  )}
+                  {internship.fees && internship.fees > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" /> Fees
+                      </span>
+                      <span className="font-medium text-orange-600">₹{internship.fees}</span>
                     </div>
                   )}
                   {internship.positions_available && (

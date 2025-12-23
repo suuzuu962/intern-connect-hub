@@ -26,6 +26,16 @@ const internshipTypeLabels = {
   contract: 'Contract',
 };
 
+const getPaymentType = (internship: Internship) => {
+  if (internship.stipend && internship.stipend > 0) {
+    return { label: 'Stipended', color: 'bg-green-500 text-white' };
+  }
+  if (internship.is_paid || (internship.fees && internship.fees > 0)) {
+    return { label: 'Paid', color: 'bg-orange-500 text-white' };
+  }
+  return { label: 'Free', color: 'bg-blue-500 text-white' };
+};
+
 export const InternshipCard = ({ internship, className }: InternshipCardProps) => {
   const { user, role } = useAuth();
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -35,6 +45,8 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
     e.stopPropagation();
     setShowApplyModal(true);
   };
+
+  const paymentType = getPaymentType(internship);
 
   return (
     <>
@@ -66,11 +78,8 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                       {internship.company?.name || 'Company'}
                     </p>
                   </div>
-                  <Badge
-                    variant={internship.is_paid ? 'default' : 'secondary'}
-                    className={internship.is_paid ? 'gradient-primary border-0' : ''}
-                  >
-                    {internship.is_paid ? 'Paid' : 'Unpaid'}
+                  <Badge className={paymentType.color}>
+                    {paymentType.label}
                   </Badge>
                 </div>
 
@@ -92,10 +101,16 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                       {internship.duration}
                     </span>
                   )}
-                  {internship.stipend && (
-                    <span className="flex items-center gap-1">
+                  {internship.stipend && internship.stipend > 0 && (
+                    <span className="flex items-center gap-1 text-green-600">
                       <DollarSign className="h-4 w-4" />
-                      ${internship.stipend}/month
+                      ₹{internship.stipend}/month
+                    </span>
+                  )}
+                  {internship.fees && internship.fees > 0 && (
+                    <span className="flex items-center gap-1 text-orange-600">
+                      <DollarSign className="h-4 w-4" />
+                      ₹{internship.fees} (fees)
                     </span>
                   )}
                 </div>
