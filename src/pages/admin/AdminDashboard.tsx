@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Users, Briefcase, LayoutDashboard } from 'lucide-react';
+import { Building2, Users, Briefcase, LayoutDashboard, Bell } from 'lucide-react';
 import AdminCompanies from '@/components/admin/AdminCompanies';
 import AdminStudents from '@/components/admin/AdminStudents';
 import AdminInternships from '@/components/admin/AdminInternships';
 import AdminOverview from '@/components/admin/AdminOverview';
+import AdminNotifications from '@/components/admin/AdminNotifications';
 
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
@@ -39,12 +40,12 @@ const AdminDashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Manage companies, students, and internships
+            Manage companies, students, internships, and notifications
           </p>
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Overview
@@ -60,6 +61,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="internships" className="flex items-center gap-2">
               <Briefcase className="h-4 w-4" />
               Internships
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Notifications
             </TabsTrigger>
           </TabsList>
 
@@ -77,6 +82,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="internships">
             <AdminInternships />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <AdminNotifications />
           </TabsContent>
         </Tabs>
       </div>
