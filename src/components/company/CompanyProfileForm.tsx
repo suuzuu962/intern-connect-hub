@@ -189,6 +189,8 @@ export const CompanyProfileForm = () => {
     if (!company?.contact_person_email?.trim()) newErrors.contact_person_email = 'Contact person email is required';
     if (!company?.contact_person_phone?.trim()) newErrors.contact_person_phone = 'Contact person phone is required';
     if (!company?.contact_person_designation) newErrors.contact_person_designation = 'Designation is required';
+    if (!company?.company_profile_url) newErrors.company_profile_url = 'Company profile document is required';
+    if (!company?.registration_profile_url) newErrors.registration_profile_url = 'Registration proof document is required';
     if (!company?.terms_accepted) newErrors.terms_accepted = 'You must accept terms & conditions';
     if (!company?.declaration_accepted) newErrors.declaration_accepted = 'You must confirm accuracy';
 
@@ -604,17 +606,19 @@ export const CompanyProfileForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <Label>Company Profile Document (PDF only)</Label>
+              <RequiredLabel>Company Profile Document (PDF only)</RequiredLabel>
               {company.company_profile_url && <a href={company.company_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
-              <Input type="file" accept=".pdf" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url', true)} />
+              <Input type="file" accept=".pdf" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url', true)} className={errors.company_profile_url ? 'border-destructive' : ''} />
               {uploading === 'company_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
+              {errors.company_profile_url && <p className="text-xs text-destructive">{errors.company_profile_url}</p>}
               <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
             <div className="space-y-3">
-              <Label>Registration Proof (PDF only)</Label>
+              <RequiredLabel>Registration Proof (PDF only)</RequiredLabel>
               {company.registration_profile_url && <a href={company.registration_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
-              <Input type="file" accept=".pdf" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url', true)} />
+              <Input type="file" accept=".pdf" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url', true)} className={errors.registration_profile_url ? 'border-destructive' : ''} />
               {uploading === 'registration_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
+              {errors.registration_profile_url && <p className="text-xs text-destructive">{errors.registration_profile_url}</p>}
               <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
           </div>
