@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Users, Trash2, Search, GraduationCap, MapPin, Plus } from 'lucide-react';
+import { Users, Trash2, Search, GraduationCap, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -20,15 +19,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 
 interface Student {
   id: string;
@@ -46,33 +36,10 @@ interface Student {
   } | null;
 }
 
-interface NewStudentForm {
-  email: string;
-  password: string;
-  fullName: string;
-  college: string;
-  department: string;
-  city: string;
-  state: string;
-  graduationYear: string;
-}
-
 export const StudentManagement = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [newStudent, setNewStudent] = useState<NewStudentForm>({
-    email: '',
-    password: '',
-    fullName: '',
-    college: '',
-    department: '',
-    city: '',
-    state: '',
-    graduationYear: '',
-  });
 
   const fetchStudents = async () => {
     try {
@@ -152,86 +119,6 @@ export const StudentManagement = () => {
     }
   };
 
-  const handleAddStudent = async () => {
-    if (!newStudent.email || !newStudent.password || !newStudent.fullName) {
-      toast.error('Please fill in required fields (Email, Password, Full Name)');
-      return;
-    }
-
-    setAdding(true);
-    try {
-      // Create user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newStudent.email,
-        password: newStudent.password,
-        options: {
-          data: {
-            full_name: newStudent.fullName,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      const userId = authData.user.id;
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: userId,
-          email: newStudent.email,
-          full_name: newStudent.fullName,
-        });
-
-      if (profileError) throw profileError;
-
-      // Create user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'student',
-        });
-
-      if (roleError) throw roleError;
-
-      // Create student record
-      const { error: studentError } = await supabase
-        .from('students')
-        .insert({
-          user_id: userId,
-          college: newStudent.college || null,
-          department: newStudent.department || null,
-          city: newStudent.city || null,
-          state: newStudent.state || null,
-          graduation_year: newStudent.graduationYear ? parseInt(newStudent.graduationYear) : null,
-        });
-
-      if (studentError) throw studentError;
-
-      toast.success('Student added successfully');
-      setAddDialogOpen(false);
-      setNewStudent({
-        email: '',
-        password: '',
-        fullName: '',
-        college: '',
-        department: '',
-        city: '',
-        state: '',
-        graduationYear: '',
-      });
-      fetchStudents();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to add student');
-      console.error('Error adding student:', error);
-    } finally {
-      setAdding(false);
-    }
-  };
-
   const filteredStudents = students.filter(student =>
     student.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     student.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -256,121 +143,14 @@ export const StudentManagement = () => {
               <Users className="h-5 w-5 text-primary" />
               All Students ({students.length})
             </CardTitle>
-            <div className="flex items-center gap-3">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gradient-primary border-0">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Student
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New Student</DialogTitle>
-                    <DialogDescription>
-                      Create a new student account. They will receive login credentials.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="student@example.com"
-                        value={newStudent.email}
-                        onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password *</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Minimum 6 characters"
-                        value={newStudent.password}
-                        onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name *</Label>
-                      <Input
-                        id="fullName"
-                        placeholder="John Doe"
-                        value={newStudent.fullName}
-                        onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="college">College</Label>
-                        <Input
-                          id="college"
-                          placeholder="University name"
-                          value={newStudent.college}
-                          onChange={(e) => setNewStudent({ ...newStudent, college: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="department">Department</Label>
-                        <Input
-                          id="department"
-                          placeholder="Computer Science"
-                          value={newStudent.department}
-                          onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          id="city"
-                          placeholder="City"
-                          value={newStudent.city}
-                          onChange={(e) => setNewStudent({ ...newStudent, city: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="state">State</Label>
-                        <Input
-                          id="state"
-                          placeholder="State"
-                          value={newStudent.state}
-                          onChange={(e) => setNewStudent({ ...newStudent, state: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="graduationYear">Graduation Year</Label>
-                      <Input
-                        id="graduationYear"
-                        type="number"
-                        placeholder="2025"
-                        value={newStudent.graduationYear}
-                        onChange={(e) => setNewStudent({ ...newStudent, graduationYear: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddStudent} disabled={adding} className="gradient-primary border-0">
-                      {adding ? 'Adding...' : 'Add Student'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </div>
         </CardHeader>

@@ -75,7 +75,6 @@ const StudentDashboard = () => {
             student={student}
             loading={loading}
             onEditProfile={() => setActiveSection('profile')}
-            onNavigateToApplied={() => setActiveSection('applied')}
           />
         );
       case 'profile':

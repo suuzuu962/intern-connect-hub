@@ -34,10 +34,9 @@ interface StudentOverviewProps {
   student: StudentInfo | null;
   loading: boolean;
   onEditProfile: () => void;
-  onNavigateToApplied: () => void;
 }
 
-export const StudentOverview = ({ student, loading, onEditProfile, onNavigateToApplied }: StudentOverviewProps) => {
+export const StudentOverview = ({ student, loading, onEditProfile }: StudentOverviewProps) => {
   const { user } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [profileCompletion, setProfileCompletion] = useState(0);
@@ -205,10 +204,7 @@ export const StudentOverview = ({ student, loading, onEditProfile, onNavigateToA
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50"
-          onClick={onNavigateToApplied}
-        >
+        <Card>
           <CardContent className="p-4">
             <div className="flex flex-col">
               <Briefcase className="h-5 w-5 text-primary mb-2" />
@@ -217,10 +213,7 @@ export const StudentOverview = ({ student, loading, onEditProfile, onNavigateToA
             </div>
           </CardContent>
         </Card>
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow hover:border-yellow-500/50"
-          onClick={onNavigateToApplied}
-        >
+        <Card>
           <CardContent className="p-4">
             <div className="flex flex-col">
               <Clock className="h-5 w-5 text-yellow-500 mb-2" />
@@ -229,10 +222,7 @@ export const StudentOverview = ({ student, loading, onEditProfile, onNavigateToA
             </div>
           </CardContent>
         </Card>
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow hover:border-green-500/50"
-          onClick={onNavigateToApplied}
-        >
+        <Card>
           <CardContent className="p-4">
             <div className="flex flex-col">
               <CheckCircle className="h-5 w-5 text-green-500 mb-2" />

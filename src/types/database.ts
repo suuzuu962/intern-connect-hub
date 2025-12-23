@@ -22,9 +22,6 @@ export interface Company {
   location: string | null;
   website: string | null;
   description: string | null;
-  short_description: string | null;
-  long_description: string | null;
-  about_company: string | null;
   employee_count: string | null;
   founded_year: number | null;
   is_verified: boolean;
@@ -93,7 +90,6 @@ export interface Notification {
   type: string;
   is_read: boolean;
   link: string | null;
-  target_role: string | null;
   created_at: string;
 }
 

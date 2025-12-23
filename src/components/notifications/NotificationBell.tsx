@@ -14,7 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'react-router-dom';
 
 export const NotificationBell = () => {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -22,44 +22,24 @@ export const NotificationBell = () => {
     if (!user) return;
 
     const fetchNotifications = async () => {
-      // Fetch user-specific notifications
-      const { data: userNotifications, error: userError } = await supabase
+      const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
-        .is('target_role', null)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Fetch role-based notifications if user has a role
-      let roleNotifications: Notification[] = [];
-      if (role) {
-        const { data: roleData, error: roleError } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('target_role', role)
-          .order('created_at', { ascending: false })
-          .limit(10);
-        
-        if (!roleError && roleData) {
-          roleNotifications = roleData as Notification[];
-        }
+      if (!error && data) {
+        setNotifications(data as Notification[]);
+        setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
       }
-
-      // Combine and sort notifications
-      const allNotifications = [...(userNotifications || []), ...roleNotifications]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 10);
-
-      setNotifications(allNotifications as Notification[]);
-      setUnreadCount(allNotifications.filter((n) => !n.is_read).length);
     };
 
     fetchNotifications();
 
-    // Subscribe to realtime notifications for user-specific
-    const userChannel = supabase
-      .channel('user-notifications')
+    // Subscribe to realtime notifications
+    const channel = supabase
+      .channel('notifications')
       .on(
         'postgres_changes',
         {
@@ -69,43 +49,16 @@ export const NotificationBell = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const newNotification = payload.new as Notification;
-          if (!newNotification.target_role) {
-            setNotifications((prev) => [newNotification, ...prev].slice(0, 10));
-            setUnreadCount((prev) => prev + 1);
-          }
+          setNotifications((prev) => [payload.new as Notification, ...prev].slice(0, 10));
+          setUnreadCount((prev) => prev + 1);
         }
       )
       .subscribe();
 
-    // Subscribe to role-based notifications
-    let roleChannel: ReturnType<typeof supabase.channel> | null = null;
-    if (role) {
-      roleChannel = supabase
-        .channel('role-notifications')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `target_role=eq.${role}`,
-          },
-          (payload) => {
-            setNotifications((prev) => [payload.new as Notification, ...prev].slice(0, 10));
-            setUnreadCount((prev) => prev + 1);
-          }
-        )
-        .subscribe();
-    }
-
     return () => {
-      supabase.removeChannel(userChannel);
-      if (roleChannel) {
-        supabase.removeChannel(roleChannel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [user, role]);
+  }, [user]);
 
   const markAsRead = async (notificationId: string) => {
     await supabase

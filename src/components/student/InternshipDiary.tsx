@@ -344,20 +344,15 @@ ${blockers || 'None'}
                 <Label>Skills Applied / Learned</Label>
                 <div className="flex flex-wrap gap-2">
                   {SKILL_OPTIONS.map((skill) => (
-                    <button
+                    <Badge
                       key={skill}
-                      type="button"
+                      variant={skillsLearned.includes(skill) ? "default" : "outline"}
+                      className="cursor-pointer transition-colors"
                       onClick={() => toggleSkill(skill)}
-                      className="inline-block"
                     >
-                      <Badge
-                        variant={skillsLearned.includes(skill) ? "default" : "outline"}
-                        className="cursor-pointer transition-colors hover:opacity-80"
-                      >
-                        {skill}
-                        {skillsLearned.includes(skill) && <X className="h-3 w-3 ml-1" />}
-                      </Badge>
-                    </button>
+                      {skill}
+                      {skillsLearned.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                    </Badge>
                   ))}
                 </div>
               </div>

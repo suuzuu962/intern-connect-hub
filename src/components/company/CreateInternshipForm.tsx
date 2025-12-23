@@ -26,8 +26,6 @@ interface Props {
   onSuccess?: () => void;
 }
 
-type PaymentType = 'free' | 'paid' | 'stipended';
-
 interface FormData {
   title: string;
   short_description: string;
@@ -40,8 +38,7 @@ interface FormData {
   skills: string[];
   location: string;
   stipend: number | null;
-  fees: number | null;
-  payment_type: PaymentType;
+  is_paid: boolean;
   positions_available: number;
 }
 
@@ -61,8 +58,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     skills: [],
     location: '',
     stipend: null,
-    fees: null,
-    payment_type: 'free',
+    is_paid: false,
     positions_available: 1,
   });
 
@@ -122,9 +118,8 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       domain: formData.domain,
       skills: formData.skills,
       location: formData.location,
-      stipend: formData.payment_type === 'stipended' ? formData.stipend : null,
-      fees: formData.payment_type === 'paid' ? formData.fees : null,
-      is_paid: formData.payment_type === 'paid',
+      stipend: formData.is_paid ? formData.stipend : null,
+      is_paid: formData.is_paid,
       positions_available: formData.positions_available,
       is_active: true,
     });
@@ -259,44 +254,6 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                 placeholder="e.g., Mumbai, India"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label>Payment Type</Label>
-              <Select value={formData.payment_type} onValueChange={(v: PaymentType) => handleChange('payment_type', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="paid">Paid (Student pays fees)</SelectItem>
-                  <SelectItem value="stipended">Stipended (Company pays stipend)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formData.payment_type === 'paid' && (
-              <div className="space-y-2">
-                <Label>Fees Amount (₹)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={formData.fees || ''}
-                  onChange={(e) => handleChange('fees', parseInt(e.target.value) || null)}
-                  placeholder="Enter fees amount"
-                />
-              </div>
-            )}
-
-            {formData.payment_type === 'stipended' && (
-              <div className="space-y-2">
-                <Label>Stipend Amount (₹/month)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={formData.stipend || ''}
-                  onChange={(e) => handleChange('stipend', parseInt(e.target.value) || null)}
-                  placeholder="Enter stipend amount"
-                />
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label>Positions Available</Label>

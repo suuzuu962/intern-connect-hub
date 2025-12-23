@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, CreditCard } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, Loader2 } from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Application {
   id: string;
@@ -17,9 +27,6 @@ interface Application {
     title: string;
     domain: string | null;
     location: string | null;
-    stipend: number | null;
-    is_paid: boolean | null;
-    fees: number | null;
     company: {
       name: string;
       logo_url: string | null;
@@ -34,6 +41,13 @@ interface AppliedInternshipsProps {
 export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: 'approve' | 'reject';
+    applicationId: string;
+    internshipTitle: string;
+  } | null>(null);
 
   useEffect(() => {
     if (studentId) {
@@ -54,9 +68,6 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title,
             domain,
             location,
-            stipend,
-            is_paid,
-            fees,
             company:companies(name, logo_url)
           )
         `)
@@ -73,9 +84,6 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title: app.internship?.title || 'Unknown',
             domain: app.internship?.domain,
             location: app.internship?.location,
-            stipend: app.internship?.stipend,
-            is_paid: app.internship?.is_paid,
-            fees: app.internship?.fees,
             company: {
               name: app.internship?.company?.name || 'Unknown',
               logo_url: app.internship?.company?.logo_url,
@@ -91,9 +99,39 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     }
   };
 
-  const approvedCount = applications.filter(app => app.status === 'approved').length;
-  const rejectedCount = applications.filter(app => app.status === 'rejected').length;
-  const pendingCount = applications.filter(app => app.status === 'pending').length;
+  const hasApprovedApplication = applications.some(app => app.status === 'approved');
+
+  const handleStatusUpdate = async (applicationId: string, newStatus: 'approved' | 'rejected') => {
+    // Check if student already has an approved internship
+    if (newStatus === 'approved' && hasApprovedApplication) {
+      toast.error('You can only have one approved internship at a time');
+      return;
+    }
+
+    setUpdatingId(applicationId);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      setApplications(prev =>
+        prev.map(app =>
+          app.id === applicationId ? { ...app, status: newStatus } : app
+        )
+      );
+
+      toast.success(`Application ${newStatus === 'approved' ? 'accepted' : 'declined'} successfully`);
+    } catch (error) {
+      console.error('Error updating application:', error);
+      toast.error('Failed to update application status');
+    } finally {
+      setUpdatingId(null);
+      setConfirmDialog(null);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -128,15 +166,6 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     }
   };
 
-  const requiresPayment = (app: Application) => {
-    return app.status === 'approved' && app.internship.is_paid && app.internship.fees && app.internship.fees > 0;
-  };
-
-  const handlePayment = (app: Application) => {
-    // For now, show a toast since payment integration isn't set up yet
-    toast.info(`Payment of ₹${app.internship.fees} required for ${app.internship.title}. Payment gateway coming soon!`);
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -157,31 +186,16 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
         </Badge>
       </div>
 
-      {approvedCount > 0 && (
+      {hasApprovedApplication && (
         <Card className="border-green-500/50 bg-green-500/5">
           <CardContent className="p-4">
             <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              You have {approvedCount} approved internship{approvedCount > 1 ? 's' : ''}.
+              You have an approved internship. You can only accept one internship at a time.
             </p>
           </CardContent>
         </Card>
       )}
-
-      <div className="flex gap-4 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Clock className="h-4 w-4 text-yellow-500" />
-          {pendingCount} Pending
-        </span>
-        <span className="flex items-center gap-1">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          {approvedCount} Approved
-        </span>
-        <span className="flex items-center gap-1">
-          <XCircle className="h-4 w-4 text-red-500" />
-          {rejectedCount} Rejected
-        </span>
-      </div>
 
       {applications.length === 0 ? (
         <Card>
@@ -233,17 +247,44 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {requiresPayment(app) && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handlePayment(app)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CreditCard className="h-4 w-4 mr-1" />
-                        Pay ₹{app.internship.fees}
-                      </Button>
-                    )}
                     {getStatusBadge(app.status)}
+                    
+                    {app.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          disabled={updatingId === app.id || hasApprovedApplication}
+                          onClick={() => setConfirmDialog({
+                            open: true,
+                            action: 'approve',
+                            applicationId: app.id,
+                            internshipTitle: app.internship.title,
+                          })}
+                        >
+                          {updatingId === app.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Accept'
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          disabled={updatingId === app.id}
+                          onClick={() => setConfirmDialog({
+                            open: true,
+                            action: 'reject',
+                            applicationId: app.id,
+                            internshipTitle: app.internship.title,
+                          })}
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -252,6 +293,38 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
         </div>
       )}
 
+      <AlertDialog open={confirmDialog?.open} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog?.action === 'approve' ? 'Accept Internship' : 'Decline Application'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog?.action === 'approve' ? (
+                <>
+                  Are you sure you want to accept the internship at <strong>{confirmDialog?.internshipTitle}</strong>?
+                  <br /><br />
+                  <strong>Note:</strong> You can only accept one internship at a time. Other pending applications will remain pending.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to decline your application for <strong>{confirmDialog?.internshipTitle}</strong>?
+                  This action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDialog && handleStatusUpdate(confirmDialog.applicationId, confirmDialog.action === 'approve' ? 'approved' : 'rejected')}
+              className={confirmDialog?.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}
+            >
+              {confirmDialog?.action === 'approve' ? 'Accept' : 'Decline'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

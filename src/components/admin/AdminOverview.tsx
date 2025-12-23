@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 interface Stats {
   totalCompanies: number;
@@ -16,12 +14,7 @@ interface Stats {
   totalApplications: number;
 }
 
-interface AdminOverviewProps {
-  onNavigate?: (section: string) => void;
-}
-
-export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
-  const [, setSearchParams] = useSearchParams();
+export const AdminOverview = () => {
   const [stats, setStats] = useState<Stats>({
     totalCompanies: 0,
     verifiedCompanies: 0,
@@ -68,14 +61,6 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     fetchStats();
   }, []);
 
-  const handleNavigate = (section: string) => {
-    if (onNavigate) {
-      onNavigate(section);
-    } else {
-      setSearchParams({ section });
-    }
-  };
-
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -94,7 +79,6 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
       description: `${stats.verifiedCompanies} verified, ${stats.pendingCompanies} pending`,
       iconColor: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-      section: 'companies',
     },
     {
       title: 'Total Internships',
@@ -103,7 +87,6 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
       description: `${stats.activeInternships} active`,
       iconColor: 'text-purple-600',
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
-      section: 'internships',
     },
     {
       title: 'Total Students',
@@ -112,7 +95,6 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
       description: 'Registered students',
       iconColor: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/20',
-      section: 'students',
     },
     {
       title: 'Total Applications',
@@ -121,7 +103,6 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
       description: 'Submitted applications',
       iconColor: 'text-orange-600',
       bgColor: 'bg-orange-100 dark:bg-orange-900/20',
-      section: 'internships',
     },
   ];
 
@@ -129,30 +110,18 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
-          <Card 
-            key={index} 
-            className={cn(
-              "cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group",
-              "hover:scale-[1.02]"
-            )}
-            onClick={() => handleNavigate(stat.section)}
-          >
+          <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform`}>
+              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
+              <div className="text-3xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
@@ -169,25 +138,13 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div 
-                className="flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors group"
-                onClick={() => handleNavigate('companies')}
-              >
+              <div className="flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
                 <span className="text-sm">Companies awaiting approval</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-amber-600">{stats.pendingCompanies}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                <span className="font-bold text-amber-600">{stats.pendingCompanies}</span>
               </div>
-              <div 
-                className="flex justify-between items-center p-3 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors group"
-                onClick={() => handleNavigate('internships')}
-              >
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                 <span className="text-sm">Inactive internships</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{stats.totalInternships - stats.activeInternships}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                <span className="font-bold">{stats.totalInternships - stats.activeInternships}</span>
               </div>
             </div>
           </CardContent>
@@ -202,25 +159,13 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div 
-                className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/10 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors group"
-                onClick={() => handleNavigate('companies')}
-              >
+              <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/10 rounded-lg">
                 <span className="text-sm">Verified companies</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-green-600">{stats.verifiedCompanies}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                <span className="font-bold text-green-600">{stats.verifiedCompanies}</span>
               </div>
-              <div 
-                className="flex justify-between items-center p-3 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors group"
-                onClick={() => handleNavigate('internships')}
-              >
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                 <span className="text-sm">Active internship listings</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{stats.activeInternships}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                <span className="font-bold">{stats.activeInternships}</span>
               </div>
             </div>
           </CardContent>

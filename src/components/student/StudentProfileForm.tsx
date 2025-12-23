@@ -63,119 +63,6 @@ const COUNTRY_OPTIONS = [
   'Other'
 ];
 
-const INDIAN_UNIVERSITIES = [
-  'Anna University',
-  'Andhra University',
-  'Bangalore University',
-  'Bharathiar University',
-  'Bharathidasan University',
-  'Calicut University',
-  'Christ University',
-  'Cochin University of Science and Technology',
-  'Delhi University',
-  'Dr. B.R. Ambedkar Open University',
-  'Gujarat University',
-  'Guru Gobind Singh Indraprastha University',
-  'Indian Institute of Science (IISc)',
-  'Indian Institute of Technology Bombay',
-  'Indian Institute of Technology Delhi',
-  'Indian Institute of Technology Madras',
-  'Indian Institute of Technology Kanpur',
-  'Indian Institute of Technology Kharagpur',
-  'Indian Institute of Technology Roorkee',
-  'Indian Institute of Technology Guwahati',
-  'Indian Institute of Technology Hyderabad',
-  'Jadavpur University',
-  'Jamia Millia Islamia',
-  'Jawaharlal Nehru University',
-  'JNTU Hyderabad',
-  'JNTU Kakinada',
-  'Karnataka University',
-  'Kerala University',
-  'Lucknow University',
-  'Madras University',
-  'Mahatma Gandhi University',
-  'Manipal Academy of Higher Education',
-  'Mumbai University',
-  'Mysore University',
-  'National Institute of Technology (NIT) Trichy',
-  'National Institute of Technology (NIT) Warangal',
-  'National Institute of Technology (NIT) Karnataka',
-  'National Institute of Technology (NIT) Calicut',
-  'Osmania University',
-  'Panjab University',
-  'Pune University (Savitribai Phule)',
-  'Rajasthan University',
-  'S.R.M. Institute of Science and Technology',
-  'Shivaji University',
-  'Symbiosis International University',
-  'Tamil Nadu Agricultural University',
-  'Tezpur University',
-  'University of Calcutta',
-  'University of Hyderabad',
-  'University of Madras',
-  'University of Mumbai',
-  'Vellore Institute of Technology (VIT)',
-  'Visvesvaraya Technological University (VTU)',
-  'Other'
-];
-
-const INDIAN_COLLEGES = [
-  'Indian Institute of Technology (IIT) Bombay',
-  'Indian Institute of Technology (IIT) Delhi',
-  'Indian Institute of Technology (IIT) Madras',
-  'Indian Institute of Technology (IIT) Kanpur',
-  'Indian Institute of Technology (IIT) Kharagpur',
-  'Indian Institute of Technology (IIT) Roorkee',
-  'Indian Institute of Technology (IIT) Guwahati',
-  'Indian Institute of Technology (IIT) Hyderabad',
-  'Indian Institute of Science (IISc) Bangalore',
-  'National Institute of Technology (NIT) Trichy',
-  'National Institute of Technology (NIT) Warangal',
-  'National Institute of Technology (NIT) Karnataka',
-  'National Institute of Technology (NIT) Calicut',
-  'BITS Pilani',
-  'BITS Hyderabad',
-  'BITS Goa',
-  'Delhi College of Engineering',
-  'Netaji Subhas University of Technology',
-  'Jadavpur University',
-  'College of Engineering Pune (COEP)',
-  'Veermata Jijabai Technological Institute (VJTI)',
-  'PSG College of Technology',
-  'R.V. College of Engineering',
-  'B.M.S. College of Engineering',
-  'M.S. Ramaiah Institute of Technology',
-  'PES University',
-  'Dayananda Sagar College of Engineering',
-  'SRM Institute of Science and Technology',
-  'VIT Vellore',
-  'VIT Chennai',
-  'Manipal Institute of Technology',
-  'Thapar Institute of Engineering and Technology',
-  'Amity University',
-  'LPU (Lovely Professional University)',
-  'Christ University',
-  'St. Xavier\'s College Mumbai',
-  'St. Stephen\'s College Delhi',
-  'Lady Shri Ram College',
-  'Hindu College Delhi',
-  'Loyola College Chennai',
-  'Fergusson College Pune',
-  'Presidency College Kolkata',
-  'IIM Ahmedabad',
-  'IIM Bangalore',
-  'IIM Calcutta',
-  'IIM Lucknow',
-  'IIM Indore',
-  'XLRI Jamshedpur',
-  'FMS Delhi',
-  'SP Jain Institute of Management',
-  'NMIMS Mumbai',
-  'Symbiosis Institute of Business Management',
-  'Other'
-];
-
 const INDIA_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
   'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
@@ -207,11 +94,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   // Academic Info
   const [usn, setUsn] = useState('');
   const [college, setCollege] = useState('');
-  const [collegeSelection, setCollegeSelection] = useState('');
-  const [customCollege, setCustomCollege] = useState('');
   const [university, setUniversity] = useState('');
-  const [universitySelection, setUniversitySelection] = useState('');
-  const [customUniversity, setCustomUniversity] = useState('');
   const [department, setDepartment] = useState('');
   const [semester, setSemester] = useState('');
 
@@ -230,8 +113,6 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   // Documents
   const [resumeUrl, setResumeUrl] = useState('');
-  const [collegeIdUrl, setCollegeIdUrl] = useState('');
-  const [uploadingCollegeId, setUploadingCollegeId] = useState(false);
   const [accuracyConfirmation, setAccuracyConfirmation] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -268,29 +149,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setDob(studentData.dob || '');
         setGender(studentData.gender || '');
         setUsn(studentData.usn || '');
-        
-        // Handle college selection
-        const savedCollege = studentData.college || '';
-        if (savedCollege && INDIAN_COLLEGES.includes(savedCollege)) {
-          setCollegeSelection(savedCollege);
-          setCollege(savedCollege);
-        } else if (savedCollege) {
-          setCollegeSelection('Other');
-          setCustomCollege(savedCollege);
-          setCollege(savedCollege);
-        }
-        
-        // Handle university selection
-        const savedUniversity = studentData.university || '';
-        if (savedUniversity && INDIAN_UNIVERSITIES.includes(savedUniversity)) {
-          setUniversitySelection(savedUniversity);
-          setUniversity(savedUniversity);
-        } else if (savedUniversity) {
-          setUniversitySelection('Other');
-          setCustomUniversity(savedUniversity);
-          setUniversity(savedUniversity);
-        }
-        
+        setCollege(studentData.college || '');
+        setUniversity(studentData.university || '');
         setDepartment(studentData.department || '');
         setSemester(studentData.semester?.toString() || '');
         setAddress(studentData.address || '');
@@ -301,7 +161,6 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setSkills(studentData.skills || []);
         setInterestedDomains(studentData.interested_domains || []);
         setResumeUrl(studentData.resume_url || '');
-        setCollegeIdUrl((studentData as any).college_id_url || '');
         setAccuracyConfirmation(studentData.accuracy_confirmation || false);
         setTermsAccepted(studentData.terms_accepted || false);
       }
@@ -344,45 +203,6 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       toast.error('Failed to upload resume');
     } finally {
       setUploading(false);
-    }
-  };
-
-  const handleCollegeIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
-      return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only JPG, PNG, or PDF files are allowed');
-      return;
-    }
-
-    setUploadingCollegeId(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${user?.id}/college_id_${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from('company-files')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('company-files')
-        .getPublicUrl(fileName);
-
-      setCollegeIdUrl(publicUrl);
-      toast.success('College ID uploaded successfully');
-    } catch (error) {
-      console.error('Error uploading college ID:', error);
-      toast.error('Failed to upload college ID');
-    } finally {
-      setUploadingCollegeId(false);
     }
   };
 
@@ -456,7 +276,6 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         skills,
         interested_domains: interestedDomains,
         resume_url: resumeUrl || null,
-        college_id_url: collegeIdUrl || null,
         accuracy_confirmation: accuracyConfirmation,
         terms_accepted: termsAccepted,
       };
@@ -556,82 +375,24 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="university">University <span className="text-destructive">*</span></Label>
-            <Select 
-              value={universitySelection} 
-              onValueChange={(value) => {
-                setUniversitySelection(value);
-                if (value !== 'Other') {
-                  setUniversity(value);
-                  setCustomUniversity('');
-                } else {
-                  setUniversity(customUniversity);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select university" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {INDIAN_UNIVERSITIES.map((uni) => (
-                  <SelectItem key={uni} value={uni}>
-                    {uni}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {universitySelection === 'Other' && (
-              <Input
-                id="customUniversity"
-                placeholder="Enter your university name"
-                value={customUniversity}
-                onChange={(e) => {
-                  setCustomUniversity(e.target.value);
-                  setUniversity(e.target.value);
-                }}
-                className="mt-2"
-                required
-              />
-            )}
+            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
+            <Input
+              id="college"
+              placeholder="Enter your college name"
+              value={college}
+              onChange={(e) => setCollege(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
-            <Select 
-              value={collegeSelection} 
-              onValueChange={(value) => {
-                setCollegeSelection(value);
-                if (value !== 'Other') {
-                  setCollege(value);
-                  setCustomCollege('');
-                } else {
-                  setCollege(customCollege);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select college" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {INDIAN_COLLEGES.map((col) => (
-                  <SelectItem key={col} value={col}>
-                    {col}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {collegeSelection === 'Other' && (
-              <Input
-                id="customCollege"
-                placeholder="Enter your college name"
-                value={customCollege}
-                onChange={(e) => {
-                  setCustomCollege(e.target.value);
-                  setCollege(e.target.value);
-                }}
-                className="mt-2"
-                required
-              />
-            )}
+            <Label htmlFor="university">University <span className="text-destructive">*</span></Label>
+            <Input
+              id="university"
+              placeholder="Enter your university name"
+              value={university}
+              onChange={(e) => setUniversity(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="department">Department / Branch <span className="text-destructive">*</span></Label>
@@ -769,20 +530,15 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             <Label>Skills (Select all that apply)</Label>
             <div className="flex flex-wrap gap-2">
               {SKILL_OPTIONS.map((skill) => (
-                <button
+                <Badge
                   key={skill}
-                  type="button"
+                  variant={skills.includes(skill) ? "default" : "outline"}
+                  className="cursor-pointer transition-colors"
                   onClick={() => toggleSkill(skill)}
-                  className="inline-block"
                 >
-                  <Badge
-                    variant={skills.includes(skill) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors hover:opacity-80"
-                  >
-                    {skill}
-                    {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
-                  </Badge>
-                </button>
+                  {skill}
+                  {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                </Badge>
               ))}
             </div>
           </div>
@@ -791,20 +547,15 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             <Label>Interested Domains</Label>
             <div className="flex flex-wrap gap-2">
               {DOMAIN_OPTIONS.map((domain) => (
-                <button
+                <Badge
                   key={domain}
-                  type="button"
+                  variant={interestedDomains.includes(domain) ? "default" : "outline"}
+                  className="cursor-pointer transition-colors"
                   onClick={() => toggleDomain(domain)}
-                  className="inline-block"
                 >
-                  <Badge
-                    variant={interestedDomains.includes(domain) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors hover:opacity-80"
-                  >
-                    {domain}
-                    {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
-                  </Badge>
-                </button>
+                  {domain}
+                  {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                </Badge>
               ))}
             </div>
           </div>
@@ -843,32 +594,6 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
                 </a>
               )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>College ID Card (JPG, PNG or PDF, max 5MB)</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleCollegeIdUpload}
-                disabled={uploadingCollegeId}
-                className="max-w-xs"
-              />
-              {uploadingCollegeId && <Loader2 className="h-4 w-4 animate-spin" />}
-              {collegeIdUrl && (
-                <a
-                  href={collegeIdUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  View College ID
-                </a>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Upload your valid college ID for verification</p>
           </div>
 
           <div className="space-y-4 pt-4 border-t">

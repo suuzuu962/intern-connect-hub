@@ -27,11 +27,6 @@ const internshipDomains = [
   'Human Resources', 'Operations', 'Research', 'Other'
 ];
 
-const designationTitles = [
-  'CEO', 'CTO', 'CFO', 'COO', 'CMO', 'Director', 'Managing Director',
-  'Founder', 'Co-Founder', 'President', 'Vice President', 'Partner'
-];
-
 interface CompanyData {
   id: string;
   name: string;
@@ -61,14 +56,6 @@ interface CompanyData {
   contact_person_email: string | null;
   contact_person_phone: string | null;
   contact_person_designation: string | null;
-  designation_title: string | null;
-  designation_name: string | null;
-  designation_email: string | null;
-  designation_phone: string | null;
-  internship_mode: string | null;
-  internship_domain: string | null;
-  internship_duration: string | null;
-  stipend_offered: string | null;
   certifications: string[] | null;
   awards: string[] | null;
   company_profile_url: string | null;
@@ -111,15 +98,9 @@ export const CompanyProfileForm = () => {
     }
   };
 
-  const handleFileUpload = async (file: File, field: 'logo_url' | 'cover_image_url' | 'company_profile_url' | 'registration_profile_url', isPdf = false) => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast.error('File size must be less than 5MB');
-      return;
-    }
-
-    if (isPdf && !file.name.toLowerCase().endsWith('.pdf')) {
-      toast.error('Only PDF files are allowed');
+  const handleFileUpload = async (file: File, field: 'logo_url' | 'cover_image_url' | 'company_profile_url' | 'registration_profile_url') => {
+    if (file.size > 1048576) {
+      toast.error('File size must be less than 1MB');
       return;
     }
 
@@ -189,8 +170,6 @@ export const CompanyProfileForm = () => {
     if (!company?.contact_person_email?.trim()) newErrors.contact_person_email = 'Contact person email is required';
     if (!company?.contact_person_phone?.trim()) newErrors.contact_person_phone = 'Contact person phone is required';
     if (!company?.contact_person_designation) newErrors.contact_person_designation = 'Designation is required';
-    if (!company?.company_profile_url) newErrors.company_profile_url = 'Company profile document is required';
-    if (!company?.registration_profile_url) newErrors.registration_profile_url = 'Registration proof is required';
     if (!company?.terms_accepted) newErrors.terms_accepted = 'You must accept terms & conditions';
     if (!company?.declaration_accepted) newErrors.declaration_accepted = 'You must confirm accuracy';
 
@@ -236,21 +215,12 @@ export const CompanyProfileForm = () => {
         contact_person_email: company.contact_person_email,
         contact_person_phone: company.contact_person_phone,
         contact_person_designation: company.contact_person_designation,
-        designation_title: company.designation_title,
-        designation_name: company.designation_name,
-        designation_email: company.designation_email,
-        designation_phone: company.designation_phone,
-        internship_mode: company.internship_mode,
-        internship_domain: company.internship_domain,
-        internship_duration: company.internship_duration,
-        stipend_offered: company.stipend_offered,
         certifications: company.certifications,
         awards: company.awards,
         company_profile_url: company.company_profile_url,
         registration_profile_url: company.registration_profile_url,
         terms_accepted: company.terms_accepted,
         declaration_accepted: company.declaration_accepted,
-        is_verified: false, // Reset verification on any profile edit
       })
       .eq('id', company.id);
 
@@ -355,7 +325,7 @@ export const CompanyProfileForm = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Upload className="h-5 w-5" /> Media & Branding</CardTitle>
-          <CardDescription>Upload logo and cover image (max 5MB each)</CardDescription>
+          <CardDescription>Upload logo and cover image (max 1MB each)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -364,14 +334,12 @@ export const CompanyProfileForm = () => {
               {company.logo_url && <img src={company.logo_url} alt="Logo" className="h-20 w-20 object-contain rounded-lg border" />}
               <Input type="file" accept="image/*" disabled={uploading === 'logo_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} />
               {uploading === 'logo_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB</p>
             </div>
             <div className="space-y-3">
               <Label>Cover Image</Label>
               {company.cover_image_url && <img src={company.cover_image_url} alt="Cover" className="h-20 w-full object-cover rounded-lg border" />}
               <Input type="file" accept="image/*" disabled={uploading === 'cover_image_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} />
               {uploading === 'cover_image_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB</p>
             </div>
           </div>
         </CardContent>
@@ -459,6 +427,20 @@ export const CompanyProfileForm = () => {
               {errors.contact_person_name && <p className="text-xs text-destructive">{errors.contact_person_name}</p>}
             </div>
             <div className="space-y-2">
+              <RequiredLabel>Designation</RequiredLabel>
+              <Select value={company.contact_person_designation || ''} onValueChange={(v) => handleChange('contact_person_designation', v)}>
+                <SelectTrigger className={errors.contact_person_designation ? 'border-destructive' : ''}><SelectValue placeholder="Select designation" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="csuit">C-Suite Executive</SelectItem>
+                  <SelectItem value="hr_manager">HR Manager</SelectItem>
+                  <SelectItem value="hr_employee">HR Employee</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.contact_person_designation && <p className="text-xs text-destructive">{errors.contact_person_designation}</p>}
+            </div>
+            <div className="space-y-2">
               <RequiredLabel>Email</RequiredLabel>
               <Input type="email" value={company.contact_person_email || ''} onChange={(e) => handleChange('contact_person_email', e.target.value)} className={errors.contact_person_email ? 'border-destructive' : ''} />
               {errors.contact_person_email && <p className="text-xs text-destructive">{errors.contact_person_email}</p>}
@@ -472,40 +454,6 @@ export const CompanyProfileForm = () => {
         </CardContent>
       </Card>
 
-      {/* Designation Info (Top Level Management) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Designation Info</CardTitle>
-          <CardDescription>Top level management details (CEO, Director, etc.)</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <RequiredLabel>Designation</RequiredLabel>
-              <Select value={company.designation_title || ''} onValueChange={(v) => handleChange('designation_title', v)}>
-                <SelectTrigger className={errors.contact_person_designation ? 'border-destructive' : ''}><SelectValue placeholder="Select designation" /></SelectTrigger>
-                <SelectContent>
-                  {designationTitles.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {errors.contact_person_designation && <p className="text-xs text-destructive">{errors.contact_person_designation}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input value={company.designation_name || ''} onChange={(e) => handleChange('designation_name', e.target.value)} placeholder="Full name" />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={company.designation_email || ''} onChange={(e) => handleChange('designation_email', e.target.value)} placeholder="Email address" />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input value={company.designation_phone || ''} onChange={(e) => handleChange('designation_phone', e.target.value)} placeholder="Phone number" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Internship Offering Details */}
       <Card>
         <CardHeader>
@@ -513,10 +461,10 @@ export const CompanyProfileForm = () => {
           <CardDescription>General information about internships you offer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Mode of Internship</Label>
-              <Select value={company.internship_mode || ''} onValueChange={(v) => handleChange('internship_mode', v)}>
+              <Select value={company.industry || ''} onValueChange={(v) => handleChange('industry', v)}>
                 <SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger>
                 <SelectContent>
                   {internshipModes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
@@ -525,7 +473,7 @@ export const CompanyProfileForm = () => {
             </div>
             <div className="space-y-2">
               <Label>Domain</Label>
-              <Select value={company.internship_domain || ''} onValueChange={(v) => handleChange('internship_domain', v)}>
+              <Select value={company.location || ''} onValueChange={(v) => handleChange('location', v)}>
                 <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
                 <SelectContent>
                   {internshipDomains.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -534,7 +482,7 @@ export const CompanyProfileForm = () => {
             </div>
             <div className="space-y-2">
               <Label>Duration</Label>
-              <Select value={company.internship_duration || ''} onValueChange={(v) => handleChange('internship_duration', v)}>
+              <Select>
                 <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1-month">1 Month</SelectItem>
@@ -542,20 +490,6 @@ export const CompanyProfileForm = () => {
                   <SelectItem value="3-months">3 Months</SelectItem>
                   <SelectItem value="6-months">6 Months</SelectItem>
                   <SelectItem value="1-year">1 Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Stipend Offered</Label>
-              <Select value={company.stipend_offered || ''} onValueChange={(v) => handleChange('stipend_offered', v)}>
-                <SelectTrigger><SelectValue placeholder="Select stipend range" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="0-5000">₹0 - ₹5,000/month</SelectItem>
-                  <SelectItem value="5000-10000">₹5,000 - ₹10,000/month</SelectItem>
-                  <SelectItem value="10000-20000">₹10,000 - ₹20,000/month</SelectItem>
-                  <SelectItem value="20000-30000">₹20,000 - ₹30,000/month</SelectItem>
-                  <SelectItem value="30000+">₹30,000+/month</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -607,20 +541,16 @@ export const CompanyProfileForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <RequiredLabel>Company Profile Document (PDF only)</RequiredLabel>
+              <Label>Company Profile Document</Label>
               {company.company_profile_url && <a href={company.company_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
-              <Input type="file" accept=".pdf" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url', true)} className={errors.company_profile_url ? 'border-destructive' : ''} />
+              <Input type="file" accept=".pdf,.doc,.docx" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url')} />
               {uploading === 'company_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              {errors.company_profile_url && <p className="text-xs text-destructive">{errors.company_profile_url}</p>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
             <div className="space-y-3">
-              <RequiredLabel>Registration Proof (PDF only)</RequiredLabel>
+              <Label>Registration Proof</Label>
               {company.registration_profile_url && <a href={company.registration_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
-              <Input type="file" accept=".pdf" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url', true)} className={errors.registration_profile_url ? 'border-destructive' : ''} />
+              <Input type="file" accept=".pdf,.doc,.docx" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url')} />
               {uploading === 'registration_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              {errors.registration_profile_url && <p className="text-xs text-destructive">{errors.registration_profile_url}</p>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
           </div>
         </CardContent>
