@@ -118,6 +118,7 @@ const CompanyDashboard = () => {
             loading={loading}
             onEditProfile={() => setActiveSection('profile')}
             onCreateInternship={() => setActiveSection('create-internship')}
+            onNavigate={setActiveSection}
           />
         );
       case 'applicants':
@@ -198,9 +199,10 @@ interface DashboardContentProps {
   loading: boolean;
   onEditProfile: () => void;
   onCreateInternship: () => void;
+  onNavigate: (section: ActiveSection) => void;
 }
 
-const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInternship }: DashboardContentProps) => {
+const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInternship, onNavigate }: DashboardContentProps) => {
   if (loading) {
     return (
       <div className="space-y-6">
@@ -213,6 +215,37 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
       </div>
     );
   }
+
+  const statCards = [
+    { 
+      label: 'Total Internships', 
+      value: stats.totalInternships, 
+      icon: Briefcase, 
+      color: 'text-primary',
+      onClick: () => onNavigate('create-internship')
+    },
+    { 
+      label: 'Active Listings', 
+      value: stats.activeInternships, 
+      icon: Briefcase, 
+      color: 'text-green-500',
+      onClick: () => onNavigate('create-internship')
+    },
+    { 
+      label: 'Total Applicants', 
+      value: stats.totalApplications, 
+      icon: Users, 
+      color: 'text-blue-500',
+      onClick: () => onNavigate('applicants')
+    },
+    { 
+      label: 'Pending Review', 
+      value: stats.pendingApplications, 
+      icon: Users, 
+      color: 'text-orange-500',
+      onClick: () => onNavigate('applicants')
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -245,42 +278,21 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col">
-              <Briefcase className="h-5 w-5 text-primary mb-2" />
-              <span className="text-2xl font-bold">{stats.totalInternships}</span>
-              <span className="text-sm text-muted-foreground">Total Internships</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col">
-              <Briefcase className="h-5 w-5 text-success mb-2" />
-              <span className="text-2xl font-bold">{stats.activeInternships}</span>
-              <span className="text-sm text-muted-foreground">Active Listings</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col">
-              <Users className="h-5 w-5 text-secondary mb-2" />
-              <span className="text-2xl font-bold">{stats.totalApplications}</span>
-              <span className="text-sm text-muted-foreground">Total Applicants</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col">
-              <Users className="h-5 w-5 text-warning mb-2" />
-              <span className="text-2xl font-bold">{stats.pendingApplications}</span>
-              <span className="text-sm text-muted-foreground">Pending Review</span>
-            </div>
-          </CardContent>
-        </Card>
+        {statCards.map((stat) => (
+          <Card 
+            key={stat.label} 
+            className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]"
+            onClick={stat.onClick}
+          >
+            <CardContent className="p-4">
+              <div className="flex flex-col">
+                <stat.icon className={cn("h-5 w-5 mb-2", stat.color)} />
+                <span className="text-2xl font-bold">{stat.value}</span>
+                <span className="text-sm text-muted-foreground">{stat.label}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Quick Actions */}
@@ -292,14 +304,18 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
               <Plus className="h-4 w-4 mr-2" />
               Create New Internship
             </Button>
+            <Button onClick={() => onNavigate('applicants')} variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              View Applicants
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {!company?.is_verified && (
-        <Card className="border-warning/50 bg-warning/5">
+        <Card className="border-orange-500/50 bg-orange-500/5">
           <CardContent className="p-6">
-            <h3 className="font-semibold text-warning mb-2">⏳ Verification Pending</h3>
+            <h3 className="font-semibold text-orange-500 mb-2">⏳ Verification Pending</h3>
             <p className="text-sm text-muted-foreground">
               Your company profile is under review. Once verified, your internships will be visible to students.
               Please ensure your profile is complete with all required information.

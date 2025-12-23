@@ -419,7 +419,6 @@ export type Database = {
           bio: string | null
           city: string | null
           college: string | null
-          college_id_url: string | null
           country: string | null
           created_at: string
           degree: string | null
@@ -447,7 +446,6 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
-          college_id_url?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
@@ -475,7 +473,6 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
-          college_id_url?: string | null
           country?: string | null
           created_at?: string
           degree?: string | null
