@@ -63,6 +63,119 @@ const COUNTRY_OPTIONS = [
   'Other'
 ];
 
+const INDIAN_UNIVERSITIES = [
+  'Anna University',
+  'Andhra University',
+  'Bangalore University',
+  'Bharathiar University',
+  'Bharathidasan University',
+  'Calicut University',
+  'Christ University',
+  'Cochin University of Science and Technology',
+  'Delhi University',
+  'Dr. B.R. Ambedkar Open University',
+  'Gujarat University',
+  'Guru Gobind Singh Indraprastha University',
+  'Indian Institute of Science (IISc)',
+  'Indian Institute of Technology Bombay',
+  'Indian Institute of Technology Delhi',
+  'Indian Institute of Technology Madras',
+  'Indian Institute of Technology Kanpur',
+  'Indian Institute of Technology Kharagpur',
+  'Indian Institute of Technology Roorkee',
+  'Indian Institute of Technology Guwahati',
+  'Indian Institute of Technology Hyderabad',
+  'Jadavpur University',
+  'Jamia Millia Islamia',
+  'Jawaharlal Nehru University',
+  'JNTU Hyderabad',
+  'JNTU Kakinada',
+  'Karnataka University',
+  'Kerala University',
+  'Lucknow University',
+  'Madras University',
+  'Mahatma Gandhi University',
+  'Manipal Academy of Higher Education',
+  'Mumbai University',
+  'Mysore University',
+  'National Institute of Technology (NIT) Trichy',
+  'National Institute of Technology (NIT) Warangal',
+  'National Institute of Technology (NIT) Karnataka',
+  'National Institute of Technology (NIT) Calicut',
+  'Osmania University',
+  'Panjab University',
+  'Pune University (Savitribai Phule)',
+  'Rajasthan University',
+  'S.R.M. Institute of Science and Technology',
+  'Shivaji University',
+  'Symbiosis International University',
+  'Tamil Nadu Agricultural University',
+  'Tezpur University',
+  'University of Calcutta',
+  'University of Hyderabad',
+  'University of Madras',
+  'University of Mumbai',
+  'Vellore Institute of Technology (VIT)',
+  'Visvesvaraya Technological University (VTU)',
+  'Other'
+];
+
+const INDIAN_COLLEGES = [
+  'Indian Institute of Technology (IIT) Bombay',
+  'Indian Institute of Technology (IIT) Delhi',
+  'Indian Institute of Technology (IIT) Madras',
+  'Indian Institute of Technology (IIT) Kanpur',
+  'Indian Institute of Technology (IIT) Kharagpur',
+  'Indian Institute of Technology (IIT) Roorkee',
+  'Indian Institute of Technology (IIT) Guwahati',
+  'Indian Institute of Technology (IIT) Hyderabad',
+  'Indian Institute of Science (IISc) Bangalore',
+  'National Institute of Technology (NIT) Trichy',
+  'National Institute of Technology (NIT) Warangal',
+  'National Institute of Technology (NIT) Karnataka',
+  'National Institute of Technology (NIT) Calicut',
+  'BITS Pilani',
+  'BITS Hyderabad',
+  'BITS Goa',
+  'Delhi College of Engineering',
+  'Netaji Subhas University of Technology',
+  'Jadavpur University',
+  'College of Engineering Pune (COEP)',
+  'Veermata Jijabai Technological Institute (VJTI)',
+  'PSG College of Technology',
+  'R.V. College of Engineering',
+  'B.M.S. College of Engineering',
+  'M.S. Ramaiah Institute of Technology',
+  'PES University',
+  'Dayananda Sagar College of Engineering',
+  'SRM Institute of Science and Technology',
+  'VIT Vellore',
+  'VIT Chennai',
+  'Manipal Institute of Technology',
+  'Thapar Institute of Engineering and Technology',
+  'Amity University',
+  'LPU (Lovely Professional University)',
+  'Christ University',
+  'St. Xavier\'s College Mumbai',
+  'St. Stephen\'s College Delhi',
+  'Lady Shri Ram College',
+  'Hindu College Delhi',
+  'Loyola College Chennai',
+  'Fergusson College Pune',
+  'Presidency College Kolkata',
+  'IIM Ahmedabad',
+  'IIM Bangalore',
+  'IIM Calcutta',
+  'IIM Lucknow',
+  'IIM Indore',
+  'XLRI Jamshedpur',
+  'FMS Delhi',
+  'SP Jain Institute of Management',
+  'NMIMS Mumbai',
+  'Symbiosis Institute of Business Management',
+  'Other'
+];
+
 const INDIA_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
   'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
@@ -94,7 +207,11 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   // Academic Info
   const [usn, setUsn] = useState('');
   const [college, setCollege] = useState('');
+  const [collegeSelection, setCollegeSelection] = useState('');
+  const [customCollege, setCustomCollege] = useState('');
   const [university, setUniversity] = useState('');
+  const [universitySelection, setUniversitySelection] = useState('');
+  const [customUniversity, setCustomUniversity] = useState('');
   const [department, setDepartment] = useState('');
   const [semester, setSemester] = useState('');
 
@@ -151,8 +268,29 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setDob(studentData.dob || '');
         setGender(studentData.gender || '');
         setUsn(studentData.usn || '');
-        setCollege(studentData.college || '');
-        setUniversity(studentData.university || '');
+        
+        // Handle college selection
+        const savedCollege = studentData.college || '';
+        if (savedCollege && INDIAN_COLLEGES.includes(savedCollege)) {
+          setCollegeSelection(savedCollege);
+          setCollege(savedCollege);
+        } else if (savedCollege) {
+          setCollegeSelection('Other');
+          setCustomCollege(savedCollege);
+          setCollege(savedCollege);
+        }
+        
+        // Handle university selection
+        const savedUniversity = studentData.university || '';
+        if (savedUniversity && INDIAN_UNIVERSITIES.includes(savedUniversity)) {
+          setUniversitySelection(savedUniversity);
+          setUniversity(savedUniversity);
+        } else if (savedUniversity) {
+          setUniversitySelection('Other');
+          setCustomUniversity(savedUniversity);
+          setUniversity(savedUniversity);
+        }
+        
         setDepartment(studentData.department || '');
         setSemester(studentData.semester?.toString() || '');
         setAddress(studentData.address || '');
@@ -418,24 +556,82 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
-            <Input
-              id="college"
-              placeholder="Enter your college name"
-              value={college}
-              onChange={(e) => setCollege(e.target.value)}
-              required
-            />
+            <Label htmlFor="university">University <span className="text-destructive">*</span></Label>
+            <Select 
+              value={universitySelection} 
+              onValueChange={(value) => {
+                setUniversitySelection(value);
+                if (value !== 'Other') {
+                  setUniversity(value);
+                  setCustomUniversity('');
+                } else {
+                  setUniversity(customUniversity);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select university" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {INDIAN_UNIVERSITIES.map((uni) => (
+                  <SelectItem key={uni} value={uni}>
+                    {uni}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {universitySelection === 'Other' && (
+              <Input
+                id="customUniversity"
+                placeholder="Enter your university name"
+                value={customUniversity}
+                onChange={(e) => {
+                  setCustomUniversity(e.target.value);
+                  setUniversity(e.target.value);
+                }}
+                className="mt-2"
+                required
+              />
+            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="university">University <span className="text-destructive">*</span></Label>
-            <Input
-              id="university"
-              placeholder="Enter your university name"
-              value={university}
-              onChange={(e) => setUniversity(e.target.value)}
-              required
-            />
+            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
+            <Select 
+              value={collegeSelection} 
+              onValueChange={(value) => {
+                setCollegeSelection(value);
+                if (value !== 'Other') {
+                  setCollege(value);
+                  setCustomCollege('');
+                } else {
+                  setCollege(customCollege);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select college" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {INDIAN_COLLEGES.map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {collegeSelection === 'Other' && (
+              <Input
+                id="customCollege"
+                placeholder="Enter your college name"
+                value={customCollege}
+                onChange={(e) => {
+                  setCustomCollege(e.target.value);
+                  setCollege(e.target.value);
+                }}
+                className="mt-2"
+                required
+              />
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="department">Department / Branch <span className="text-destructive">*</span></Label>
