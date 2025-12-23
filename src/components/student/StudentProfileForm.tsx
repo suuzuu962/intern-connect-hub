@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle } from 'lucide-react';
+import { StudentProfileView } from './StudentProfileView';
 
 const SKILL_OPTIONS = [
   'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue.js', 'Node.js', 'Python', 'Java',
@@ -78,11 +79,43 @@ interface StudentProfileFormProps {
   onSuccess?: () => void;
 }
 
+const isProfileComplete = (data: {
+  usn: string;
+  college: string;
+  university: string;
+  department: string;
+  semester: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  resumeUrl: string;
+  termsAccepted: boolean;
+  accuracyConfirmation: boolean;
+}) => {
+  return !!(
+    data.usn &&
+    data.college &&
+    data.university &&
+    data.department &&
+    data.semester &&
+    data.address &&
+    data.country &&
+    data.state &&
+    data.city &&
+    data.resumeUrl &&
+    data.termsAccepted &&
+    data.accuracyConfirmation
+  );
+};
+
 export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [studentId, setStudentId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
 
   // Basic Info
   const [fullName, setFullName] = useState('');
@@ -163,9 +196,30 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setResumeUrl(studentData.resume_url || '');
         setAccuracyConfirmation(studentData.accuracy_confirmation || false);
         setTermsAccepted(studentData.terms_accepted || false);
+
+        // Check if profile is complete
+        const complete = isProfileComplete({
+          usn: studentData.usn || '',
+          college: studentData.college || '',
+          university: studentData.university || '',
+          department: studentData.department || '',
+          semester: studentData.semester?.toString() || '',
+          address: studentData.address || '',
+          country: studentData.country || '',
+          state: studentData.state || '',
+          city: studentData.city || '',
+          resumeUrl: studentData.resume_url || '',
+          termsAccepted: studentData.terms_accepted || false,
+          accuracyConfirmation: studentData.accuracy_confirmation || false,
+        });
+        setProfileComplete(complete);
+        setIsEditMode(!complete);
+      } else {
+        setIsEditMode(true);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setIsEditMode(true);
     }
   };
 
@@ -288,6 +342,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       if (studentError) throw studentError;
 
       toast.success('Profile updated successfully');
+      setProfileComplete(true);
+      setIsEditMode(false);
       onSuccess?.();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -296,6 +352,35 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       setLoading(false);
     }
   };
+
+  // Show view mode if profile is complete and not in edit mode
+  if (profileComplete && !isEditMode) {
+    return (
+      <StudentProfileView
+        data={{
+          fullName,
+          email,
+          phoneNumber,
+          dob,
+          gender,
+          usn,
+          college,
+          university,
+          department,
+          semester,
+          address,
+          country,
+          state,
+          city,
+          linkedinUrl,
+          skills,
+          interestedDomains,
+          resumeUrl,
+        }}
+        onEdit={() => setIsEditMode(true)}
+      />
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
