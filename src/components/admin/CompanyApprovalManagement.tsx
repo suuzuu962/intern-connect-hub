@@ -98,7 +98,7 @@ const initialVerificationState: VerificationState = {
 export const CompanyApprovalManagement = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+  const [collapsedCompanies, setCollapsedCompanies] = useState<Set<string>>(new Set());
   const [verificationStates, setVerificationStates] = useState<Record<string, VerificationState>>({});
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [newCompany, setNewCompany] = useState({
@@ -229,7 +229,24 @@ export const CompanyApprovalManagement = () => {
   };
 
   const toggleExpanded = (companyId: string) => {
-    setExpandedCompanyId(expandedCompanyId === companyId ? null : companyId);
+    setCollapsedCompanies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(companyId)) {
+        newSet.delete(companyId);
+      } else {
+        newSet.add(companyId);
+      }
+      return newSet;
+    });
+  };
+
+  // Pending companies are expanded by default (not in collapsed set)
+  // Approved companies are collapsed by default
+  const isCompanyExpanded = (companyId: string, isPending: boolean) => {
+    if (isPending) {
+      return !collapsedCompanies.has(companyId); // Pending: expanded by default
+    }
+    return collapsedCompanies.has(companyId); // Approved: collapsed by default (inverted logic)
   };
 
   const updateVerification = (companyId: string, field: keyof VerificationState, value: boolean) => {
@@ -326,7 +343,7 @@ export const CompanyApprovalManagement = () => {
   };
 
   const CompanyDetailsCard = ({ company, isPending = false }: { company: Company; isPending?: boolean }) => {
-    const isExpanded = expandedCompanyId === company.id;
+    const isExpanded = isCompanyExpanded(company.id, isPending);
     const verification = getVerificationState(company.id);
     const allVerified = Object.values(verification).every(v => v);
     const fullAddress = [company.address, company.city, company.state, company.postal_code, company.country]
