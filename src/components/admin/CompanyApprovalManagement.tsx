@@ -275,11 +275,11 @@ export const CompanyApprovalManagement = () => {
           checked={verification[field]}
           onCheckedChange={(checked) => updateVerification(companyId, field, checked as boolean)}
         />
-        <label 
+        <label
           htmlFor={`${companyId}-${field}`}
-          className={`text-sm font-medium cursor-pointer ${verification[field] ? 'text-green-600' : 'text-muted-foreground'}`}
+          className={`text-sm font-medium cursor-pointer inline-flex items-center gap-1 ${verification[field] ? 'text-foreground' : 'text-muted-foreground'}`}
         >
-          {verification[field] && <Check className="h-3 w-3 inline mr-1" />}
+          {verification[field] && <Check className="h-3 w-3 text-primary" />}
           {label}
         </label>
       </div>
@@ -437,11 +437,29 @@ export const CompanyApprovalManagement = () => {
                 Verification Progress: {Object.values(verification).filter(v => v).length}/6
               </p>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-green-600 transition-all"
                   style={{ width: `${(Object.values(verification).filter(v => v).length / 6) * 100}%` }}
                 />
               </div>
+
+              {/* Make checkboxes visible without expanding */}
+              {isPending && !isExpanded && (
+                <div className="mt-3 rounded-lg border bg-background/50 p-3">
+                  <p className="text-sm font-medium mb-2">Verification checklist</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <VerificationCheckbox companyId={company.id} field="basicInfo" label="Basic information" />
+                    <VerificationCheckbox companyId={company.id} field="contactPerson" label="Contact person" />
+                    <VerificationCheckbox companyId={company.id} field="companyDetails" label="Company details" />
+                    <VerificationCheckbox companyId={company.id} field="documents" label="Documents" />
+                    <VerificationCheckbox companyId={company.id} field="socialLinks" label="Social links" />
+                    <VerificationCheckbox companyId={company.id} field="termsDeclaration" label="Terms & declaration" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Tip: use the arrow to expand and review full details.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
