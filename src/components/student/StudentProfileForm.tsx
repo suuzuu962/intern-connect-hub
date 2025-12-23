@@ -90,6 +90,7 @@ const isProfileComplete = (data: {
   state: string;
   city: string;
   resumeUrl: string;
+  collegeIdUrl: string;
   termsAccepted: boolean;
   accuracyConfirmation: boolean;
 }) => {
@@ -104,6 +105,7 @@ const isProfileComplete = (data: {
     data.state &&
     data.city &&
     data.resumeUrl &&
+    data.collegeIdUrl &&
     data.termsAccepted &&
     data.accuracyConfirmation
   );
@@ -113,6 +115,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCollegeId, setUploadingCollegeId] = useState(false);
   const [studentId, setStudentId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
@@ -146,6 +149,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   // Documents
   const [resumeUrl, setResumeUrl] = useState('');
+  const [collegeIdUrl, setCollegeIdUrl] = useState('');
   const [accuracyConfirmation, setAccuracyConfirmation] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -194,6 +198,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setSkills(studentData.skills || []);
         setInterestedDomains(studentData.interested_domains || []);
         setResumeUrl(studentData.resume_url || '');
+        setCollegeIdUrl(studentData.college_id_url || '');
         setAccuracyConfirmation(studentData.accuracy_confirmation || false);
         setTermsAccepted(studentData.terms_accepted || false);
 
@@ -209,6 +214,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           state: studentData.state || '',
           city: studentData.city || '',
           resumeUrl: studentData.resume_url || '',
+          collegeIdUrl: studentData.college_id_url || '',
           termsAccepted: studentData.terms_accepted || false,
           accuracyConfirmation: studentData.accuracy_confirmation || false,
         });
@@ -260,6 +266,45 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     }
   };
 
+  const handleCollegeIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPG, PNG, or PDF files are allowed');
+      return;
+    }
+
+    setUploadingCollegeId(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${user?.id}/college_id_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-files')
+        .getPublicUrl(fileName);
+
+      setCollegeIdUrl(publicUrl);
+      toast.success('College ID uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading college ID:', error);
+      toast.error('Failed to upload college ID');
+    } finally {
+      setUploadingCollegeId(false);
+    }
+  };
+
   const toggleSkill = (skill: string) => {
     setSkills(prev =>
       prev.includes(skill)
@@ -300,6 +345,11 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       return;
     }
 
+    if (!collegeIdUrl) {
+      toast.error('Please upload your college ID');
+      return;
+    }
+
     setLoading(true);
     try {
       // Update profile
@@ -330,6 +380,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         skills,
         interested_domains: interestedDomains,
         resume_url: resumeUrl || null,
+        college_id_url: collegeIdUrl || null,
         accuracy_confirmation: accuracyConfirmation,
         terms_accepted: termsAccepted,
       };
@@ -376,6 +427,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           skills,
           interestedDomains,
           resumeUrl,
+          collegeIdUrl,
         }}
         onEdit={() => setIsEditMode(true)}
       />
@@ -676,6 +728,31 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
                 >
                   <CheckCircle className="h-4 w-4" />
                   View Resume
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>College ID (JPG, PNG, or PDF, max 5MB) <span className="text-destructive">*</span></Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleCollegeIdUpload}
+                disabled={uploadingCollegeId}
+                className="max-w-xs"
+              />
+              {uploadingCollegeId && <Loader2 className="h-4 w-4 animate-spin" />}
+              {collegeIdUrl && (
+                <a
+                  href={collegeIdUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  View College ID
                 </a>
               )}
             </div>
