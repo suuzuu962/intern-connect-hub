@@ -24,7 +24,11 @@ const Internships = () => {
 
   const fetchInternships = async () => {
     setLoading(true);
-    let query = supabase.from('internships').select('*, company:companies(*)', { count: 'exact' }).eq('is_active', true);
+    let query = supabase
+      .from('internships')
+      .select('*, company:companies!inner(*)', { count: 'exact' })
+      .eq('is_active', true)
+      .eq('company.is_verified', true);
 
     if (filters.search) query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     if (filters.location && filters.location !== 'Any Location') query = query.ilike('location', `%${filters.location}%`);
