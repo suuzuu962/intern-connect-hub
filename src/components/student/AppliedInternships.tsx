@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Application {
   id: string;
@@ -29,6 +31,7 @@ interface AppliedInternshipsProps {
 export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (studentId) {
@@ -80,17 +83,65 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     }
   };
 
+  const handleAcceptOffer = async (applicationId: string) => {
+    setActionLoading(applicationId);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: 'accepted' })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast.success('Offer accepted successfully!');
+      fetchApplications();
+    } catch (error) {
+      console.error('Error accepting offer:', error);
+      toast.error('Failed to accept offer. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectOffer = async (applicationId: string) => {
+    setActionLoading(applicationId);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: 'withdrawn' })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast.success('Offer declined.');
+      fetchApplications();
+    } catch (error) {
+      console.error('Error declining offer:', error);
+      toast.error('Failed to decline offer. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const acceptedCount = applications.filter(app => app.status === 'accepted').length;
   const approvedCount = applications.filter(app => app.status === 'approved').length;
   const rejectedCount = applications.filter(app => app.status === 'rejected').length;
   const pendingCount = applications.filter(app => app.status === 'pending').length;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'accepted':
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+            <ThumbsUp className="h-3 w-3 mr-1" />
+            Accepted
+          </Badge>
+        );
       case 'approved':
         return (
           <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Approved
+            Approved - Action Required
           </Badge>
         );
       case 'rejected':
@@ -142,13 +193,24 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
           <CardContent className="p-4">
             <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              You have {approvedCount} approved internship{approvedCount > 1 ? 's' : ''}.
+              You have {approvedCount} approved internship{approvedCount > 1 ? 's' : ''} waiting for your response!
             </p>
           </CardContent>
         </Card>
       )}
 
-      <div className="flex gap-4 text-sm text-muted-foreground">
+      {acceptedCount > 0 && (
+        <Card className="border-blue-500/50 bg-blue-500/5">
+          <CardContent className="p-4">
+            <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+              <ThumbsUp className="h-4 w-4" />
+              You have accepted {acceptedCount} internship{acceptedCount > 1 ? 's' : ''}.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex gap-4 text-sm text-muted-foreground flex-wrap">
         <span className="flex items-center gap-1">
           <Clock className="h-4 w-4 text-yellow-500" />
           {pendingCount} Pending
@@ -156,6 +218,10 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
         <span className="flex items-center gap-1">
           <CheckCircle className="h-4 w-4 text-green-500" />
           {approvedCount} Approved
+        </span>
+        <span className="flex items-center gap-1">
+          <ThumbsUp className="h-4 w-4 text-blue-500" />
+          {acceptedCount} Accepted
         </span>
         <span className="flex items-center gap-1">
           <XCircle className="h-4 w-4 text-red-500" />
@@ -212,8 +278,38 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     {getStatusBadge(app.status)}
+                    
+                    {app.status === 'approved' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleAcceptOffer(app.id)}
+                          disabled={actionLoading === app.id}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {actionLoading === app.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <ThumbsUp className="h-4 w-4 mr-1" />
+                              Accept
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRejectOffer(app.id)}
+                          disabled={actionLoading === app.id}
+                          className="border-red-500 text-red-500 hover:bg-red-500/10"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Decline
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
