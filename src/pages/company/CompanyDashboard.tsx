@@ -57,11 +57,52 @@ const CompanyDashboard = () => {
 
   const fetchCompanyData = async () => {
     try {
-      const { data: companyData } = await supabase
+      // First check if company exists
+      let { data: companyData, error } = await supabase
         .from('companies')
         .select('id, name, logo_url, is_verified')
         .eq('user_id', user?.id)
         .single();
+
+      // If no company exists, create one
+      if (error?.code === 'PGRST116' || !companyData) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', user?.id)
+          .single();
+
+        const { data: newCompany, error: createError } = await supabase
+          .from('companies')
+          .insert({
+            user_id: user?.id,
+            name: profile?.full_name || 'My Company'
+          })
+          .select('id, name, logo_url, is_verified')
+          .single();
+
+        if (createError) {
+          console.error('Error creating company:', createError);
+        } else {
+          companyData = newCompany;
+        }
+      }
+
+      // Also ensure user_role exists
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!roleData) {
+        await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user?.id,
+            role: 'company'
+          });
+      }
 
       if (companyData) {
         setCompany(companyData);

@@ -98,7 +98,33 @@ export const CompanyProfileForm = () => {
       .eq('user_id', user?.id)
       .single();
 
-    if (data) setCompany(data as CompanyData);
+    if (data) {
+      setCompany(data as CompanyData);
+    } else if (error?.code === 'PGRST116') {
+      // No company record found - create one
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user?.id)
+        .single();
+
+      const { data: newCompany, error: createError } = await supabase
+        .from('companies')
+        .insert({
+          user_id: user?.id,
+          name: profile?.full_name || 'My Company'
+        })
+        .select()
+        .single();
+
+      if (newCompany) {
+        setCompany(newCompany as CompanyData);
+        toast.info('Company profile created. Please fill in the required details.');
+      } else if (createError) {
+        console.error('Error creating company:', createError);
+        toast.error('Failed to create company profile. Please try again.');
+      }
+    }
     setLoading(false);
   };
 
