@@ -101,12 +101,16 @@ const CompanyDashboard = () => {
   };
 
   const sidebarItems = [
-    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'applicants' as const, label: 'Applicants', icon: Users },
-    { id: 'create-internship' as const, label: 'Create Internship', icon: Plus },
-    { id: 'profile' as const, label: 'Company Profile', icon: Building2 },
-    { id: 'change-password' as const, label: 'Change Password', icon: Settings },
+    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, requiresVerification: false },
+    { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
+    { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
+    { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
+    { id: 'change-password' as const, label: 'Change Password', icon: Settings, requiresVerification: false },
   ];
+
+  const visibleSidebarItems = sidebarItems.filter(
+    item => !item.requiresVerification || company?.is_verified
+  );
 
   const renderContent = () => {
     switch (activeSection) {
@@ -166,7 +170,7 @@ const CompanyDashboard = () => {
           </div>
 
           <nav className="p-2 space-y-1">
-            {sidebarItems.map((item) => (
+            {visibleSidebarItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
@@ -216,36 +220,44 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
     );
   }
 
-  const statCards = [
+  const allStatCards = [
     { 
       label: 'Total Internships', 
       value: stats.totalInternships, 
       icon: Briefcase, 
       color: 'text-primary',
-      onClick: () => onNavigate('create-internship')
+      onClick: () => onNavigate('create-internship'),
+      requiresVerification: true
     },
     { 
       label: 'Active Listings', 
       value: stats.activeInternships, 
       icon: Briefcase, 
       color: 'text-green-500',
-      onClick: () => onNavigate('create-internship')
+      onClick: () => onNavigate('create-internship'),
+      requiresVerification: true
     },
     { 
       label: 'Total Applicants', 
       value: stats.totalApplications, 
       icon: Users, 
       color: 'text-blue-500',
-      onClick: () => onNavigate('applicants')
+      onClick: () => onNavigate('applicants'),
+      requiresVerification: true
     },
     { 
       label: 'Pending Review', 
       value: stats.pendingApplications, 
       icon: Users, 
       color: 'text-orange-500',
-      onClick: () => onNavigate('applicants')
+      onClick: () => onNavigate('applicants'),
+      requiresVerification: true
     },
   ];
+
+  const statCards = allStatCards.filter(
+    card => !card.requiresVerification || company?.is_verified
+  );
 
   return (
     <div className="space-y-6">
@@ -300,14 +312,23 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
         <CardContent className="p-6">
           <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">
-            <Button onClick={onCreateInternship} className="gradient-primary border-0">
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Internship
-            </Button>
-            <Button onClick={() => onNavigate('applicants')} variant="outline">
-              <Users className="h-4 w-4 mr-2" />
-              View Applicants
-            </Button>
+            {company?.is_verified ? (
+              <>
+                <Button onClick={onCreateInternship} className="gradient-primary border-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Internship
+                </Button>
+                <Button onClick={() => onNavigate('applicants')} variant="outline">
+                  <Users className="h-4 w-4 mr-2" />
+                  View Applicants
+                </Button>
+              </>
+            ) : (
+              <Button onClick={onEditProfile} variant="outline">
+                <UserCog className="h-4 w-4 mr-2" />
+                Complete Profile
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
