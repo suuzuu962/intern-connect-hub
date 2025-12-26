@@ -62,30 +62,18 @@ export const Header = () => {
                 {link.label}
               </Link>
             ))}
-            {user && role === 'company' && (
+            {user && (
               <Link
-                to="/company/dashboard"
+                to={getDashboardLink()}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname === '/company/dashboard'
+                  "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1",
+                  location.pathname.includes('/dashboard')
                     ? "text-primary"
                     : "text-muted-foreground"
                 )}
               >
+                <LayoutDashboard className="h-4 w-4" />
                 Dashboard
-              </Link>
-            )}
-            {user && role === 'admin' && (
-              <Link
-                to="/admin/dashboard"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname.startsWith('/admin')
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )}
-              >
-                Admin Panel
               </Link>
             )}
           </nav>
@@ -239,6 +227,21 @@ export const Header = () => {
                   {link.label}
                 </Link>
               ))}
+              {user && (
+                <Link
+                  to={getDashboardLink()}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary px-2 py-2 flex items-center gap-2",
+                    location.pathname.includes('/dashboard')
+                      ? "text-primary bg-primary/5 rounded-lg"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              )}
               {!user && (
                 <div className="flex flex-col gap-2 pt-4 border-t border-border">
                   <Button variant="ghost" asChild className="justify-start">
