@@ -101,7 +101,10 @@ export const CompanyApprovalManagement = () => {
   const [collapsedCompanies, setCollapsedCompanies] = useState<Set<string>>(new Set());
   const [verificationStates, setVerificationStates] = useState<Record<string, VerificationState>>({});
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
+  const [addingCompany, setAddingCompany] = useState(false);
   const [newCompany, setNewCompany] = useState({
+    email: '',
+    password: '',
     name: '',
     industry: '',
     location: '',
@@ -192,39 +195,70 @@ export const CompanyApprovalManagement = () => {
   };
 
   const handleAddCompany = async () => {
-    if (!newCompany.name.trim()) {
-      toast.error('Company name is required');
+    if (!newCompany.email || !newCompany.password || !newCompany.name) {
+      toast.error('Please fill in required fields (Email, Password, Company Name)');
       return;
     }
 
+    setAddingCompany(true);
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('You must be logged in to add a company');
-        return;
+      // Get current session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
       }
 
-      const { error } = await supabase
-        .from('companies')
-        .insert({
-          name: newCompany.name,
-          industry: newCompany.industry || null,
-          location: newCompany.location || null,
-          website: newCompany.website || null,
-          description: newCompany.description || null,
-          user_id: user.id,
-          is_verified: true, // Admin-added companies are pre-verified
-        });
+      // Call edge function to create user without email verification
+      const response = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email: newCompany.email,
+          password: newCompany.password,
+          fullName: newCompany.name,
+          role: 'company',
+          additionalData: {
+            industry: newCompany.industry || null,
+            location: newCompany.location || null,
+            website: newCompany.website || null,
+            description: newCompany.description || null,
+          }
+        }
+      });
 
-      if (error) throw error;
-      toast.success('Company added successfully');
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create company');
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      // Update the company to be verified and add additional details
+      if (response.data?.userId) {
+        const { error: updateError } = await supabase
+          .from('companies')
+          .update({
+            industry: newCompany.industry || null,
+            location: newCompany.location || null,
+            website: newCompany.website || null,
+            description: newCompany.description || null,
+            is_verified: true,
+          })
+          .eq('user_id', response.data.userId);
+
+        if (updateError) {
+          console.error('Error updating company details:', updateError);
+        }
+      }
+
+      toast.success('Company added successfully (no email verification required)');
       setAddCompanyOpen(false);
-      setNewCompany({ name: '', industry: '', location: '', website: '', description: '' });
+      setNewCompany({ email: '', password: '', name: '', industry: '', location: '', website: '', description: '' });
       fetchCompanies();
     } catch (error: any) {
-      toast.error('Failed to add company');
+      toast.error(error.message || 'Failed to add company');
       console.error('Error adding company:', error);
+    } finally {
+      setAddingCompany(false);
     }
   };
 
@@ -859,10 +893,30 @@ export const CompanyApprovalManagement = () => {
             <DialogHeader>
               <DialogTitle>Add New Company</DialogTitle>
               <DialogDescription>
-                Add a new company directly. Admin-added companies are pre-approved.
+                Create a company account with login credentials. Admin-added companies are pre-approved.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newCompany.email}
+                  onChange={(e) => setNewCompany({ ...newCompany, email: e.target.value })}
+                  placeholder="company@example.com"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newCompany.password}
+                  onChange={(e) => setNewCompany({ ...newCompany, password: e.target.value })}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Company Name *</Label>
                 <Input
@@ -872,23 +926,25 @@ export const CompanyApprovalManagement = () => {
                   placeholder="Enter company name"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="industry">Industry</Label>
-                <Input
-                  id="industry"
-                  value={newCompany.industry}
-                  onChange={(e) => setNewCompany({ ...newCompany, industry: e.target.value })}
-                  placeholder="e.g., Technology, Healthcare"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={newCompany.location}
-                  onChange={(e) => setNewCompany({ ...newCompany, location: e.target.value })}
-                  placeholder="e.g., New York, USA"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="industry">Industry</Label>
+                  <Input
+                    id="industry"
+                    value={newCompany.industry}
+                    onChange={(e) => setNewCompany({ ...newCompany, industry: e.target.value })}
+                    placeholder="e.g., Technology"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={newCompany.location}
+                    onChange={(e) => setNewCompany({ ...newCompany, location: e.target.value })}
+                    placeholder="e.g., New York"
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="website">Website</Label>
@@ -914,8 +970,8 @@ export const CompanyApprovalManagement = () => {
               <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddCompany}>
-                Add Company
+              <Button onClick={handleAddCompany} disabled={addingCompany}>
+                {addingCompany ? 'Adding...' : 'Add Company'}
               </Button>
             </DialogFooter>
           </DialogContent>
