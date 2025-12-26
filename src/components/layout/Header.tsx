@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, Users, Plus, Building2, Settings, Shield, Briefcase, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -22,8 +23,23 @@ const navLinks = [
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCompanyVerified, setIsCompanyVerified] = useState(false);
   const location = useLocation();
   const { user, role, signOut } = useAuth();
+
+  useEffect(() => {
+    const fetchCompanyStatus = async () => {
+      if (user && role === 'company') {
+        const { data } = await supabase
+          .from('companies')
+          .select('is_verified')
+          .eq('user_id', user.id)
+          .single();
+        setIsCompanyVerified(data?.is_verified ?? false);
+      }
+    };
+    fetchCompanyStatus();
+  }, [user, role]);
 
   const getDashboardLink = () => {
     if (role === 'admin') return '/admin/dashboard';
@@ -101,18 +117,22 @@ export const Header = () => {
                     </DropdownMenuItem>
                     {role === 'company' && (
                       <>
-                        <DropdownMenuItem asChild>
-                          <Link to="/company/dashboard?section=applicants" className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Applicants
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/company/dashboard?section=create-internship" className="flex items-center gap-2">
-                            <Plus className="h-4 w-4" />
-                            Create Internship
-                          </Link>
-                        </DropdownMenuItem>
+                        {isCompanyVerified && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link to="/company/dashboard?section=applicants" className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                Applicants
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to="/company/dashboard?section=create-internship" className="flex items-center gap-2">
+                                <Plus className="h-4 w-4" />
+                                Create Internship
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuItem asChild>
                           <Link to="/company/dashboard?section=profile" className="flex items-center gap-2">
                             <Building2 className="h-4 w-4" />
