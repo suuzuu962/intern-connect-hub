@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async (userId: string): Promise<AppRole | null> => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -43,17 +43,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data?.role as AppRole;
   };
 
+  // Ensure student record exists for student role
+  const ensureStudentRecord = async (userId: string) => {
+    const { data: existingStudent } = await supabase
+      .from('students')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!existingStudent) {
+      await supabase.from('students').insert({ user_id: userId });
+    }
+  };
+
+  // Ensure company record exists for company role
+  const ensureCompanyRecord = async (userId: string, fullName: string) => {
+    const { data: existingCompany } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!existingCompany) {
+      await supabase.from('companies').insert({ user_id: userId, name: fullName || 'My Company' });
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id).then(setRole);
-          }, 0);
+          const userRole = await fetchUserRole(session.user.id);
+          setRole(userRole);
+          
+          // Ensure related records exist based on role
+          if (userRole === 'student') {
+            await ensureStudentRecord(session.user.id);
+          } else if (userRole === 'company') {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', session.user.id)
+              .single();
+            await ensureCompanyRecord(session.user.id, profile?.full_name || 'My Company');
+          }
         } else {
           setRole(null);
         }
@@ -61,15 +98,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id).then(userRole => {
-          setRole(userRole);
-          setLoading(false);
-        });
+        const userRole = await fetchUserRole(session.user.id);
+        setRole(userRole);
+        
+        // Ensure related records exist based on role
+        if (userRole === 'student') {
+          await ensureStudentRecord(session.user.id);
+        } else if (userRole === 'company') {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', session.user.id)
+            .single();
+          await ensureCompanyRecord(session.user.id, profile?.full_name || 'My Company');
+        }
+        
+        setLoading(false);
       } else {
         setLoading(false);
       }
