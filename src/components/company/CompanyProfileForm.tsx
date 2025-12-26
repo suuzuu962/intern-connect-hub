@@ -508,7 +508,7 @@ export const CompanyProfileForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <RequiredLabel>Designation</RequiredLabel>
-              <Select value={company.designation_title || ''} onValueChange={(v) => handleChange('designation_title', v)}>
+              <Select value={company.contact_person_designation || ''} onValueChange={(v) => handleChange('contact_person_designation', v)}>
                 <SelectTrigger className={errors.contact_person_designation ? 'border-destructive' : ''}><SelectValue placeholder="Select designation" /></SelectTrigger>
                 <SelectContent>
                   {designationTitles.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
