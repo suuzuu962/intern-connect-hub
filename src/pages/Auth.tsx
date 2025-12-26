@@ -96,7 +96,9 @@ const Auth = () => {
       toast({
         title: 'Welcome back!'
       });
-      if (roleData?.role === 'company') {
+      if (roleData?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (roleData?.role === 'company') {
         navigate('/company/dashboard');
       } else if (roleData?.role === 'student') {
         navigate('/student/dashboard');
