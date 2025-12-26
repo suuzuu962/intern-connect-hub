@@ -198,80 +198,100 @@ const Auth = () => {
       return;
     }
     if (data.user && data.session) {
-      // Create profile with phone number
-      const {
-        error: profileError
-      } = await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        email,
-        full_name: fullName,
-        phone_number: phoneNumber
-      });
+      // Update profile with phone number (profile is created by trigger, so we update it)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone_number: phoneNumber
+        })
+        .eq('user_id', data.user.id);
+      
       if (profileError) {
-        console.error('Error creating profile:', profileError);
-        toast({
-          title: 'Error',
-          description: 'Failed to create profile. Please try again.',
-          variant: 'destructive'
-        });
-        setLoading(false);
-        return;
+        console.error('Error updating profile:', profileError);
+        // Don't block - profile might have been created by trigger
       }
 
-      // Create user role
-      const {
-        error: roleError
-      } = await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: role
-      });
-      if (roleError) {
-        console.error('Error creating user role:', roleError);
-        toast({
-          title: 'Error',
-          description: 'Failed to create user role. Please try again.',
-          variant: 'destructive'
-        });
-        setLoading(false);
-        return;
-      }
+      // Check if user role already exists
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single();
 
-      // Create company or student record
-      if (role === 'company') {
-        const {
-          error: companyError
-        } = await supabase.from('companies').insert({
-          user_id: data.user.id,
-          name: fullName,
-          contact_person_phone: phoneNumber
-        });
-        if (companyError) {
-          console.error('Error creating company:', companyError);
+      if (!existingRole) {
+        // Create user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: role
+          });
+        if (roleError) {
+          console.error('Error creating user role:', roleError);
           toast({
             title: 'Error',
-            description: 'Failed to create company profile. Please try again.',
+            description: 'Failed to create user role. Please try again.',
             variant: 'destructive'
           });
           setLoading(false);
           return;
+        }
+      }
+
+      // Create company or student record if it doesn't exist
+      if (role === 'company') {
+        const { data: existingCompany } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (!existingCompany) {
+          const { error: companyError } = await supabase
+            .from('companies')
+            .insert({
+              user_id: data.user.id,
+              name: fullName,
+              contact_person_phone: phoneNumber
+            });
+          if (companyError) {
+            console.error('Error creating company:', companyError);
+            toast({
+              title: 'Error',
+              description: 'Failed to create company profile. Please try again.',
+              variant: 'destructive'
+            });
+            setLoading(false);
+            return;
+          }
         }
       } else {
-        const {
-          error: studentError
-        } = await supabase.from('students').insert({
-          user_id: data.user.id
-        });
-        if (studentError) {
-          console.error('Error creating student:', studentError);
-          toast({
-            title: 'Error',
-            description: 'Failed to create student profile. Please try again.',
-            variant: 'destructive'
-          });
-          setLoading(false);
-          return;
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (!existingStudent) {
+          const { error: studentError } = await supabase
+            .from('students')
+            .insert({
+              user_id: data.user.id
+            });
+          if (studentError) {
+            console.error('Error creating student:', studentError);
+            toast({
+              title: 'Error',
+              description: 'Failed to create student profile. Please try again.',
+              variant: 'destructive'
+            });
+            setLoading(false);
+            return;
+          }
         }
       }
+
       toast({
         title: 'Account Verified!',
         description: 'Your account has been created successfully'
