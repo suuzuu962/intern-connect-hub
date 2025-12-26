@@ -160,58 +160,38 @@ export const StudentManagement = () => {
 
     setAdding(true);
     try {
-      // Create user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newStudent.email,
-        password: newStudent.password,
-        options: {
-          data: {
-            full_name: newStudent.fullName,
-          },
-        },
+      // Get current session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Call edge function to create user without email verification
+      const response = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email: newStudent.email,
+          password: newStudent.password,
+          fullName: newStudent.fullName,
+          role: 'student',
+          additionalData: {
+            college: newStudent.college || null,
+            department: newStudent.department || null,
+            city: newStudent.city || null,
+            state: newStudent.state || null,
+            graduationYear: newStudent.graduationYear || null,
+          }
+        }
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create student');
+      }
 
-      const userId = authData.user.id;
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: userId,
-          email: newStudent.email,
-          full_name: newStudent.fullName,
-        });
-
-      if (profileError) throw profileError;
-
-      // Create user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'student',
-        });
-
-      if (roleError) throw roleError;
-
-      // Create student record
-      const { error: studentError } = await supabase
-        .from('students')
-        .insert({
-          user_id: userId,
-          college: newStudent.college || null,
-          department: newStudent.department || null,
-          city: newStudent.city || null,
-          state: newStudent.state || null,
-          graduation_year: newStudent.graduationYear ? parseInt(newStudent.graduationYear) : null,
-        });
-
-      if (studentError) throw studentError;
-
-      toast.success('Student added successfully');
+      toast.success('Student added successfully (no email verification required)');
       setAddDialogOpen(false);
       setNewStudent({
         email: '',
