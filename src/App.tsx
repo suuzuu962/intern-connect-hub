@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Internships from "./pages/Internships";
@@ -33,9 +34,30 @@ const App = () => (
             <Route path="/companies" element={<Companies />} />
             <Route path="/companies/:id" element={<CompanyDetails />} />
             <Route path="/about" element={<About />} />
-            <Route path="/company/dashboard" element={<CompanyDashboard />} />
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route 
+              path="/company/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['company']}>
+                  <CompanyDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

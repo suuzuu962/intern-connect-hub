@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminOverview } from '@/components/admin/AdminOverview';
@@ -12,16 +11,8 @@ import { DataExport } from '@/components/admin/DataExport';
 import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { user, role, loading } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('section') || 'overview');
-
-  useEffect(() => {
-    if (!loading && (!user || role !== 'admin')) {
-      navigate('/auth?mode=login');
-    }
-  }, [user, role, loading, navigate]);
 
   useEffect(() => {
     const section = searchParams.get('section');
@@ -34,23 +25,6 @@ const AdminDashboard = () => {
     setActiveTab(value);
     setSearchParams({ section: value });
   };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-64 bg-muted rounded"></div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!user || role !== 'admin') {
-    return null;
-  }
 
   return (
     <Layout>
