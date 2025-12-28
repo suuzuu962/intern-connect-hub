@@ -13,6 +13,7 @@ import Companies from "./pages/Companies";
 import CompanyDetails from "./pages/CompanyDetails";
 import About from "./pages/About";
 import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/companies/:id" element={<CompanyDetails />} />
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route 
               path="/company/dashboard" 
               element={
