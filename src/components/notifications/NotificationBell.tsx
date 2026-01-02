@@ -11,12 +11,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Notification } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const NotificationBell = () => {
   const { user, role } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -107,16 +109,25 @@ export const NotificationBell = () => {
     };
   }, [user, role]);
 
-  const markAsRead = async (notificationId: string) => {
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read
+    if (!notification.is_read) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification.id);
 
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    // Navigate if link exists
+    if (notification.link) {
+      setOpen(false);
+      navigate(notification.link);
+    }
   };
 
   const markAllAsRead = async () => {
@@ -131,7 +142,7 @@ export const NotificationBell = () => {
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -162,10 +173,10 @@ export const NotificationBell = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                   className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
                     !notification.is_read ? 'bg-primary/5' : ''
-                  }`}
+                  } ${notification.link ? 'hover:bg-primary/10' : ''}`}
                 >
                   <div className="flex items-start gap-3">
                     <div
