@@ -70,27 +70,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener - keep it synchronous to avoid deadlocks
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const userRole = await fetchUserRole(session.user.id);
-          setRole(userRole);
-          
-          // Ensure related records exist based on role
-          if (userRole === 'student') {
-            await ensureStudentRecord(session.user.id);
-          } else if (userRole === 'company') {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('user_id', session.user.id)
-              .single();
-            await ensureCompanyRecord(session.user.id, profile?.full_name || 'My Company');
-          }
+          // Defer async operations with setTimeout to prevent deadlocks
+          setTimeout(async () => {
+            const userRole = await fetchUserRole(session.user.id);
+            setRole(userRole);
+            
+            // Ensure related records exist based on role
+            if (userRole === 'student') {
+              await ensureStudentRecord(session.user.id);
+            } else if (userRole === 'company') {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('user_id', session.user.id)
+                .single();
+              await ensureCompanyRecord(session.user.id, profile?.full_name || 'My Company');
+            }
+          }, 0);
         } else {
           setRole(null);
         }
@@ -189,8 +192,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clear state first for immediate UI feedback
+    setUser(null);
+    setSession(null);
     setRole(null);
+    
+    // Then sign out from Supabase
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
