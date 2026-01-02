@@ -1,6 +1,34 @@
 import { Layout } from "@/components/layout/Layout";
 import { Separator } from "@/components/ui/separator";
 
+const tocItems = [
+  { id: "introduction", label: "Introduction" },
+  { id: "definitions", label: "Definitions" },
+  { id: "overview", label: "Overview" },
+  { id: "information-we-collect", label: "Information We Collect" },
+  { id: "our-use-of-your-information", label: "Our Use of Your Information" },
+  { id: "how-information-is-collected", label: "How Information is Collected" },
+  { id: "external-links", label: "External Links on the Platform" },
+  { id: "google-analytics", label: "Google Analytics" },
+  { id: "google-adsense", label: "Google AdSense" },
+  { id: "your-rights", label: "Your Rights" },
+  { id: "children-policy", label: "Our Policy Concerning Children" },
+  { id: "confidentiality", label: "Confidentiality" },
+  { id: "other-information-collectors", label: "Other Information Collectors" },
+  { id: "disclosure-of-information", label: "Our Disclosure of Your Information" },
+  { id: "external-service-providers", label: "External Service Providers" },
+  { id: "law-and-order", label: "Law and Order" },
+  { id: "accessing-profile", label: "Accessing, Reviewing and Changing Your Profile" },
+  { id: "password-control", label: "Control of Your Password" },
+  { id: "security", label: "Security" },
+  { id: "severability", label: "Severability" },
+  { id: "amendment", label: "Amendment" },
+  { id: "no-guarantee", label: "No Guarantee" },
+  { id: "automated-decision-making", label: "Automated Decision Making" },
+  { id: "consent-withdrawal", label: "Consent Withdrawal, Data Download & Data Removal" },
+  { id: "contact-us", label: "Contact Us" },
+];
+
 const Privacy = () => {
   return (
     <Layout>
@@ -10,8 +38,27 @@ const Privacy = () => {
         
         <Separator className="my-8" />
 
+        {/* Table of Contents */}
+        <nav className="mb-8 p-6 bg-muted/50 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4">Table of Contents</h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {tocItems.map((item) => (
+              <li key={item.id}>
+                <a
+                  href={`#${item.id}`}
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <Separator className="my-8" />
+
         {/* Introduction Section */}
-        <section className="mb-8">
+        <section id="introduction" className="mb-8 scroll-mt-20">
           <p className="text-muted-foreground leading-relaxed mb-4">
             Economic Labs, A Unit of Econfin Exploration Pvt Ltd., and having its registered, Karnataka, India-560102, hereinafter referred to as the "Company" (where such expression shall, unless repugnant to the context thereof, be deemed to include its respective legal heirs, representatives, administrators, permitted successors and assigns). The Company ensures steady commitment to your usage of the Platform and privacy with regard to the protection of your invaluable information. This document contains information about the Website and mobile application, hereinafter referred to as the "Platform".
           </p>
@@ -29,7 +76,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Definitions Section */}
-        <section className="mb-8">
+        <section id="definitions" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Definitions</h2>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
             <li><strong>"We", "Our", and "Us"</strong> shall mean and refer to the Domain and/or the Company, as the context so requires.</li>
@@ -44,7 +91,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Overview Section */}
-        <section className="mb-8">
+        <section id="overview" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Overview</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             This privacy statement sets forth our online data collection and usage policies and practices. By using our services, you consent to the policies and practices described in this statement. Your data will be stored and processed on our servers which may be inside or outside India and your usage of the Services constitutes consent to the transfer of your data out of India.
@@ -57,7 +104,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Information We Collect Section */}
-        <section className="mb-8">
+        <section id="information-we-collect" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Information We Collect</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             We are committed to respecting Your online privacy. We further recognize Your need for appropriate protection and management of any Personal Information You share with us. We may collect the following information:
@@ -82,7 +129,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Our Use of Your Information Section */}
-        <section className="mb-8">
+        <section id="our-use-of-your-information" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Our Use of Your Information</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             The information provided by you shall be used to provide and improve the service for you and all users.
@@ -102,7 +149,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* How Information is Collected Section */}
-        <section className="mb-8">
+        <section id="how-information-is-collected" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">How Information is Collected</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             Before or at the time of collecting personal information, we will identify the purposes for which information is being collected. If the same is not identified to you, you have the right to request the Company to elucidate the purpose of collection of said personal information, pending the fulfilment of which you shall not be mandated to disclose any information whatsoever.
@@ -118,7 +165,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* External Links Section */}
-        <section className="mb-8">
+        <section id="external-links" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">External Links on the Platform</h2>
           <p className="text-muted-foreground leading-relaxed">
             The Platform may include advertisements, hyperlinks to other websites, applications, content or resources. We have no control over any websites or resources, which are provided by companies or persons other than Us. You acknowledge and agree that we are not responsible for the availability of any such external sites or resources, and do not endorse any advertising, services/services or other materials on or available from such platform or resources. You acknowledge and agree that We are not liable for any loss or damage which may be incurred by you as a result of the availability of those external sites or resources, or as a result of any reliance placed by you on the completeness, accuracy or existence of any advertising, services or other materials on, or available from, such websites or resources.
@@ -128,7 +175,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Google Analytics Section */}
-        <section className="mb-8">
+        <section id="google-analytics" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Google Analytics</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             We use Google Analytics to help us to understand how you make use of our content and work out how we can make things better. These cookies follow your progress through us, collecting anonymous data on where you have come from, which pages you visit, and how long you spend on the site. This data is then stored by Google to create reports. These cookies do not store your personal data.
@@ -141,7 +188,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Google AdSense Section */}
-        <section className="mb-8">
+        <section id="google-adsense" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Google AdSense</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             Google AdSense is a tool that allows website publishers to deliver advertisements to site visitors in exchange for revenue calculated on a per-click or per-impression basis. To do this, Google uses cookies and tracking technology to deliver ads personalized to a website user/visitor. In this regard the following terms are specified to the Users:
@@ -159,7 +206,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Your Rights Section */}
-        <section className="mb-8">
+        <section id="your-rights" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Your Rights</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             Unless subject to an exemption, you have the following rights with respect to your personal data:
@@ -180,7 +227,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Our Policy Concerning Children Section */}
-        <section className="mb-8">
+        <section id="children-policy" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Our Policy Concerning Children</h2>
           <p className="text-muted-foreground leading-relaxed">
             Our Platform is not intended for children under 18 years of age. If you are less than 18 years old at the time of your first visit to our Platform, you are prohibited from using the website further entirely on your own. You may do so under parental guidance. However, please note that we have no way of determining your age when you visit our website or whether you have parental supervision available or not. We do not intend to and do not knowingly collect personal information from children under 18.
@@ -190,7 +237,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Confidentiality Section */}
-        <section className="mb-8">
+        <section id="confidentiality" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Confidentiality</h2>
           <p className="text-muted-foreground leading-relaxed">
             You further acknowledge that the Platform may contain information which is designated confidential by us and that you shall not disclose such information without our prior written consent. Your information is regarded as confidential and therefore will not be divulged to any third party, unless if legally required to do so to the appropriate authorities. We will not sell, share, or rent your personal information to any third party or use your e-mail address for unsolicited mail. Any emails sent by us will only be in connection with the provision of agreed services, and you retain sole discretion to seek for discontinuation of such communications at any point of time.
@@ -200,7 +247,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Other Information Collectors Section */}
-        <section className="mb-8">
+        <section id="other-information-collectors" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Other Information Collectors</h2>
           <p className="text-muted-foreground leading-relaxed">
             Except as otherwise expressly included in this Privacy Policy, this document only addresses the use and disclosure of information we collect from you. To the extent that you disclose your information to other parties, whether they are on our Platform or on other sites throughout the Internet, different rules may apply to their use or disclosure of the information you disclose to them. Since we do not control the privacy policies of the third parties, you are subject to ask questions before you disclose your personal information to others.
@@ -210,7 +257,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Our Disclosure of Your Information Section */}
-        <section className="mb-8">
+        <section id="disclosure-of-information" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Our Disclosure of Your Information</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             We may host surveys for survey creators for our platform who are the owners and users of your survey responses. We do not own or sell your responses. Anything you expressly disclose in your responses will be disclosed to survey creators. Please contact the survey creator directly to better understand how they might share your survey responses.
@@ -226,7 +273,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* External Service Providers Section */}
-        <section className="mb-8">
+        <section id="external-service-providers" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">External Service Providers</h2>
           <p className="text-muted-foreground leading-relaxed">
             There may be a number of services offered by external service providers that help you use our Platform. If you choose to use these optional services, and in the course of doing so, disclose information to the external service providers, and/or grant them permission to collect information about you, then their use of your information is governed by their privacy policy.
@@ -236,7 +283,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Law and Order Section */}
-        <section className="mb-8">
+        <section id="law-and-order" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Law and Order</h2>
           <p className="text-muted-foreground leading-relaxed">
             We cooperate with law enforcement inquiries, as well as other third parties to enforce laws, such as intellectual property rights, fraud and other rights. We can (and you authorize us to) disclose any information about you to law enforcement and other government officials as we, in our sole discretion, believe necessary or appropriate, in connection with an investigation of fraud, intellectual property infringements, or other activity that is illegal or may expose us or you to legal liability.
@@ -246,7 +293,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Accessing, Reviewing and Changing Your Profile Section */}
-        <section className="mb-8">
+        <section id="accessing-profile" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Accessing, Reviewing and Changing Your Profile</h2>
           <p className="text-muted-foreground leading-relaxed">
             Following registration, you can review and change the information you submitted at the stage of registration, except Email ID and mobile number. An option for facilitating such change shall be present on the Platform and such change shall be facilitated by the User. If you change any information, we may or may not keep track of your old information. We will not retain in our files information you have requested to remove for certain circumstances, such as to resolve disputes, troubleshoot problems and enforce our terms and conditions.
@@ -256,7 +303,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Control of Your Password Section */}
-        <section className="mb-8">
+        <section id="password-control" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Control of Your Password</h2>
           <p className="text-muted-foreground leading-relaxed">
             You are entirely responsible for maintaining the confidentiality of your password. It is important that you protect it against unauthorized access of your account and information by choosing your password carefully and keeping your password and computer secure by signing out after using our services. You agree not to use the account, username, email address or password of another Member at any time or to disclose your password to any third party. You are responsible for all actions taken with your login information and password, including fees. If your password has been compromised for any reason, you should immediately change your password.
@@ -266,7 +313,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Security Section */}
-        <section className="mb-8">
+        <section id="security" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Security</h2>
           <p className="text-muted-foreground leading-relaxed">
             We treat data as an asset that must be protected against loss and unauthorized access. We employ many different security techniques to protect such data from unauthorized access by members inside and outside the Company. We follow generally accepted industry standards to protect the Personal Information submitted to us and information that we have accessed. However, as effective as encryption technology is, no security system is impenetrable. Our Company cannot guarantee the security of our database, nor can we guarantee that information you provide won't be intercepted while being transmitted to the Company over the Internet.
@@ -276,7 +323,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Severability Section */}
-        <section className="mb-8">
+        <section id="severability" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Severability</h2>
           <p className="text-muted-foreground leading-relaxed">
             Each paragraph of this Privacy Policy shall be and remain separate from and independent of and severable from all and any other paragraphs herein except where otherwise expressly indicated or indicated by the context of the agreement. The decision or declaration that one or more of the paragraphs are null and void shall have no effect on the remaining paragraphs of this privacy policy.
@@ -286,7 +333,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Amendment Section */}
-        <section className="mb-8">
+        <section id="amendment" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Amendment</h2>
           <p className="text-muted-foreground leading-relaxed">
             Our Privacy Policy may change from time to time. The most current version of the policy will govern our use of your information and will always be at the Platform. Any amendments to this Policy shall be deemed as accepted by the User on their continued use of the Platform. You are advised to refer to this page to know about our latest Privacy Policy.
@@ -296,7 +343,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* No Guarantee Section */}
-        <section className="mb-8">
+        <section id="no-guarantee" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">No Guarantee</h2>
           <p className="text-muted-foreground leading-relaxed">
             While this Privacy Policy states our standards for maintenance of data and we will make efforts to meet them, we are not in a position to guarantee these standards. There may be factors beyond our control that may result in disclosure of data. As a consequence, we disclaim any warranties or representations relating to maintenance or nondisclosure of data.
@@ -306,7 +353,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Automated Decision Making Section */}
-        <section className="mb-8">
+        <section id="automated-decision-making" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Automated Decision Making</h2>
           <p className="text-muted-foreground leading-relaxed">
             As a responsible Company, we do not use automatic decision-making or profiling.
@@ -316,7 +363,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Consent Withdrawal Section */}
-        <section className="mb-8">
+        <section id="consent-withdrawal" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Consent Withdrawal, Data Download & Data Removal Requests</h2>
           <p className="text-muted-foreground leading-relaxed">
             To withdraw your consent, or to request the download or delete your data with us for any or all our services at any time, please email to{" "}
@@ -329,7 +376,7 @@ const Privacy = () => {
         <Separator className="my-8" />
 
         {/* Contact Us Section */}
-        <section className="mb-8">
+        <section id="contact-us" className="mb-8 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
           <p className="text-muted-foreground leading-relaxed">
             If you have any questions or concerns regarding this privacy policy, you should contact us by sending an e-mail to{" "}
