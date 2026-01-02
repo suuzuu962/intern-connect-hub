@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, Users, Plus, Building2, Settings, Shield, Briefcase, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +25,13 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCompanyVerified, setIsCompanyVerified] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   useEffect(() => {
     const fetchCompanyStatus = async () => {
@@ -198,7 +204,7 @@ export const Header = () => {
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut} className="text-destructive">
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign Out
                     </DropdownMenuItem>
