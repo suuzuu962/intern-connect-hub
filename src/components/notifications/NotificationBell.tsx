@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Info, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -178,12 +178,21 @@ export const NotificationBell = () => {
                     !notification.is_read ? 'bg-primary/5' : ''
                   } ${notification.link ? 'hover:bg-primary/10' : ''}`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`h-2 w-2 mt-2 rounded-full shrink-0 ${
-                        !notification.is_read ? 'bg-primary' : 'bg-transparent'
-                      }`}
-                    />
+                <div className="flex items-start gap-3">
+                    {(() => {
+                      const iconClass = `h-5 w-5 mt-0.5 shrink-0 ${!notification.is_read ? 'opacity-100' : 'opacity-50'}`;
+                      switch (notification.type) {
+                        case 'success':
+                          return <CheckCircle className={`${iconClass} text-green-500`} />;
+                        case 'warning':
+                          return <AlertTriangle className={`${iconClass} text-amber-500`} />;
+                        case 'error':
+                          return <AlertCircle className={`${iconClass} text-destructive`} />;
+                        case 'info':
+                        default:
+                          return <Info className={`${iconClass} text-primary`} />;
+                      }
+                    })()}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{notification.title}</p>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
