@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2 } from 'lucide-react';
+import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -258,6 +258,88 @@ export const CompanyApplicants = ({ companyId }: Props) => {
     setSelectedIds(new Set());
   };
 
+  // Export to CSV
+  const exportToCSV = () => {
+    if (filteredApplications.length === 0) {
+      toast.error('No applications to export');
+      return;
+    }
+
+    const headers = [
+      'Applicant Name',
+      'Email',
+      'Phone',
+      'University',
+      'College',
+      'Degree',
+      'Department',
+      'Semester',
+      'Graduation Year',
+      'USN',
+      'City',
+      'State',
+      'Country',
+      'Skills',
+      'Interested Domains',
+      'LinkedIn',
+      'GitHub',
+      'Resume URL',
+      'Internship Title',
+      'Status',
+      'Applied Date',
+      'Cover Letter'
+    ];
+
+    const rows = filteredApplications.map(app => [
+      app.student.profile.full_name || '',
+      app.student.profile.email || '',
+      app.student.profile.phone_number || '',
+      app.student.university || '',
+      app.student.college || '',
+      app.student.degree || '',
+      app.student.department || '',
+      app.student.semester?.toString() || '',
+      app.student.graduation_year?.toString() || '',
+      app.student.usn || '',
+      app.student.city || '',
+      app.student.state || '',
+      app.student.country || '',
+      app.student.skills?.join('; ') || '',
+      app.student.interested_domains?.join('; ') || '',
+      app.student.linkedin_url || '',
+      app.student.github_url || '',
+      app.student.resume_url || app.resume_url || '',
+      app.internship.title || '',
+      app.status.replace('_', ' '),
+      format(new Date(app.applied_at), 'yyyy-MM-dd'),
+      (app.cover_letter || '').replace(/[\n\r,]/g, ' ')
+    ]);
+
+    const escapeCSV = (value: string) => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map(row => row.map(escapeCSV).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `applications_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exported ${filteredApplications.length} application(s) to CSV`);
+  };
+
   const filteredApplications = selectedInternship === 'all'
     ? applications
     : applications.filter(a => a.internship.id === selectedInternship);
@@ -309,17 +391,23 @@ export const CompanyApplicants = ({ companyId }: Props) => {
             <span>{rejectedCount} rejected</span>
           </div>
         </div>
-        <Select value={selectedInternship} onValueChange={setSelectedInternship}>
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Filter by internship" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Internships</SelectItem>
-            {internships.map(i => (
-              <SelectItem key={i.id} value={i.id}>{i.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={selectedInternship} onValueChange={setSelectedInternship}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Filter by internship" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Internships</SelectItem>
+              {internships.map(i => (
+                <SelectItem key={i.id} value={i.id}>{i.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Bulk Action Bar */}
