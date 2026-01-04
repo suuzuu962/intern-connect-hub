@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send } from 'lucide-react';
+import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -71,6 +72,8 @@ export const CompanyApplicants = ({ companyId }: Props) => {
   const [internships, setInternships] = useState<{ id: string; title: string }[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
     if (companyId) {
@@ -204,6 +207,57 @@ export const CompanyApplicants = ({ companyId }: Props) => {
     setUpdating(false);
   };
 
+  // Bulk update function
+  const bulkUpdateStatus = async (newStatus: ApplicationStatus) => {
+    const eligibleIds = Array.from(selectedIds).filter(id => {
+      const app = applications.find(a => a.id === id);
+      return app && app.status !== 'rejected' && app.status !== 'withdrawn';
+    });
+
+    if (eligibleIds.length === 0) {
+      toast.error('No eligible applications to update');
+      return;
+    }
+
+    setBulkUpdating(true);
+    const { error } = await supabase
+      .from('applications')
+      .update({ status: newStatus })
+      .in('id', eligibleIds);
+
+    if (error) {
+      toast.error('Failed to update applications');
+    } else {
+      toast.success(`${eligibleIds.length} application(s) updated to ${newStatus.replace('_', ' ')}`);
+      setSelectedIds(new Set());
+      fetchApplications();
+    }
+    setBulkUpdating(false);
+  };
+
+  // Selection helpers
+  const toggleSelection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = (tabApplications: Application[]) => {
+    const eligibleIds = tabApplications
+      .filter(a => a.status !== 'rejected' && a.status !== 'withdrawn')
+      .map(a => a.id);
+    setSelectedIds(new Set(eligibleIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
   const filteredApplications = selectedInternship === 'all'
     ? applications
     : applications.filter(a => a.internship.id === selectedInternship);
@@ -268,7 +322,38 @@ export const CompanyApplicants = ({ companyId }: Props) => {
         </Select>
       </div>
 
-      <Tabs defaultValue="applied">
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CheckSquare className="h-5 w-5 text-primary" />
+                <span className="font-medium">{selectedIds.size} application(s) selected</span>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  Clear
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground self-center mr-2">Change status to:</span>
+                {STATUS_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={option.value === 'rejected' ? 'destructive' : 'outline'}
+                    size="sm"
+                    onClick={() => bulkUpdateStatus(option.value)}
+                    disabled={bulkUpdating}
+                  >
+                    {bulkUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs defaultValue="applied" onValueChange={() => clearSelection()}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="applied">Applied ({appliedCount})</TabsTrigger>
           <TabsTrigger value="under_review">Under Review ({underReviewCount})</TabsTrigger>
@@ -278,43 +363,82 @@ export const CompanyApplicants = ({ companyId }: Props) => {
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
-        {['applied', 'under_review', 'shortlisted', 'offer_released', 'rejected', 'all'].map((tab) => (
-          <TabsContent key={tab} value={tab} className="space-y-4">
-            {filteredApplications
-              .filter(a => tab === 'all' || a.status === tab)
-              .map((application) => (
-                <Card key={application.id} className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => setSelectedApplication(application)}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-6 w-6 text-primary" />
+        {['applied', 'under_review', 'shortlisted', 'offer_released', 'rejected', 'all'].map((tab) => {
+          const tabApplications = filteredApplications.filter(a => tab === 'all' || a.status === tab);
+          const selectableApplications = tabApplications.filter(a => a.status !== 'rejected' && a.status !== 'withdrawn');
+          const allSelected = selectableApplications.length > 0 && selectableApplications.every(a => selectedIds.has(a.id));
+
+          return (
+            <TabsContent key={tab} value={tab} className="space-y-4">
+              {/* Select All for Tab */}
+              {tabApplications.length > 0 && tab !== 'rejected' && (
+                <div className="flex items-center gap-3 px-2">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        selectAll(tabApplications);
+                      } else {
+                        clearSelection();
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Select all {selectableApplications.length} application(s)
+                  </span>
+                </div>
+              )}
+
+              {tabApplications.map((application) => {
+                const isSelectable = application.status !== 'rejected' && application.status !== 'withdrawn';
+                const isSelected = selectedIds.has(application.id);
+
+                return (
+                  <Card 
+                    key={application.id} 
+                    className={`hover:border-primary/50 transition-colors cursor-pointer ${isSelected ? 'border-primary bg-primary/5' : ''}`}
+                    onClick={() => setSelectedApplication(application)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          {isSelectable && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => {}}
+                              onClick={(e) => toggleSelection(application.id, e)}
+                            />
+                          )}
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{application.student.profile.full_name || 'Unknown'}</h3>
+                            <p className="text-sm text-muted-foreground">{application.student.college || application.student.university || 'No college'}</p>
+                            <p className="text-xs text-muted-foreground">Applied for: {application.internship.title}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold">{application.student.profile.full_name || 'Unknown'}</h3>
-                          <p className="text-sm text-muted-foreground">{application.student.college || application.student.university || 'No college'}</p>
-                          <p className="text-xs text-muted-foreground">Applied for: {application.internship.title}</p>
+                        <div className="flex items-center gap-4">
+                          {statusBadge(application.status)}
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(application.applied_at), 'MMM d, yyyy')}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        {statusBadge(application.status)}
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(application.applied_at), 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                    </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {tabApplications.length === 0 && (
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    No {tab === 'all' ? '' : tab.replace('_', ' ')} applications found.
                   </CardContent>
                 </Card>
-              ))}
-            {filteredApplications.filter(a => tab === 'all' || a.status === tab).length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  No {tab === 'all' ? '' : tab.replace('_', ' ')} applications found.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        ))}
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
 
       {/* Application Detail Dialog */}
