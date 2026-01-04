@@ -89,7 +89,7 @@ export const ApplyModal = ({ internship, open, onOpenChange, onSuccess }: ApplyM
         student_id: studentId,
         cover_letter: coverLetter || null,
         resume_url: resumeUrl,
-        status: 'pending',
+        status: 'applied',
       });
 
       if (error) {

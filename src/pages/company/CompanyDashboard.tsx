@@ -5,10 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, Loader2 } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, Loader2, FolderOpen } from 'lucide-react';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
+import { CompanyInternships } from '@/components/company/CompanyInternships';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,7 @@ interface CompanyInfo {
   is_verified: boolean | null;
 }
 
-type ActiveSection = 'dashboard' | 'applicants' | 'create-internship' | 'profile' | 'change-password';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
@@ -44,7 +45,7 @@ const CompanyDashboard = () => {
   const [company, setCompany] = useState<CompanyInfo | null>(null);
 
   useEffect(() => {
-    if (sectionParam && ['dashboard', 'applicants', 'create-internship', 'profile', 'change-password'].includes(sectionParam)) {
+    if (sectionParam && ['dashboard', 'internships', 'applicants', 'create-internship', 'profile', 'change-password'].includes(sectionParam)) {
       setActiveSection(sectionParam);
     }
   }, [sectionParam]);
@@ -123,7 +124,7 @@ const CompanyDashboard = () => {
 
           applicationStats = {
             total: applications?.length || 0,
-            pending: applications?.filter(a => a.status === 'pending').length || 0,
+            pending: applications?.filter(a => a.status === 'applied' || a.status === 'under_review').length || 0,
           };
         }
 
@@ -143,6 +144,7 @@ const CompanyDashboard = () => {
 
   const sidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, requiresVerification: false },
+    { id: 'internships' as const, label: 'Internships', icon: FolderOpen, requiresVerification: true },
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
     { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
@@ -166,6 +168,13 @@ const CompanyDashboard = () => {
             onNavigate={setActiveSection}
           />
         );
+      case 'internships':
+        return (
+          <CompanyInternships
+            companyId={company?.id || null}
+            onUpdate={fetchCompanyData}
+          />
+        );
       case 'applicants':
         return <CompanyApplicants companyId={company?.id || null} />;
       case 'create-internship':
@@ -174,7 +183,7 @@ const CompanyDashboard = () => {
             companyId={company?.id || null}
             onSuccess={() => {
               fetchCompanyData();
-              setActiveSection('dashboard');
+              setActiveSection('internships');
             }}
           />
         );
@@ -267,7 +276,7 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
       value: stats.totalInternships, 
       icon: Briefcase, 
       color: 'text-primary',
-      onClick: () => onNavigate('create-internship'),
+      onClick: () => onNavigate('internships'),
       requiresVerification: true
     },
     { 
@@ -275,7 +284,7 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
       value: stats.activeInternships, 
       icon: Briefcase, 
       color: 'text-green-500',
-      onClick: () => onNavigate('create-internship'),
+      onClick: () => onNavigate('internships'),
       requiresVerification: true
     },
     { 
@@ -358,6 +367,10 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
                 <Button onClick={onCreateInternship} className="gradient-primary border-0">
                   <Plus className="h-4 w-4 mr-2" />
                   Create New Internship
+                </Button>
+                <Button onClick={() => onNavigate('internships')} variant="outline">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  View Internships
                 </Button>
                 <Button onClick={() => onNavigate('applicants')} variant="outline">
                   <Users className="h-4 w-4 mr-2" />
