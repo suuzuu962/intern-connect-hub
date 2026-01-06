@@ -32,7 +32,7 @@ const Internships = () => {
 
     if (filters.search) query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     if (filters.location && filters.location !== 'Any Location') query = query.ilike('location', `%${filters.location}%`);
-    if (filters.internshipType) query = query.eq('internship_type', filters.internshipType as 'full_time' | 'part_time' | 'contract');
+    if (filters.internshipType) query = query.eq('internship_type', filters.internshipType as 'free' | 'paid' | 'stipended');
     if (filters.workMode) query = query.eq('work_mode', filters.workMode as 'remote' | 'onsite' | 'hybrid');
 
     if (filters.sortBy === 'newest') query = query.order('created_at', { ascending: false });

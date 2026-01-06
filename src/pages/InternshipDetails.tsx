@@ -21,9 +21,9 @@ const workModeLabels = {
 };
 
 const internshipTypeLabels = {
-  full_time: 'Full-time',
-  part_time: 'Part-time',
-  contract: 'Contract',
+  free: 'Free',
+  paid: 'Paid',
+  stipended: 'Stipended',
 };
 
 const InternshipDetails = () => {

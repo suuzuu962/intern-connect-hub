@@ -563,7 +563,7 @@ export type Database = {
         | "offer_released"
         | "rejected"
         | "withdrawn"
-      internship_type: "full_time" | "part_time" | "contract"
+      internship_type: "free" | "paid" | "stipended"
       work_mode: "remote" | "onsite" | "hybrid"
     }
     CompositeTypes: {
@@ -701,7 +701,7 @@ export const Constants = {
         "rejected",
         "withdrawn",
       ],
-      internship_type: ["full_time", "part_time", "contract"],
+      internship_type: ["free", "paid", "stipended"],
       work_mode: ["remote", "onsite", "hybrid"],
     },
   },

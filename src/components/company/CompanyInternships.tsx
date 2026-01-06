@@ -22,7 +22,7 @@ interface InternshipFormData {
   domain: string;
   skills: string[];
   duration: string;
-  internship_type: 'full_time' | 'part_time' | 'contract';
+  internship_type: 'free' | 'paid' | 'stipended';
   work_mode: 'remote' | 'onsite' | 'hybrid';
   location: string;
   stipend: number | null;
@@ -48,7 +48,7 @@ const initialFormData: InternshipFormData = {
   domain: '',
   skills: [],
   duration: '',
-  internship_type: 'full_time',
+  internship_type: 'free',
   work_mode: 'onsite',
   location: '',
   stipend: null,
@@ -153,8 +153,8 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
       internship_type: formData.internship_type,
       work_mode: formData.work_mode,
       location: formData.location,
-      stipend: formData.is_paid ? formData.stipend : null,
-      is_paid: formData.is_paid,
+      stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
+      is_paid: formData.internship_type === 'paid' || formData.internship_type === 'stipended',
       fees: formData.fees,
       positions_available: formData.positions_available,
       start_date: formData.start_date || null,
@@ -266,9 +266,9 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
                   <Select value={formData.internship_type} onValueChange={(v: any) => handleChange('internship_type', v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="full_time">Full-time</SelectItem>
-                      <SelectItem value="part_time">Part-time</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="stipended">Stipended</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -296,17 +296,10 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch checked={formData.is_paid} onCheckedChange={(v) => handleChange('is_paid', v)} />
-                  <Label>Paid Internship</Label>
-                </div>
-              </div>
-
-              {formData.is_paid && (
+              {formData.internship_type === 'stipended' && (
                 <div className="space-y-2">
                   <Label>Monthly Stipend (₹)</Label>
-                  <Input type="number" value={formData.stipend || ''} onChange={(e) => handleChange('stipend', parseInt(e.target.value) || null)} />
+                  <Input type="number" min={0} value={formData.stipend || ''} onChange={(e) => handleChange('stipend', parseInt(e.target.value) || null)} placeholder="e.g., 10000" />
                 </div>
               )}
 

@@ -1,5 +1,5 @@
 export type AppRole = 'admin' | 'company' | 'student';
-export type InternshipType = 'full_time' | 'part_time' | 'contract';
+export type InternshipType = 'free' | 'paid' | 'stipended';
 export type WorkMode = 'remote' | 'onsite' | 'hybrid';
 export type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'rejected' | 'withdrawn';
 
