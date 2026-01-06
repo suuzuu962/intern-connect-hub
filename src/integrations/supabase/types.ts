@@ -62,6 +62,122 @@ export type Database = {
           },
         ]
       }
+      college_coordinators: {
+        Row: {
+          address: string | null
+          college_id: string | null
+          created_at: string
+          designation: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          is_approved: boolean | null
+          name: string
+          phone: string | null
+          university_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          college_id?: string | null
+          created_at?: string
+          designation?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          is_approved?: boolean | null
+          name: string
+          phone?: string | null
+          university_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          college_id?: string | null
+          created_at?: string
+          designation?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          is_approved?: boolean | null
+          name?: string
+          phone?: string | null
+          university_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_coordinators_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "college_coordinators_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colleges: {
+        Row: {
+          address: string | null
+          contact_person_designation: string | null
+          contact_person_email: string | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          university_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          university_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          university_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colleges_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           about_company: string | null
@@ -343,6 +459,36 @@ export type Database = {
           },
         ]
       }
+      login_logs: {
+        Row: {
+          id: string
+          ip_address: string | null
+          login_at: string
+          role: string
+          user_agent: string | null
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          login_at?: string
+          role: string
+          user_agent?: string | null
+          user_email: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          login_at?: string
+          role?: string
+          user_agent?: string | null
+          user_email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -419,6 +565,7 @@ export type Database = {
           bio: string | null
           city: string | null
           college: string | null
+          college_id: string | null
           college_id_url: string | null
           country: string | null
           created_at: string
@@ -447,6 +594,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
+          college_id?: string | null
           college_id_url?: string | null
           country?: string | null
           created_at?: string
@@ -475,6 +623,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           college?: string | null
+          college_id?: string | null
           college_id_url?: string | null
           country?: string | null
           created_at?: string
@@ -497,7 +646,15 @@ export type Database = {
           user_id?: string
           usn?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -519,6 +676,95 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      universities: {
+        Row: {
+          address: string | null
+          contact_person_designation: string | null
+          contact_person_email: string | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_person_designation?: string | null
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      university_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          university_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          university_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          university_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_users_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -555,7 +801,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "company" | "student" | "admin"
+      app_role:
+        | "company"
+        | "student"
+        | "admin"
+        | "university"
+        | "college_coordinator"
       application_status:
         | "applied"
         | "under_review"
@@ -692,7 +943,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["company", "student", "admin"],
+      app_role: [
+        "company",
+        "student",
+        "admin",
+        "university",
+        "college_coordinator",
+      ],
       application_status: [
         "applied",
         "under_review",

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import UniversityAuth from "./pages/UniversityAuth";
 import Internships from "./pages/Internships";
 import InternshipDetails from "./pages/InternshipDetails";
 import Companies from "./pages/Companies";
@@ -17,6 +18,8 @@ import Privacy from "./pages/Privacy";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import UniversityDashboard from "./pages/university/UniversityDashboard";
+import CoordinatorDashboard from "./pages/coordinator/CoordinatorDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/university-auth" element={<UniversityAuth />} />
             <Route path="/internships" element={<Internships />} />
             <Route path="/internships/:id" element={<InternshipDetails />} />
             <Route path="/companies" element={<Companies />} />
@@ -59,6 +63,22 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/university/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['university']}>
+                  <UniversityDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/coordinator/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['college_coordinator']}>
+                  <CoordinatorDashboard />
                 </ProtectedRoute>
               } 
             />
