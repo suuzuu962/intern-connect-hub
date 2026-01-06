@@ -28,6 +28,11 @@ export interface Company {
   employee_count: string | null;
   founded_year: number | null;
   is_verified: boolean;
+  address: string | null;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  postal_code: string | null;
   created_at: string;
   updated_at: string;
 }
