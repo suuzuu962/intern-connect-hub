@@ -133,6 +133,10 @@ export interface InternshipDiary {
   content: string;
   hours_worked: number | null;
   skills_learned: string[] | null;
+  is_approved: boolean | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  coordinator_remarks: string | null;
   created_at: string;
   updated_at: string;
 }

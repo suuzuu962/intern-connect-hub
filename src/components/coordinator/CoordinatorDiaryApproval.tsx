@@ -9,15 +9,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, BookOpen, Search, Filter, CheckCircle, Eye, XCircle } from 'lucide-react';
-import { InternshipDiary, Company } from '@/types/database';
 
 interface CoordinatorDiaryApprovalProps {
   coordinatorId: string;
   collegeId: string | null;
 }
 
-interface DiaryEntryWithDetails extends InternshipDiary {
+interface DiaryEntryWithDetails {
+  id: string;
+  student_id: string;
+  application_id: string;
+  title: string;
+  content: string;
+  entry_date: string;
+  hours_worked: number | null;
+  skills_learned: string[] | null;
+  created_at: string;
+  updated_at: string;
+  is_approved: boolean | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  coordinator_remarks: string | null;
   student?: {
     id: string;
     usn: string | null;
@@ -29,19 +43,26 @@ interface DiaryEntryWithDetails extends InternshipDiary {
   };
   internship?: {
     title: string;
-    company?: Company;
+    company?: {
+      id: string;
+      name: string;
+    };
   };
-  is_approved?: boolean;
-  coordinator_remarks?: string;
+}
+
+interface CompanyOption {
+  id: string;
+  name: string;
 }
 
 export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: CoordinatorDiaryApprovalProps) => {
+  const { user } = useAuth();
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntryWithDetails[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [companyFilter, setCompanyFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntryWithDetails | null>(null);
   const [remarks, setRemarks] = useState('');
   const [saving, setSaving] = useState(false);
@@ -98,10 +119,13 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
       .in('id', applicationIds);
 
     // Extract unique companies
-    const uniqueCompanies = new Map<string, Company>();
+    const uniqueCompanies = new Map<string, CompanyOption>();
     (applicationsData || []).forEach((app: any) => {
       if (app.internship?.company) {
-        uniqueCompanies.set(app.internship.company.id, app.internship.company);
+        uniqueCompanies.set(app.internship.company.id, {
+          id: app.internship.company.id,
+          name: app.internship.company.name,
+        });
       }
     });
     setCompanies(Array.from(uniqueCompanies.values()));
@@ -118,8 +142,13 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
         ...entry,
         student,
         profile,
-        internship: application?.internship,
-        is_approved: false, // This would come from a separate approval table if needed
+        internship: application?.internship ? {
+          title: application.internship.title,
+          company: application.internship.company ? {
+            id: application.internship.company.id,
+            name: application.internship.company.name,
+          } : undefined,
+        } : undefined,
       };
     });
 
@@ -129,11 +158,28 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
 
   const handleApprove = async (entryId: string) => {
     setSaving(true);
-    // For now, just show a toast - in production you'd update an approval status
-    toast({ title: 'Diary entry approved' });
-    setSelectedEntry(null);
-    setRemarks('');
-    setSaving(false);
+    try {
+      const { error } = await supabase
+        .from('internship_diary')
+        .update({
+          is_approved: true,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+          coordinator_remarks: remarks || null,
+        })
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Diary entry approved successfully' });
+      setSelectedEntry(null);
+      setRemarks('');
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReject = async (entryId: string) => {
@@ -142,10 +188,33 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
       return;
     }
     setSaving(true);
-    toast({ title: 'Diary entry rejected with remarks' });
-    setSelectedEntry(null);
-    setRemarks('');
-    setSaving(false);
+    try {
+      const { error } = await supabase
+        .from('internship_diary')
+        .update({
+          is_approved: false,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+          coordinator_remarks: remarks,
+        })
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Diary entry rejected with remarks' });
+      setSelectedEntry(null);
+      setRemarks('');
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getApprovalStatus = (entry: DiaryEntryWithDetails) => {
+    if (entry.approved_at === null) return 'pending';
+    return entry.is_approved ? 'approved' : 'rejected';
   };
 
   const filteredEntries = diaryEntries.filter((entry) => {
@@ -157,10 +226,9 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
     const matchesCompany =
       companyFilter === 'all' || entry.internship?.company?.id === companyFilter;
 
+    const status = getApprovalStatus(entry);
     const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'pending' && !entry.is_approved) ||
-      (statusFilter === 'approved' && entry.is_approved);
+      statusFilter === 'all' || statusFilter === status;
 
     return matchesSearch && matchesCompany && matchesStatus;
   });
@@ -216,7 +284,7 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={(v: 'all' | 'pending' | 'approved') => setStatusFilter(v)}>
+              <Select value={statusFilter} onValueChange={(v: 'all' | 'pending' | 'approved' | 'rejected') => setStatusFilter(v)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -224,6 +292,7 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -247,23 +316,27 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{new Date(entry.entry_date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{entry.profile?.full_name || '-'}</p>
-                        <p className="text-xs text-muted-foreground">{entry.student?.usn || '-'}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{entry.internship?.company?.name || '-'}</TableCell>
-                    <TableCell className="max-w-xs truncate">{entry.title}</TableCell>
-                    <TableCell>{entry.hours_worked || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={entry.is_approved ? 'default' : 'secondary'}>
-                        {entry.is_approved ? 'Approved' : 'Pending'}
-                      </Badge>
-                    </TableCell>
+                {filteredEntries.map((entry) => {
+                  const status = getApprovalStatus(entry);
+                  return (
+                    <TableRow key={entry.id}>
+                      <TableCell>{new Date(entry.entry_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{entry.profile?.full_name || '-'}</p>
+                          <p className="text-xs text-muted-foreground">{entry.student?.usn || '-'}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{entry.internship?.company?.name || '-'}</TableCell>
+                      <TableCell className="max-w-xs truncate">{entry.title}</TableCell>
+                      <TableCell>{entry.hours_worked || '-'}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={status === 'approved' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary'}
+                        >
+                          {status === 'approved' ? 'Approved' : status === 'rejected' ? 'Rejected' : 'Pending'}
+                        </Badge>
+                      </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -275,7 +348,8 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
