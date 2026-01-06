@@ -36,7 +36,9 @@ interface FormData {
   work_mode: 'remote' | 'onsite' | 'hybrid';
   domain: string;
   skills: string[];
-  location: string;
+  address: string;
+  state: string;
+  pincode: string;
   stipend: number | null;
   is_paid: boolean;
   positions_available: number;
@@ -56,7 +58,9 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     work_mode: 'onsite',
     domain: '',
     skills: [],
-    location: '',
+    address: '',
+    state: '',
+    pincode: '',
     stipend: null,
     is_paid: false,
     positions_available: 1,
@@ -106,6 +110,8 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
 
     setSaving(true);
 
+    const locationString = [formData.address, formData.state, formData.pincode].filter(Boolean).join(', ');
+    
     const { error } = await supabase.from('internships').insert({
       company_id: companyId,
       title: formData.title,
@@ -117,7 +123,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       work_mode: formData.work_mode,
       domain: formData.domain,
       skills: formData.skills,
-      location: formData.location,
+      location: locationString || null,
       stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
       is_paid: formData.internship_type === 'paid' || formData.internship_type === 'stipended',
       positions_available: formData.positions_available,
@@ -260,15 +266,6 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <Label>Location</Label>
-              <Input
-                value={formData.location}
-                onChange={(e) => handleChange('location', e.target.value)}
-                placeholder="e.g., Mumbai, India"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label>Positions Available</Label>
               <Input
                 type="number"
@@ -276,6 +273,37 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                 value={formData.positions_available}
                 onChange={(e) => handleChange('positions_available', parseInt(e.target.value) || 1)}
               />
+            </div>
+          </div>
+
+          {/* Location Section */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">Location</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-3">
+                <Label>Address</Label>
+                <Input
+                  value={formData.address}
+                  onChange={(e) => handleChange('address', e.target.value)}
+                  placeholder="e.g., 123 Tech Park, MG Road"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Input
+                  value={formData.state}
+                  onChange={(e) => handleChange('state', e.target.value)}
+                  placeholder="e.g., Maharashtra"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pincode</Label>
+                <Input
+                  value={formData.pincode}
+                  onChange={(e) => handleChange('pincode', e.target.value)}
+                  placeholder="e.g., 400001"
+                />
+              </div>
             </div>
           </div>
 
