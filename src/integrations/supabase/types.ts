@@ -328,11 +328,15 @@ export type Database = {
       internship_diary: {
         Row: {
           application_id: string
+          approved_at: string | null
+          approved_by: string | null
           content: string
+          coordinator_remarks: string | null
           created_at: string
           entry_date: string
           hours_worked: number | null
           id: string
+          is_approved: boolean | null
           skills_learned: string[] | null
           student_id: string
           title: string
@@ -340,11 +344,15 @@ export type Database = {
         }
         Insert: {
           application_id: string
+          approved_at?: string | null
+          approved_by?: string | null
           content: string
+          coordinator_remarks?: string | null
           created_at?: string
           entry_date: string
           hours_worked?: number | null
           id?: string
+          is_approved?: boolean | null
           skills_learned?: string[] | null
           student_id: string
           title: string
@@ -352,11 +360,15 @@ export type Database = {
         }
         Update: {
           application_id?: string
+          approved_at?: string | null
+          approved_by?: string | null
           content?: string
+          coordinator_remarks?: string | null
           created_at?: string
           entry_date?: string
           hours_worked?: number | null
           id?: string
+          is_approved?: boolean | null
           skills_learned?: string[] | null
           student_id?: string
           title?: string

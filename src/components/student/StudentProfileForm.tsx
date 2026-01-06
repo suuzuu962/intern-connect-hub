@@ -111,6 +111,12 @@ const isProfileComplete = (data: {
   );
 };
 
+interface CollegeOption {
+  id: string;
+  name: string;
+  university_name: string;
+}
+
 export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -119,6 +125,10 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
+
+  // College selection
+  const [collegeOptions, setCollegeOptions] = useState<CollegeOption[]>([]);
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string>('');
 
   // Basic Info
   const [fullName, setFullName] = useState('');
@@ -156,8 +166,35 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   useEffect(() => {
     if (user) {
       fetchProfileData();
+      fetchColleges();
     }
   }, [user]);
+
+  const fetchColleges = async () => {
+    const { data: collegesData } = await supabase
+      .from('colleges')
+      .select('id, name, university:universities(name)')
+      .eq('is_active', true);
+
+    if (collegesData) {
+      setCollegeOptions(
+        collegesData.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          university_name: c.university?.name || 'Unknown University',
+        }))
+      );
+    }
+  };
+
+  const handleCollegeSelect = (collegeId: string) => {
+    setSelectedCollegeId(collegeId);
+    const selected = collegeOptions.find(c => c.id === collegeId);
+    if (selected) {
+      setCollege(selected.name);
+      setUniversity(selected.university_name);
+    }
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -201,6 +238,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setCollegeIdUrl(studentData.college_id_url || '');
         setAccuracyConfirmation(studentData.accuracy_confirmation || false);
         setTermsAccepted(studentData.terms_accepted || false);
+        setSelectedCollegeId(studentData.college_id || '');
 
         // Check if profile is complete
         const complete = isProfileComplete({
@@ -369,6 +407,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         gender: gender || null,
         usn: usn || null,
         college: college || null,
+        college_id: selectedCollegeId || null,
         university: university || null,
         department: department || null,
         semester: semester ? parseInt(semester) : null,
@@ -512,7 +551,25 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="college">College <span className="text-destructive">*</span></Label>
+            <Label htmlFor="collegeSelect">Select College <span className="text-destructive">*</span></Label>
+            <Select value={selectedCollegeId} onValueChange={handleCollegeSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your college" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {collegeOptions.map((col) => (
+                  <SelectItem key={col.id} value={col.id}>
+                    {col.name} - {col.university_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              If your college is not listed, enter manually below
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="college">College Name <span className="text-destructive">*</span></Label>
             <Input
               id="college"
               placeholder="Enter your college name"
