@@ -169,6 +169,40 @@ const CompanyDetails = () => {
           </Card>
         )}
 
+        {/* Location Section */}
+        {(company.address || company.state || company.postal_code) && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {company.address && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Address</p>
+                    <p className="text-foreground">{company.address}</p>
+                  </div>
+                )}
+                {company.state && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">State</p>
+                    <p className="text-foreground">{company.state}</p>
+                  </div>
+                )}
+                {company.postal_code && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Pincode</p>
+                    <p className="text-foreground">{company.postal_code}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Active Internships */}
         <div>
           <h2 className="text-2xl font-heading font-bold mb-6">
