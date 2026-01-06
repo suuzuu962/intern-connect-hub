@@ -31,7 +31,7 @@ interface FormData {
   short_description: string;
   description: string;
   application_deadline: string;
-  internship_type: 'full_time' | 'part_time' | 'contract';
+  internship_type: 'free' | 'paid' | 'stipended';
   duration: string;
   work_mode: 'remote' | 'onsite' | 'hybrid';
   domain: string;
@@ -51,7 +51,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     short_description: '',
     description: '',
     application_deadline: '',
-    internship_type: 'full_time',
+    internship_type: 'free',
     duration: '',
     work_mode: 'onsite',
     domain: '',
@@ -118,8 +118,8 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       domain: formData.domain,
       skills: formData.skills,
       location: formData.location,
-      stipend: formData.is_paid ? formData.stipend : null,
-      is_paid: formData.is_paid,
+      stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
+      is_paid: formData.internship_type === 'paid' || formData.internship_type === 'stipended',
       positions_available: formData.positions_available,
       is_active: true,
     });
@@ -205,12 +205,25 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
               <Select value={formData.internship_type} onValueChange={(v: any) => handleChange('internship_type', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full_time">Full-time</SelectItem>
-                  <SelectItem value="part_time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="stipended">Stipended</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.internship_type === 'stipended' && (
+              <div className="space-y-2">
+                <Label>Monthly Stipend (₹)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={formData.stipend || ''}
+                  onChange={(e) => handleChange('stipend', parseInt(e.target.value) || null)}
+                  placeholder="e.g., 10000"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <RequiredLabel>Duration</RequiredLabel>
