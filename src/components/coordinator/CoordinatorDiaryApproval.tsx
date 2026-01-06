@@ -7,10 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, BookOpen, Search, Filter, CheckCircle, Eye, XCircle } from 'lucide-react';
+import { Loader2, BookOpen, Search, Filter, CheckCircle, Eye, XCircle, CheckSquare } from 'lucide-react';
 
 interface CoordinatorDiaryApprovalProps {
   coordinatorId: string;
@@ -66,6 +67,10 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntryWithDetails | null>(null);
   const [remarks, setRemarks] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
+  const [bulkRemarks, setBulkRemarks] = useState('');
+  const [showBulkDialog, setShowBulkDialog] = useState<'approve' | 'reject' | null>(null);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -233,6 +238,84 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
     return matchesSearch && matchesCompany && matchesStatus;
   });
 
+  const pendingFilteredEntries = filteredEntries.filter(e => getApprovalStatus(e) === 'pending');
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedEntries(pendingFilteredEntries.map(e => e.id));
+    } else {
+      setSelectedEntries([]);
+    }
+  };
+
+  const handleSelectEntry = (entryId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedEntries(prev => [...prev, entryId]);
+    } else {
+      setSelectedEntries(prev => prev.filter(id => id !== entryId));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedEntries.length === 0) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('internship_diary')
+        .update({
+          is_approved: true,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+          coordinator_remarks: bulkRemarks || null,
+        })
+        .in('id', selectedEntries);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: `${selectedEntries.length} entries approved successfully` });
+      setSelectedEntries([]);
+      setBulkRemarks('');
+      setShowBulkDialog(null);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedEntries.length === 0) return;
+    if (!bulkRemarks.trim()) {
+      toast({ title: 'Error', description: 'Please provide remarks for rejection', variant: 'destructive' });
+      return;
+    }
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('internship_diary')
+        .update({
+          is_approved: false,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+          coordinator_remarks: bulkRemarks,
+        })
+        .in('id', selectedEntries);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: `${selectedEntries.length} entries rejected` });
+      setSelectedEntries([]);
+      setBulkRemarks('');
+      setShowBulkDialog(null);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -298,6 +381,31 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
             </div>
           </div>
 
+          {/* Bulk Actions */}
+          {selectedEntries.length > 0 && (
+            <div className="flex items-center gap-4 mb-4 p-3 bg-muted rounded-lg">
+              <CheckSquare className="h-5 w-5 text-primary" />
+              <span className="font-medium">{selectedEntries.length} entries selected</span>
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowBulkDialog('reject')}
+                >
+                  <XCircle className="h-4 w-4 mr-2 text-destructive" />
+                  Reject Selected
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowBulkDialog('approve')}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve Selected
+                </Button>
+              </div>
+            </div>
+          )}
+
           {filteredEntries.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No diary entries found.
@@ -306,6 +414,13 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={pendingFilteredEntries.length > 0 && selectedEntries.length === pendingFilteredEntries.length}
+                      onCheckedChange={handleSelectAll}
+                      disabled={pendingFilteredEntries.length === 0}
+                    />
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Student</TableHead>
                   <TableHead>Company</TableHead>
@@ -318,8 +433,16 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
               <TableBody>
                 {filteredEntries.map((entry) => {
                   const status = getApprovalStatus(entry);
+                  const isPending = status === 'pending';
                   return (
                     <TableRow key={entry.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedEntries.includes(entry.id)}
+                          onCheckedChange={(checked) => handleSelectEntry(entry.id, checked as boolean)}
+                          disabled={!isPending}
+                        />
+                      </TableCell>
                       <TableCell>{new Date(entry.entry_date).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div>
@@ -337,17 +460,17 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
                           {status === 'approved' ? 'Approved' : status === 'rejected' ? 'Rejected' : 'Pending'}
                         </Badge>
                       </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedEntry(entry)}
-                        title="View & Approve"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelectedEntry(entry)}
+                          title="View & Approve"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -435,6 +558,42 @@ export const CoordinatorDiaryApproval = ({ coordinatorId, collegeId }: Coordinat
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Action Dialog */}
+      <Dialog open={!!showBulkDialog} onOpenChange={() => { setShowBulkDialog(null); setBulkRemarks(''); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {showBulkDialog === 'approve' ? 'Approve' : 'Reject'} {selectedEntries.length} Entries
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {showBulkDialog === 'approve' 
+                ? 'You are about to approve the selected diary entries. Add optional remarks below.'
+                : 'You are about to reject the selected diary entries. Please provide remarks (required).'}
+            </p>
+            <Textarea
+              placeholder={showBulkDialog === 'approve' ? 'Optional remarks...' : 'Remarks (required)...'}
+              value={bulkRemarks}
+              onChange={(e) => setBulkRemarks(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setShowBulkDialog(null); setBulkRemarks(''); }}>
+                Cancel
+              </Button>
+              <Button
+                variant={showBulkDialog === 'reject' ? 'destructive' : 'default'}
+                onClick={showBulkDialog === 'approve' ? handleBulkApprove : handleBulkReject}
+                disabled={bulkProcessing}
+              >
+                {bulkProcessing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                {showBulkDialog === 'approve' ? 'Approve All' : 'Reject All'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
