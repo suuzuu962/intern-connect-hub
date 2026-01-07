@@ -10,8 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, ShieldCheck, ShieldX, Clock, AlertCircle } from 'lucide-react';
+import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, ShieldCheck, ShieldX, Clock, AlertCircle, CheckSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface University {
   id: string;
@@ -61,6 +62,8 @@ export const UniversityManagement = () => {
   const [formData, setFormData] = useState<UniversityFormData>(initialFormData);
   const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -204,6 +207,58 @@ export const UniversityManagement = () => {
       toast({ title: 'Success', description: 'University deleted successfully' });
       fetchUniversities();
     }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkProcessing(true);
+    
+    const { error } = await supabase
+      .from('universities')
+      .update({ is_verified: true })
+      .in('id', selectedIds);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedIds.length} universities approved successfully` });
+      setSelectedIds([]);
+      fetchUniversities();
+    }
+    setBulkProcessing(false);
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkProcessing(true);
+    
+    const { error } = await supabase
+      .from('universities')
+      .delete()
+      .in('id', selectedIds);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedIds.length} universities rejected and removed` });
+      setSelectedIds([]);
+      fetchUniversities();
+    }
+    setBulkProcessing(false);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === displayedUniversities.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(displayedUniversities.map((u) => u.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
   };
 
   const openEditDialog = (university: University) => {
@@ -411,6 +466,51 @@ export const UniversityManagement = () => {
           </TabsList>
 
           <TabsContent value={activeTab}>
+            {/* Bulk Actions Bar */}
+            {selectedIds.length > 0 && (
+              <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  {selectedIds.length} selected
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleBulkApprove}
+                    disabled={bulkProcessing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {bulkProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+                    Approve All
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="destructive" disabled={bulkProcessing}>
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Reject All
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Reject Universities</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to reject and delete {selectedIds.length} selected universities? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBulkReject}>
+                          Reject All
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedIds([])}>
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {displayedUniversities.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {activeTab === 'pending' ? 'No pending university registrations.' : 
@@ -422,6 +522,12 @@ export const UniversityManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedIds.length === displayedUniversities.length && displayedUniversities.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>University</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Contact Person</TableHead>
@@ -434,6 +540,12 @@ export const UniversityManagement = () => {
                   <TableBody>
                     {displayedUniversities.map((university) => (
                       <TableRow key={university.id} className={!university.is_verified ? 'bg-amber-500/5' : ''}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(university.id)}
+                            onCheckedChange={() => toggleSelect(university.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{university.name}</TableCell>
                         <TableCell>{university.email}</TableCell>
                         <TableCell>
