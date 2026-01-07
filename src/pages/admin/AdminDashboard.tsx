@@ -8,9 +8,10 @@ import { InternshipManagement } from '@/components/admin/InternshipManagement';
 import { StudentManagement } from '@/components/admin/StudentManagement';
 import { UniversityManagement } from '@/components/admin/UniversityManagement';
 import { CoordinatorManagement } from '@/components/admin/CoordinatorManagement';
+import { CollegeManagement } from '@/components/admin/CollegeManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck } from 'lucide-react';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,13 +41,13 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
           </div>
           <p className="text-muted-foreground">
-            Manage companies, internships, and students across the platform.
+            Manage companies, internships, universities, colleges, and students across the platform.
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -66,6 +67,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="universities" className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4" />
               <span className="hidden sm:inline">Universities</span>
+            </TabsTrigger>
+            <TabsTrigger value="colleges" className="flex items-center gap-2">
+              <School className="h-4 w-4" />
+              <span className="hidden sm:inline">Colleges</span>
             </TabsTrigger>
             <TabsTrigger value="coordinators" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
@@ -99,6 +104,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="universities">
             <UniversityManagement />
+          </TabsContent>
+
+          <TabsContent value="colleges">
+            <CollegeManagement />
           </TabsContent>
 
           <TabsContent value="coordinators">
