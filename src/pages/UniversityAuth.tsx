@@ -659,7 +659,8 @@ const UniversityAuth = () => {
             renderForgotPassword()
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'signup' && signupStep === 'details' && (
+              {/* Role selection for both login and signup */}
+              {(mode === 'login' || (mode === 'signup' && signupStep === 'details')) && (
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <Button
                     type="button"
