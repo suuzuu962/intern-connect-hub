@@ -7,9 +7,10 @@ import { CompanyApprovalManagement } from '@/components/admin/CompanyApprovalMan
 import { InternshipManagement } from '@/components/admin/InternshipManagement';
 import { StudentManagement } from '@/components/admin/StudentManagement';
 import { UniversityManagement } from '@/components/admin/UniversityManagement';
+import { CoordinatorManagement } from '@/components/admin/CoordinatorManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap } from 'lucide-react';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,7 +46,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 mb-8">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -65,6 +66,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="universities" className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4" />
               <span className="hidden sm:inline">Universities</span>
+            </TabsTrigger>
+            <TabsTrigger value="coordinators" className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Coordinators</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
@@ -94,6 +99,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="universities">
             <UniversityManagement />
+          </TabsContent>
+
+          <TabsContent value="coordinators">
+            <CoordinatorManagement />
           </TabsContent>
 
           <TabsContent value="notifications">
