@@ -213,6 +213,8 @@ const UniversityAuth = () => {
 
     if (role === 'university') {
       navigate('/university/dashboard');
+    } else if (role === 'college') {
+      navigate('/college/dashboard');
     } else {
       navigate('/coordinator/dashboard');
     }

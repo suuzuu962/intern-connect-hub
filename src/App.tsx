@@ -21,6 +21,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UniversityDashboard from "./pages/university/UniversityDashboard";
 import CoordinatorDashboard from "./pages/coordinator/CoordinatorDashboard";
+import CollegeDashboard from "./pages/college/CollegeDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['college_coordinator']}>
                   <CoordinatorDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/college/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['college_coordinator']}>
+                  <CollegeDashboard />
                 </ProtectedRoute>
               } 
             />
