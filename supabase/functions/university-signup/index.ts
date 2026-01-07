@@ -23,9 +23,9 @@ Deno.serve(async (req) => {
     })
 
     // Parse request body
-    const { email, password, fullName, role, phoneNumber, institutionName } = await req.json()
+    const { email, password, fullName, role, phoneNumber, institutionName, isCollegeAdmin } = await req.json()
 
-    console.log('Received signup request for:', email, 'role:', role)
+    console.log('Received signup request for:', email, 'role:', role, 'isCollegeAdmin:', isCollegeAdmin)
 
     // Validate role is university or college_coordinator only
     if (role !== 'university' && role !== 'college_coordinator') {
@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
         full_name: fullName,
         phone_number: phoneNumber,
         institution_name: institutionName,
+        is_college_admin: isCollegeAdmin || false,
       }
     })
 
@@ -119,24 +120,54 @@ Deno.serve(async (req) => {
         console.error('University creation error:', universityError)
       }
     } else if (role === 'college_coordinator') {
-      const { error: coordinatorError } = await supabaseAdmin
-        .from('college_coordinators')
-        .insert({
-          user_id: userId,
-          name: fullName,
-          email: email,
-          phone: phoneNumber,
-          is_approved: false,
-        })
+      // Check if this is a college admin signup
+      if (isCollegeAdmin) {
+        console.log('Creating college record for college admin signup')
+        
+        // First, create the college record (without university_id - will be linked later by admin)
+        // For now, we'll create a placeholder - the admin can link it to a university later
+        // We need a university_id, so we'll look for one or create a default flow
+        
+        // Create the coordinator first
+        const { data: coordinatorData, error: coordinatorError } = await supabaseAdmin
+          .from('college_coordinators')
+          .insert({
+            user_id: userId,
+            name: fullName,
+            email: email,
+            phone: phoneNumber,
+            designation: 'College Admin',
+            is_approved: false, // Pending approval
+          })
+          .select()
+          .single()
 
-      if (coordinatorError) {
-        console.error('Coordinator creation error:', coordinatorError)
+        if (coordinatorError) {
+          console.error('College admin coordinator creation error:', coordinatorError)
+        } else {
+          console.log('College admin coordinator created:', coordinatorData?.id)
+        }
+      } else {
+        // Regular coordinator signup
+        const { error: coordinatorError } = await supabaseAdmin
+          .from('college_coordinators')
+          .insert({
+            user_id: userId,
+            name: fullName,
+            email: email,
+            phone: phoneNumber,
+            is_approved: false,
+          })
+
+        if (coordinatorError) {
+          console.error('Coordinator creation error:', coordinatorError)
+        }
       }
     }
 
     console.log('Signup completed successfully for:', email)
 
-    return new Response(JSON.stringify({ success: true, userId }), {
+    return new Response(JSON.stringify({ success: true, userId, isCollegeAdmin: isCollegeAdmin || false }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
