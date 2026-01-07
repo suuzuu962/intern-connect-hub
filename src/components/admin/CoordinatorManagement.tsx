@@ -721,15 +721,15 @@ export const CoordinatorManagement = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>University</Label>
-                <Select value={selectedUniversityId} onValueChange={(value) => {
-                  setSelectedUniversityId(value);
+                <Select value={selectedUniversityId || "none"} onValueChange={(value) => {
+                  setSelectedUniversityId(value === "none" ? '' : value);
                   setSelectedCollegeId(''); // Reset college when university changes
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a university" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No university</SelectItem>
+                    <SelectItem value="none">No university</SelectItem>
                     {universities.map(uni => (
                       <SelectItem key={uni.id} value={uni.id}>{uni.name}</SelectItem>
                     ))}
@@ -739,12 +739,12 @@ export const CoordinatorManagement = () => {
 
               <div className="space-y-2">
                 <Label>College</Label>
-                <Select value={selectedCollegeId} onValueChange={setSelectedCollegeId} disabled={!selectedUniversityId}>
+                <Select value={selectedCollegeId || "none"} onValueChange={(value) => setSelectedCollegeId(value === "none" ? '' : value)} disabled={!selectedUniversityId}>
                   <SelectTrigger>
                     <SelectValue placeholder={selectedUniversityId ? "Select a college" : "Select university first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No college</SelectItem>
+                    <SelectItem value="none">No college</SelectItem>
                     {filteredColleges.map(college => (
                       <SelectItem key={college.id} value={college.id}>{college.name}</SelectItem>
                     ))}
