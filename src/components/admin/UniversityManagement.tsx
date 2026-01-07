@@ -5,14 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, ShieldCheck, ShieldX, Clock, AlertCircle, CheckSquare } from 'lucide-react';
+import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, Clock, AlertCircle, Eye, Link2, Unlink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface University {
   id: string;
@@ -28,6 +31,19 @@ interface University {
   is_verified: boolean | null;
   is_active: boolean | null;
   created_at: string;
+}
+
+interface College {
+  id: string;
+  name: string;
+  university_id: string;
+  email: string | null;
+  address: string | null;
+  is_active: boolean | null;
+  contact_person_name: string | null;
+  contact_person_email: string | null;
+  contact_person_phone: string | null;
+  university?: { name: string } | null;
 }
 
 interface UniversityFormData {
@@ -54,33 +70,42 @@ const initialFormData: UniversityFormData = {
 
 export const UniversityManagement = () => {
   const [universities, setUniversities] = useState<University[]>([]);
+  const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isCollegeManageDialogOpen, setIsCollegeManageDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UniversityFormData>(initialFormData);
   const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [unassignedColleges, setUnassignedColleges] = useState<College[]>([]);
+  const [universityColleges, setUniversityColleges] = useState<College[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUniversities();
+    fetchData();
   }, []);
 
-  const fetchUniversities = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('universities')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [uniResult, collegeResult] = await Promise.all([
+      supabase.from('universities').select('*').order('created_at', { ascending: false }),
+      supabase.from('colleges').select('*, university:universities(name)').order('name', { ascending: true })
+    ]);
 
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    if (uniResult.error) {
+      toast({ title: 'Error', description: uniResult.error.message, variant: 'destructive' });
     } else {
-      setUniversities(data || []);
+      setUniversities(uniResult.data || []);
+    }
+
+    if (!collegeResult.error) {
+      setColleges(collegeResult.data || []);
     }
     setLoading(false);
   };
@@ -93,7 +118,6 @@ export const UniversityManagement = () => {
 
     setSaving(true);
     try {
-      // Create user via edge function
       const { data: userData, error: userError } = await supabase.functions.invoke('admin-create-user', {
         body: {
           email: formData.email,
@@ -106,7 +130,6 @@ export const UniversityManagement = () => {
       if (userError) throw userError;
       if (!userData?.user_id) throw new Error('Failed to create user');
 
-      // Create university record
       const { error: uniError } = await supabase.from('universities').insert({
         user_id: userData.user_id,
         name: formData.name,
@@ -125,7 +148,7 @@ export const UniversityManagement = () => {
       toast({ title: 'Success', description: 'University added successfully' });
       setFormData(initialFormData);
       setIsAddDialogOpen(false);
-      fetchUniversities();
+      fetchData();
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -159,7 +182,7 @@ export const UniversityManagement = () => {
       setIsEditDialogOpen(false);
       setSelectedUniversity(null);
       setFormData(initialFormData);
-      fetchUniversities();
+      fetchData();
     }
     setSaving(false);
   };
@@ -177,7 +200,7 @@ export const UniversityManagement = () => {
         title: 'Success',
         description: `University ${university.is_verified ? 'unverified' : 'verified'} successfully`,
       });
-      fetchUniversities();
+      fetchData();
     }
   };
 
@@ -194,7 +217,7 @@ export const UniversityManagement = () => {
         title: 'Success',
         description: `University ${university.is_active ? 'deactivated' : 'activated'} successfully`,
       });
-      fetchUniversities();
+      fetchData();
     }
   };
 
@@ -205,7 +228,7 @@ export const UniversityManagement = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'University deleted successfully' });
-      fetchUniversities();
+      fetchData();
     }
   };
 
@@ -223,7 +246,7 @@ export const UniversityManagement = () => {
     } else {
       toast({ title: 'Success', description: `${selectedIds.length} universities approved successfully` });
       setSelectedIds([]);
-      fetchUniversities();
+      fetchData();
     }
     setBulkProcessing(false);
   };
@@ -242,9 +265,71 @@ export const UniversityManagement = () => {
     } else {
       toast({ title: 'Success', description: `${selectedIds.length} universities rejected and removed` });
       setSelectedIds([]);
-      fetchUniversities();
+      fetchData();
     }
     setBulkProcessing(false);
+  };
+
+  const openDetailDialog = (university: University) => {
+    setSelectedUniversity(university);
+    setIsDetailDialogOpen(true);
+  };
+
+  const openCollegeManageDialog = (university: University) => {
+    setSelectedUniversity(university);
+    const uniColleges = colleges.filter(c => c.university_id === university.id);
+    const unassigned = colleges.filter(c => c.university_id !== university.id);
+    setUniversityColleges(uniColleges);
+    setUnassignedColleges(unassigned);
+    setIsCollegeManageDialogOpen(true);
+  };
+
+  const handleAssignCollege = async (collegeId: string) => {
+    if (!selectedUniversity) return;
+    
+    const { error } = await supabase
+      .from('colleges')
+      .update({ university_id: selectedUniversity.id })
+      .eq('id', collegeId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'College assigned to university' });
+      await fetchData();
+      // Refresh the dialog lists
+      const uniColleges = colleges.filter(c => c.university_id === selectedUniversity.id || c.id === collegeId);
+      const unassigned = colleges.filter(c => c.university_id !== selectedUniversity.id && c.id !== collegeId);
+      setUniversityColleges(uniColleges);
+      setUnassignedColleges(unassigned);
+    }
+  };
+
+  const handleUnassignCollege = async (collegeId: string, targetUniversityId?: string) => {
+    if (!selectedUniversity) return;
+    
+    // If targetUniversityId provided, reassign; otherwise just remove from current
+    const updateData = targetUniversityId 
+      ? { university_id: targetUniversityId }
+      : { university_id: universities[0]?.id }; // Fallback to first university or handle differently
+    
+    if (!targetUniversityId) {
+      toast({ title: 'Info', description: 'Select a university to reassign this college', variant: 'default' });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('colleges')
+      .update({ university_id: targetUniversityId })
+      .eq('id', collegeId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'College reassigned successfully' });
+      await fetchData();
+      openCollegeManageDialog(selectedUniversity);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -297,6 +382,10 @@ export const UniversityManagement = () => {
   };
 
   const displayedUniversities = getDisplayedUniversities();
+
+  const getCollegeCount = (universityId: string) => {
+    return colleges.filter(c => c.university_id === universityId).length;
+  };
 
   if (loading) {
     return (
@@ -529,10 +618,9 @@ export const UniversityManagement = () => {
                         />
                       </TableHead>
                       <TableHead>University</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Contact Person</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Colleges</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Verified</TableHead>
                       <TableHead>Registered</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -546,31 +634,56 @@ export const UniversityManagement = () => {
                             onCheckedChange={() => toggleSelect(university.id)}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{university.name}</TableCell>
-                        <TableCell>{university.email}</TableCell>
                         <TableCell>
-                          {university.contact_person_name ? (
-                            <div>
-                              <p className="text-sm">{university.contact_person_name}</p>
-                              <p className="text-xs text-muted-foreground">{university.contact_person_phone}</p>
-                            </div>
-                          ) : (
-                            '-'
-                          )}
+                          <div>
+                            <p className="font-medium">{university.name}</p>
+                            <p className="text-sm text-muted-foreground">{university.email}</p>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={university.is_active ? 'default' : 'secondary'}>
-                            {university.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
+                          <div className="text-sm">
+                            {university.contact_person_name || '-'}
+                            {university.contact_person_phone && (
+                              <p className="text-muted-foreground">{university.contact_person_phone}</p>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={university.is_verified ? 'default' : 'outline'} className={!university.is_verified ? 'border-amber-500 text-amber-600' : ''}>
-                            {university.is_verified ? 'Approved' : 'Pending'}
-                          </Badge>
+                          <Badge variant="outline">{getCollegeCount(university.id)} colleges</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={university.is_verified ? 'default' : 'outline'} className={!university.is_verified ? 'border-amber-500 text-amber-600' : ''}>
+                              {university.is_verified ? 'Verified' : 'Pending'}
+                            </Badge>
+                            <Badge variant={university.is_active ? 'default' : 'secondary'}>
+                              {university.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
                         </TableCell>
                         <TableCell>{new Date(university.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <div className="flex justify-end gap-1">
+                            {/* View Details Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openDetailDialog(university)}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            
+                            {/* Manage Colleges Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openCollegeManageDialog(university)}
+                              title="Manage Colleges"
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                            
                             {!university.is_verified ? (
                               <Button
                                 variant="default"
@@ -586,11 +699,19 @@ export const UniversityManagement = () => {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleVerifyToggle(university)}
-                                title="Revoke approval"
+                                title="Revoke verification"
                               >
-                                <ShieldX className="h-4 w-4 text-amber-500" />
+                                <XCircle className="h-4 w-4 text-amber-500" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(university)}
+                              title="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -602,14 +723,6 @@ export const UniversityManagement = () => {
                               ) : (
                                 <CheckCircle className="h-4 w-4 text-green-500" />
                               )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(university)}
-                              title="Edit"
-                            >
-                              <Pencil className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -642,80 +755,300 @@ export const UniversityManagement = () => {
             )}
           </TabsContent>
         </Tabs>
-      </CardContent>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit University</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>University Name *</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter university name"
-              />
+        {/* Detail View Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                University Details
+              </DialogTitle>
+              <DialogDescription>
+                Full registration details for {selectedUniversity?.name}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedUniversity && (
+              <ScrollArea className="max-h-[60vh]">
+                <div className="space-y-6 p-1">
+                  {/* Basic Info */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">BASIC INFORMATION</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">University Name</Label>
+                        <p className="font-medium">{selectedUniversity.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Email</Label>
+                        <p className="font-medium">{selectedUniversity.email}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Address</Label>
+                        <p>{selectedUniversity.address || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Registered On</Label>
+                        <p>{new Date(selectedUniversity.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Contact Person */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">CONTACT PERSON</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Name</Label>
+                        <p>{selectedUniversity.contact_person_name || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Designation</Label>
+                        <p>{selectedUniversity.contact_person_designation || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Email</Label>
+                        <p>{selectedUniversity.contact_person_email || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Phone</Label>
+                        <p>{selectedUniversity.contact_person_phone || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Status */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">STATUS</h4>
+                    <div className="flex gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Verification</Label>
+                        <div className="mt-1">
+                          <Badge variant={selectedUniversity.is_verified ? 'default' : 'outline'} className={!selectedUniversity.is_verified ? 'border-amber-500 text-amber-600' : ''}>
+                            {selectedUniversity.is_verified ? 'Verified' : 'Pending Approval'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Account Status</Label>
+                        <div className="mt-1">
+                          <Badge variant={selectedUniversity.is_active ? 'default' : 'secondary'}>
+                            {selectedUniversity.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Colleges</Label>
+                        <div className="mt-1">
+                          <Badge variant="outline">{getCollegeCount(selectedUniversity.id)} linked</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Colleges List */}
+                  <Separator />
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">LINKED COLLEGES</h4>
+                    {colleges.filter(c => c.university_id === selectedUniversity.id).length > 0 ? (
+                      <div className="space-y-2">
+                        {colleges.filter(c => c.university_id === selectedUniversity.id).map(college => (
+                          <div key={college.id} className="p-3 bg-muted rounded-lg flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{college.name}</p>
+                              <p className="text-sm text-muted-foreground">{college.email || 'No email'}</p>
+                            </div>
+                            <Badge variant={college.is_active ? 'default' : 'secondary'}>
+                              {college.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No colleges linked yet.</p>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+            <DialogFooter>
+              {selectedUniversity && !selectedUniversity.is_verified && (
+                <Button
+                  onClick={() => {
+                    handleVerifyToggle(selectedUniversity);
+                    setIsDetailDialogOpen(false);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve University
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* College Management Dialog */}
+        <Dialog open={isCollegeManageDialogOpen} onOpenChange={setIsCollegeManageDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" />
+                Manage Colleges for {selectedUniversity?.name}
+              </DialogTitle>
+              <DialogDescription>
+                Assign or reassign colleges to this university
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Current Colleges */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Current Colleges ({universityColleges.length})
+                </h4>
+                <ScrollArea className="h-[300px] border rounded-lg p-3">
+                  {universityColleges.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No colleges assigned</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {universityColleges.map(college => (
+                        <div key={college.id} className="p-3 bg-muted rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{college.name}</p>
+                              <p className="text-xs text-muted-foreground">{college.email || 'No email'}</p>
+                            </div>
+                            <Select onValueChange={(value) => handleUnassignCollege(college.id, value)}>
+                              <SelectTrigger className="w-[140px] h-8">
+                                <SelectValue placeholder="Reassign to..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {universities.filter(u => u.id !== selectedUniversity?.id).map(uni => (
+                                  <SelectItem key={uni.id} value={uni.id}>{uni.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+
+              {/* Available Colleges */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Unlink className="h-4 w-4" />
+                  Other Colleges ({unassignedColleges.length})
+                </h4>
+                <ScrollArea className="h-[300px] border rounded-lg p-3">
+                  {unassignedColleges.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No other colleges available</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {unassignedColleges.map(college => (
+                        <div key={college.id} className="p-3 bg-muted rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">{college.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Currently: {college.university?.name || 'Unassigned'}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAssignCollege(college.id)}
+                          >
+                            <Link2 className="h-4 w-4 mr-1" />
+                            Assign
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={formData.email} disabled className="bg-muted" />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCollegeManageDialogOpen(false)}>
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit University</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>University Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Person Name</Label>
+                <Input
+                  value={formData.contact_person_name}
+                  onChange={(e) => setFormData({ ...formData, contact_person_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Person Email</Label>
+                <Input
+                  type="email"
+                  value={formData.contact_person_email}
+                  onChange={(e) => setFormData({ ...formData, contact_person_email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Person Phone</Label>
+                <Input
+                  value={formData.contact_person_phone}
+                  onChange={(e) => setFormData({ ...formData, contact_person_phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Designation</Label>
+                <Input
+                  value={formData.contact_person_designation}
+                  onChange={(e) => setFormData({ ...formData, contact_person_designation: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <Input
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Contact Person Name</Label>
-              <Input
-                value={formData.contact_person_name}
-                onChange={(e) => setFormData({ ...formData, contact_person_name: e.target.value })}
-                placeholder="Enter contact name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Contact Person Email</Label>
-              <Input
-                type="email"
-                value={formData.contact_person_email}
-                onChange={(e) => setFormData({ ...formData, contact_person_email: e.target.value })}
-                placeholder="Enter contact email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Contact Person Phone</Label>
-              <Input
-                value={formData.contact_person_phone}
-                onChange={(e) => setFormData({ ...formData, contact_person_phone: e.target.value })}
-                placeholder="Enter contact phone"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Designation</Label>
-              <Input
-                value={formData.contact_person_designation}
-                onChange={(e) => setFormData({ ...formData, contact_person_designation: e.target.value })}
-                placeholder="Enter designation"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Enter address"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleEditUniversity} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditUniversity} disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
     </Card>
   );
 };
