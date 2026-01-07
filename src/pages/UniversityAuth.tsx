@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building, Users, Phone, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Building, Users, Phone, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,10 +24,10 @@ const UniversityAuth = () => {
   const { toast } = useToast();
 
   const initialMode = searchParams.get('mode') || 'login';
-  const initialRole = (searchParams.get('role') as 'university' | 'college_coordinator') || 'university';
+  const initialRole = (searchParams.get('role') as 'university' | 'college' | 'college_coordinator') || 'university';
 
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(initialMode as 'login' | 'signup');
-  const [role, setRole] = useState<'university' | 'college_coordinator'>(initialRole);
+  const [role, setRole] = useState<'university' | 'college' | 'college_coordinator'>(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -109,11 +109,12 @@ const UniversityAuth = () => {
       if (roleData?.role === 'university') {
         navigate('/university/dashboard');
       } else if (roleData?.role === 'college_coordinator') {
+        // Both college admins and coordinators use the same role
         navigate('/coordinator/dashboard');
       } else {
         toast({
           title: 'Access Denied',
-          description: 'This login is for universities and college coordinators only.',
+          description: 'This login is for universities, colleges and coordinators only.',
           variant: 'destructive',
         });
         await supabase.auth.signOut();
@@ -157,6 +158,9 @@ const UniversityAuth = () => {
       return;
     }
 
+    // Map 'college' role to 'college_coordinator' for database (since college admins use same role)
+    const dbRole = role === 'college' ? 'college_coordinator' : role;
+
     setLoading(true);
 
     // Use the university-signup edge function to create user without email verification
@@ -165,9 +169,10 @@ const UniversityAuth = () => {
         email,
         password,
         fullName,
-        role,
+        role: dbRole,
         phoneNumber,
         institutionName,
+        isCollegeAdmin: role === 'college',
       },
     });
 
@@ -201,6 +206,8 @@ const UniversityAuth = () => {
       title: 'Account Created!',
       description: role === 'university' 
         ? 'Your university account is pending approval.' 
+        : role === 'college'
+        ? 'Your college account is pending approval.'
         : 'Your account is pending university approval.',
     });
 
@@ -258,10 +265,13 @@ const UniversityAuth = () => {
         .eq('user_id', data.user.id)
         .single();
 
+      // Map 'college' role to 'college_coordinator' for database
+      const dbRole = role === 'college' ? 'college_coordinator' : role;
+
       if (!existingRole) {
         const { error: roleError } = await supabase.from('user_roles').insert({
           user_id: data.user.id,
-          role: role,
+          role: dbRole as 'university' | 'college_coordinator',
         });
 
         if (roleError) {
@@ -656,14 +666,18 @@ const UniversityAuth = () => {
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                 role === 'university' 
                   ? 'bg-primary/10 text-primary border border-primary/20' 
+                  : role === 'college'
+                  ? 'bg-accent text-accent-foreground border border-accent'
                   : 'bg-secondary text-secondary-foreground border border-border'
               }`}>
                 {role === 'university' ? (
                   <Building className="h-3 w-3" />
+                ) : role === 'college' ? (
+                  <GraduationCap className="h-3 w-3" />
                 ) : (
                   <Users className="h-3 w-3" />
                 )}
-                {role === 'university' ? 'University Login' : 'College Coordinator Login'}
+                {role === 'university' ? 'University Login' : role === 'college' ? 'College Login' : 'College Coordinator Login'}
               </span>
             </div>
           )}
@@ -678,7 +692,7 @@ const UniversityAuth = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Role selection for both login and signup */}
               {(mode === 'login' || (mode === 'signup' && signupStep === 'details')) && (
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   <Button
                     type="button"
                     variant={role === 'university' ? 'default' : 'outline'}
@@ -690,12 +704,21 @@ const UniversityAuth = () => {
                   </Button>
                   <Button
                     type="button"
+                    variant={role === 'college' ? 'default' : 'outline'}
+                    className="flex flex-col items-center gap-1 h-auto py-3"
+                    onClick={() => setRole('college')}
+                  >
+                    <GraduationCap className="h-5 w-5" />
+                    <span className="text-xs">College</span>
+                  </Button>
+                  <Button
+                    type="button"
                     variant={role === 'college_coordinator' ? 'default' : 'outline'}
                     className="flex flex-col items-center gap-1 h-auto py-3"
                     onClick={() => setRole('college_coordinator')}
                   >
                     <Users className="h-5 w-5" />
-                    <span className="text-xs">College Coordinator</span>
+                    <span className="text-xs">Coordinator</span>
                   </Button>
                 </div>
               )}
