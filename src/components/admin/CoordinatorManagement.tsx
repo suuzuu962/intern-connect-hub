@@ -2,15 +2,20 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Users, Search, CheckCircle, XCircle, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { Loader2, Users, Search, CheckCircle, XCircle, Trash2, Clock, AlertCircle, Eye, Link2, Building, GraduationCap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface Coordinator {
   id: string;
@@ -25,38 +30,77 @@ interface Coordinator {
   is_approved: boolean | null;
   is_active: boolean | null;
   created_at: string;
-  college?: { name: string } | null;
+  college?: { id: string; name: string } | null;
+  university?: { id: string; name: string } | null;
+}
+
+interface College {
+  id: string;
+  name: string;
+  university_id: string;
   university?: { name: string } | null;
+}
+
+interface University {
+  id: string;
+  name: string;
 }
 
 export const CoordinatorManagement = () => {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isMappingDialogOpen, setIsMappingDialogOpen] = useState(false);
+  const [selectedCoordinator, setSelectedCoordinator] = useState<Coordinator | null>(null);
+  const [selectedUniversityId, setSelectedUniversityId] = useState<string>('');
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string>('');
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCoordinators();
+    fetchData();
   }, []);
 
-  const fetchCoordinators = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('college_coordinators')
-      .select(`
-        *,
-        college:colleges(name),
-        university:universities(name)
-      `)
-      .order('created_at', { ascending: false });
+    const [coordResult, collegeResult, uniResult] = await Promise.all([
+      supabase
+        .from('college_coordinators')
+        .select(`
+          *,
+          college:colleges(id, name),
+          university:universities(id, name)
+        `)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('colleges')
+        .select('id, name, university_id, university:universities(name)')
+        .order('name', { ascending: true }),
+      supabase
+        .from('universities')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+    ]);
 
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    if (coordResult.error) {
+      toast({ title: 'Error', description: coordResult.error.message, variant: 'destructive' });
     } else {
-      setCoordinators(data || []);
+      setCoordinators(coordResult.data || []);
+    }
+
+    if (!collegeResult.error) {
+      setColleges(collegeResult.data || []);
+    }
+
+    if (!uniResult.error) {
+      setUniversities(uniResult.data || []);
     }
     setLoading(false);
   };
@@ -71,7 +115,7 @@ export const CoordinatorManagement = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Coordinator approved successfully' });
-      fetchCoordinators();
+      fetchData();
     }
   };
 
@@ -85,7 +129,7 @@ export const CoordinatorManagement = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Coordinator approval revoked' });
-      fetchCoordinators();
+      fetchData();
     }
   };
 
@@ -102,7 +146,7 @@ export const CoordinatorManagement = () => {
         title: 'Success',
         description: `Coordinator ${coordinator.is_active ? 'deactivated' : 'activated'} successfully`,
       });
-      fetchCoordinators();
+      fetchData();
     }
   };
 
@@ -113,7 +157,7 @@ export const CoordinatorManagement = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Coordinator deleted successfully' });
-      fetchCoordinators();
+      fetchData();
     }
   };
 
@@ -131,7 +175,7 @@ export const CoordinatorManagement = () => {
     } else {
       toast({ title: 'Success', description: `${selectedIds.length} coordinators approved successfully` });
       setSelectedIds([]);
-      fetchCoordinators();
+      fetchData();
     }
     setBulkProcessing(false);
   };
@@ -150,9 +194,65 @@ export const CoordinatorManagement = () => {
     } else {
       toast({ title: 'Success', description: `${selectedIds.length} coordinators rejected and removed` });
       setSelectedIds([]);
-      fetchCoordinators();
+      fetchData();
     }
     setBulkProcessing(false);
+  };
+
+  const openDetailDialog = (coordinator: Coordinator) => {
+    setSelectedCoordinator(coordinator);
+    setIsDetailDialogOpen(true);
+  };
+
+  const openMappingDialog = (coordinator: Coordinator) => {
+    setSelectedCoordinator(coordinator);
+    setSelectedUniversityId(coordinator.university_id || '');
+    setSelectedCollegeId(coordinator.college_id || '');
+    setIsMappingDialogOpen(true);
+  };
+
+  const handleSaveMapping = async () => {
+    if (!selectedCoordinator) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from('college_coordinators')
+      .update({
+        university_id: selectedUniversityId || null,
+        college_id: selectedCollegeId || null
+      })
+      .eq('id', selectedCoordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Coordinator mapping updated successfully' });
+      setIsMappingDialogOpen(false);
+      fetchData();
+    }
+    setSaving(false);
+  };
+
+  const handleRemoveMapping = async () => {
+    if (!selectedCoordinator) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from('college_coordinators')
+      .update({
+        university_id: null,
+        college_id: null
+      })
+      .eq('id', selectedCoordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Coordinator mapping removed' });
+      setIsMappingDialogOpen(false);
+      fetchData();
+    }
+    setSaving(false);
   };
 
   const filteredCoordinators = coordinators.filter(
@@ -190,6 +290,11 @@ export const CoordinatorManagement = () => {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
+
+  // Filter colleges based on selected university
+  const filteredColleges = selectedUniversityId 
+    ? colleges.filter(c => c.university_id === selectedUniversityId)
+    : colleges;
 
   if (loading) {
     return (
@@ -357,13 +462,22 @@ export const CoordinatorManagement = () => {
                         <TableCell>{coordinator.email}</TableCell>
                         <TableCell>
                           <div>
-                            {coordinator.college?.name && (
-                              <p className="text-sm">{coordinator.college.name}</p>
+                            {coordinator.college?.name ? (
+                              <p className="text-sm flex items-center gap-1">
+                                <GraduationCap className="h-3 w-3" />
+                                {coordinator.college.name}
+                              </p>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No college</span>
                             )}
-                            {coordinator.university?.name && (
-                              <p className="text-xs text-muted-foreground">{coordinator.university.name}</p>
+                            {coordinator.university?.name ? (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Building className="h-3 w-3" />
+                                {coordinator.university.name}
+                              </p>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No university</span>
                             )}
-                            {!coordinator.college?.name && !coordinator.university?.name && '-'}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -382,6 +496,26 @@ export const CoordinatorManagement = () => {
                         <TableCell>{new Date(coordinator.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            {/* View Details Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openDetailDialog(coordinator)}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            
+                            {/* Map to College/University Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openMappingDialog(coordinator)}
+                              title="Map to College/University"
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                            
                             {!coordinator.is_approved ? (
                               <Button
                                 variant="default"
@@ -445,6 +579,214 @@ export const CoordinatorManagement = () => {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Detail View Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Coordinator Details
+              </DialogTitle>
+              <DialogDescription>
+                Full registration details for {selectedCoordinator?.name}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedCoordinator && (
+              <ScrollArea className="max-h-[60vh]">
+                <div className="space-y-6 p-1">
+                  {/* Basic Info */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">PERSONAL INFORMATION</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Full Name</Label>
+                        <p className="font-medium">{selectedCoordinator.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Email</Label>
+                        <p className="font-medium">{selectedCoordinator.email}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Phone</Label>
+                        <p>{selectedCoordinator.phone || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Designation</Label>
+                        <p>{selectedCoordinator.designation || '-'}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-muted-foreground">Address</Label>
+                        <p>{selectedCoordinator.address || '-'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Registered On</Label>
+                        <p>{new Date(selectedCoordinator.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Mapping Info */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">ASSIGNMENT</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">University</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Building className="h-4 w-4 text-muted-foreground" />
+                          <p>{selectedCoordinator.university?.name || 'Not assigned'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">College</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                          <p>{selectedCoordinator.college?.name || 'Not assigned'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Status */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-3">STATUS</h4>
+                    <div className="flex gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Approval Status</Label>
+                        <div className="mt-1">
+                          <Badge variant={selectedCoordinator.is_approved ? 'default' : 'outline'} className={!selectedCoordinator.is_approved ? 'border-amber-500 text-amber-600' : ''}>
+                            {selectedCoordinator.is_approved ? 'Approved' : 'Pending Approval'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Account Status</Label>
+                        <div className="mt-1">
+                          <Badge variant={selectedCoordinator.is_active ? 'default' : 'secondary'}>
+                            {selectedCoordinator.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+            <DialogFooter>
+              {selectedCoordinator && !selectedCoordinator.is_approved && (
+                <Button
+                  onClick={() => {
+                    handleApprove(selectedCoordinator);
+                    setIsDetailDialogOpen(false);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve Coordinator
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  openMappingDialog(selectedCoordinator!);
+                  setIsDetailDialogOpen(false);
+                }}
+              >
+                <Link2 className="h-4 w-4 mr-2" />
+                Manage Mapping
+              </Button>
+              <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mapping Dialog */}
+        <Dialog open={isMappingDialogOpen} onOpenChange={setIsMappingDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" />
+                Map Coordinator
+              </DialogTitle>
+              <DialogDescription>
+                Assign {selectedCoordinator?.name} to a university and college
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>University</Label>
+                <Select value={selectedUniversityId} onValueChange={(value) => {
+                  setSelectedUniversityId(value);
+                  setSelectedCollegeId(''); // Reset college when university changes
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a university" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No university</SelectItem>
+                    {universities.map(uni => (
+                      <SelectItem key={uni.id} value={uni.id}>{uni.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>College</Label>
+                <Select value={selectedCollegeId} onValueChange={setSelectedCollegeId} disabled={!selectedUniversityId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedUniversityId ? "Select a college" : "Select university first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No college</SelectItem>
+                    {filteredColleges.map(college => (
+                      <SelectItem key={college.id} value={college.id}>{college.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedUniversityId && filteredColleges.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No colleges found for this university</p>
+                )}
+              </div>
+
+              {selectedCoordinator?.university_id && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium mb-1">Current Assignment</p>
+                  <p className="text-xs text-muted-foreground">
+                    University: {selectedCoordinator.university?.name || 'None'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    College: {selectedCoordinator.college?.name || 'None'}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex justify-between">
+              <Button
+                variant="destructive"
+                onClick={handleRemoveMapping}
+                disabled={saving || (!selectedCoordinator?.university_id && !selectedCoordinator?.college_id)}
+              >
+                Remove Mapping
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsMappingDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveMapping} disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Mapping
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
