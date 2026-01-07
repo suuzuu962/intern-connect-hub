@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, Trash2, Search, GraduationCap, MapPin, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Users, Trash2, Search, GraduationCap, MapPin, Plus, School } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -34,6 +35,7 @@ interface Student {
   id: string;
   user_id: string;
   college: string | null;
+  college_id: string | null;
   department: string | null;
   city: string | null;
   state: string | null;
@@ -44,6 +46,16 @@ interface Student {
     full_name: string | null;
     email: string;
   } | null;
+  college_data?: {
+    name: string;
+    university?: { name: string } | null;
+  } | null;
+}
+
+interface College {
+  id: string;
+  name: string;
+  university?: { name: string } | null;
 }
 
 interface NewStudentForm {
@@ -51,6 +63,7 @@ interface NewStudentForm {
   password: string;
   fullName: string;
   college: string;
+  college_id: string;
   department: string;
   city: string;
   state: string;
@@ -59,8 +72,10 @@ interface NewStudentForm {
 
 export const StudentManagement = () => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterCollegeId, setFilterCollegeId] = useState<string>('all');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newStudent, setNewStudent] = useState<NewStudentForm>({
@@ -68,24 +83,32 @@ export const StudentManagement = () => {
     password: '',
     fullName: '',
     college: '',
+    college_id: '',
     department: '',
     city: '',
     state: '',
     graduationYear: '',
   });
 
-  const fetchStudents = async () => {
+  const fetchData = async () => {
     try {
-      // Fetch students
-      const { data: studentsData, error: studentsError } = await supabase
-        .from('students')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch students and colleges in parallel
+      const [studentsResult, collegesResult] = await Promise.all([
+        supabase
+          .from('students')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('colleges')
+          .select('id, name, university:universities(name)')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+      ]);
 
-      if (studentsError) throw studentsError;
+      if (studentsResult.error) throw studentsResult.error;
 
       // Fetch profiles for all students
-      const userIds = (studentsData || []).map(s => s.user_id);
+      const userIds = (studentsResult.data || []).map(s => s.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, full_name, email')
@@ -93,17 +116,34 @@ export const StudentManagement = () => {
 
       if (profilesError) throw profilesError;
 
+      // Get college info for students
+      const collegeIds = (studentsResult.data || [])
+        .map(s => s.college_id)
+        .filter((id): id is string => id !== null);
+      
+      let collegeMap = new Map<string, { name: string; university?: { name: string } | null }>();
+      if (collegeIds.length > 0) {
+        const { data: collegeData } = await supabase
+          .from('colleges')
+          .select('id, name, university:universities(name)')
+          .in('id', collegeIds);
+        
+        collegeMap = new Map((collegeData || []).map(c => [c.id, c]));
+      }
+
       // Map profiles to students
       const profilesMap = new Map(
         (profilesData || []).map(p => [p.user_id, p])
       );
 
-      const studentsWithProfiles = (studentsData || []).map(student => ({
+      const studentsWithProfiles = (studentsResult.data || []).map(student => ({
         ...student,
-        profile: profilesMap.get(student.user_id) || null
+        profile: profilesMap.get(student.user_id) || null,
+        college_data: student.college_id ? collegeMap.get(student.college_id) || null : null,
       }));
       
       setStudents(studentsWithProfiles);
+      setColleges(collegesResult.data || []);
     } catch (error: any) {
       toast.error('Failed to fetch students');
       console.error('Error fetching students:', error);
@@ -113,7 +153,7 @@ export const StudentManagement = () => {
   };
 
   useEffect(() => {
-    fetchStudents();
+    fetchData();
   }, []);
 
   const handleDelete = async (studentId: string, userId: string) => {
@@ -145,7 +185,7 @@ export const StudentManagement = () => {
         .eq('user_id', userId);
 
       toast.success('Student removed successfully');
-      fetchStudents();
+      fetchData();
     } catch (error: any) {
       toast.error('Failed to remove student');
       console.error('Error deleting student:', error);
@@ -175,6 +215,7 @@ export const StudentManagement = () => {
           role: 'student',
           additionalData: {
             college: newStudent.college || null,
+            college_id: newStudent.college_id || null,
             department: newStudent.department || null,
             city: newStudent.city || null,
             state: newStudent.state || null,
@@ -198,12 +239,13 @@ export const StudentManagement = () => {
         password: '',
         fullName: '',
         college: '',
+        college_id: '',
         department: '',
         city: '',
         state: '',
         graduationYear: '',
       });
-      fetchStudents();
+      fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to add student');
       console.error('Error adding student:', error);
@@ -212,11 +254,17 @@ export const StudentManagement = () => {
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.college?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = 
+      student.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.college?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.college_data?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCollege = filterCollegeId === 'all' || student.college_id === filterCollegeId;
+    
+    return matchesSearch && matchesCollege;
+  });
 
   if (loading) {
     return (
@@ -236,7 +284,7 @@ export const StudentManagement = () => {
               <Users className="h-5 w-5 text-primary" />
               All Students ({students.length})
             </CardTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -246,6 +294,19 @@ export const StudentManagement = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={filterCollegeId} onValueChange={setFilterCollegeId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by college" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Colleges</SelectItem>
+                  {colleges.map(college => (
+                    <SelectItem key={college.id} value={college.id}>
+                      {college.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gradient-primary border-0">
@@ -290,25 +351,39 @@ export const StudentManagement = () => {
                         onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="college">College</Label>
-                        <Input
-                          id="college"
-                          placeholder="University name"
-                          value={newStudent.college}
-                          onChange={(e) => setNewStudent({ ...newStudent, college: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="department">Department</Label>
-                        <Input
-                          id="department"
-                          placeholder="Computer Science"
-                          value={newStudent.department}
-                          onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="college_select">College</Label>
+                      <Select 
+                        value={newStudent.college_id} 
+                        onValueChange={(value) => {
+                          const college = colleges.find(c => c.id === value);
+                          setNewStudent({ 
+                            ...newStudent, 
+                            college_id: value,
+                            college: college?.name || ''
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a college" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {colleges.map(college => (
+                            <SelectItem key={college.id} value={college.id}>
+                              {college.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="department">Department</Label>
+                      <Input
+                        id="department"
+                        placeholder="Computer Science"
+                        value={newStudent.department}
+                        onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -388,7 +463,14 @@ export const StudentManagement = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{student.college || '-'}</TableCell>
+                      <TableCell>
+                        {student.college_data ? (
+                          <div className="flex items-center gap-1">
+                            <School className="h-4 w-4 text-muted-foreground" />
+                            <span>{student.college_data.name}</span>
+                          </div>
+                        ) : student.college || '-'}
+                      </TableCell>
                       <TableCell>{student.department || '-'}</TableCell>
                       <TableCell>
                         {student.city || student.state ? (

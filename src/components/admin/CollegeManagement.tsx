@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +10,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, Eye, Link2, Building, Users } from 'lucide-react';
+import { Loader2, GraduationCap, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, Eye, Link2, Building, Users, Upload, FileSpreadsheet, AlertCircle, Check, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 
 interface College {
   id: string;
@@ -53,6 +54,30 @@ interface CollegeFormData {
   contact_person_designation: string;
 }
 
+interface CSVCollegeRow {
+  name: string;
+  email?: string;
+  address?: string;
+  university_name?: string;
+  contact_person_name?: string;
+  contact_person_email?: string;
+  contact_person_phone?: string;
+  contact_person_designation?: string;
+}
+
+interface Student {
+  id: string;
+  user_id: string;
+  department: string | null;
+  graduation_year: number | null;
+  skills: string[] | null;
+  created_at: string;
+  profile: {
+    full_name: string | null;
+    email: string;
+  } | null;
+}
+
 const initialFormData: CollegeFormData = {
   name: '',
   email: '',
@@ -68,6 +93,7 @@ export const CollegeManagement = () => {
   const [colleges, setColleges] = useState<College[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUniversity, setFilterUniversity] = useState<string>('all');
@@ -75,10 +101,18 @@ export const CollegeManagement = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
+  const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
+  const [isBulkImportDialogOpen, setIsBulkImportDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CollegeFormData>(initialFormData);
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedNewUniversity, setSelectedNewUniversity] = useState<string>('');
+  const [csvData, setCsvData] = useState<CSVCollegeRow[]>([]);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+  const [importProgress, setImportProgress] = useState(0);
+  const [isImporting, setIsImporting] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -121,6 +155,187 @@ export const CollegeManagement = () => {
       setCoordinators(data || []);
     }
   };
+
+  const fetchCollegeStudents = async (collegeId: string) => {
+    const { data: studentsData, error } = await supabase
+      .from('students')
+      .select('id, user_id, department, graduation_year, skills, created_at')
+      .eq('college_id', collegeId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    const userIds = (studentsData || []).map(s => s.user_id);
+    if (userIds.length === 0) {
+      setStudents([]);
+      return;
+    }
+
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, full_name, email')
+      .in('user_id', userIds);
+
+    const profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+
+    setStudents((studentsData || []).map(student => ({
+      ...student,
+      profile: profilesMap.get(student.user_id) || null
+    })));
+  };
+
+  const parseCSV = (text: string): { rows: CSVCollegeRow[], errors: string[] } => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+      return { rows: [], errors: ['CSV file must have a header row and at least one data row'] };
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+    const requiredHeaders = ['name'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    
+    if (missingHeaders.length > 0) {
+      return { rows: [], errors: [`Missing required columns: ${missingHeaders.join(', ')}`] };
+    }
+
+    const rows: CSVCollegeRow[] = [];
+    const errors: string[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+      const row: Record<string, string> = {};
+      
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+
+      if (!row.name) {
+        errors.push(`Row ${i + 1}: Name is required`);
+        continue;
+      }
+
+      rows.push({
+        name: row.name,
+        email: row.email || undefined,
+        address: row.address || undefined,
+        university_name: row.university_name || row.university || undefined,
+        contact_person_name: row.contact_person_name || undefined,
+        contact_person_email: row.contact_person_email || undefined,
+        contact_person_phone: row.contact_person_phone || undefined,
+        contact_person_designation: row.contact_person_designation || undefined,
+      });
+    }
+
+    return { rows, errors };
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({ title: 'Error', description: 'Please upload a CSV file', variant: 'destructive' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const { rows, errors } = parseCSV(text);
+      setCsvData(rows);
+      setCsvErrors(errors);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleBulkImport = async () => {
+    if (csvData.length === 0) {
+      toast({ title: 'Error', description: 'No valid data to import', variant: 'destructive' });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress(0);
+
+    let successCount = 0;
+    let errorCount = 0;
+    const totalRows = csvData.length;
+
+    for (let i = 0; i < csvData.length; i++) {
+      const row = csvData[i];
+      
+      // Find university by name if provided
+      let universityId: string | null = null;
+      if (row.university_name) {
+        const university = universities.find(u => 
+          u.name.toLowerCase() === row.university_name?.toLowerCase()
+        );
+        if (university) {
+          universityId = university.id;
+        }
+      }
+
+      if (!universityId) {
+        // Use the first university if none matched
+        universityId = universities[0]?.id || null;
+      }
+
+      if (!universityId) {
+        errorCount++;
+        continue;
+      }
+
+      const { error } = await supabase.from('colleges').insert({
+        name: row.name,
+        email: row.email || null,
+        address: row.address || null,
+        university_id: universityId,
+        contact_person_name: row.contact_person_name || null,
+        contact_person_email: row.contact_person_email || null,
+        contact_person_phone: row.contact_person_phone || null,
+        contact_person_designation: row.contact_person_designation || null,
+        is_active: true,
+      });
+
+      if (error) {
+        errorCount++;
+      } else {
+        successCount++;
+      }
+
+      setImportProgress(Math.round(((i + 1) / totalRows) * 100));
+    }
+
+    setIsImporting(false);
+    setCsvData([]);
+    setCsvErrors([]);
+    setIsBulkImportDialogOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    toast({
+      title: 'Import Complete',
+      description: `Successfully imported ${successCount} colleges. ${errorCount} failed.`,
+      variant: errorCount > 0 ? 'destructive' : 'default',
+    });
+
+    fetchData();
+  };
+
+  const openStudentsDialog = async (college: College) => {
+    setSelectedCollege(college);
+    await fetchCollegeStudents(college.id);
+    setStudentSearchTerm('');
+    setIsStudentsDialogOpen(true);
+  };
+
+  const filteredStudents = students.filter(s => 
+    s.profile?.full_name?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+    s.profile?.email?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+    s.department?.toLowerCase().includes(studentSearchTerm.toLowerCase())
+  );
 
   const handleAddCollege = async () => {
     if (!formData.name || !formData.university_id) {
@@ -321,6 +536,123 @@ export const CollegeManagement = () => {
                 ))}
               </SelectContent>
             </Select>
+            {/* Bulk Import Button */}
+            <Dialog open={isBulkImportDialogOpen} onOpenChange={(open) => {
+              setIsBulkImportDialogOpen(open);
+              if (!open) {
+                setCsvData([]);
+                setCsvErrors([]);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Import
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5" />
+                    Bulk Import Colleges from CSV
+                  </DialogTitle>
+                  <DialogDescription>
+                    Upload a CSV file with college data. Required column: name. Optional columns: email, address, university_name, contact_person_name, contact_person_email, contact_person_phone, contact_person_designation.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label htmlFor="csv-upload" className="cursor-pointer">
+                      <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm font-medium">Click to upload CSV file</p>
+                      <p className="text-xs text-muted-foreground mt-1">or drag and drop</p>
+                    </label>
+                  </div>
+
+                  {csvErrors.length > 0 && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-destructive font-medium mb-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Validation Errors
+                      </div>
+                      <ul className="text-sm text-destructive space-y-1">
+                        {csvErrors.map((error, i) => (
+                          <li key={i}>• {error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {csvData.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-green-600">
+                        <Check className="h-4 w-4" />
+                        <span className="font-medium">{csvData.length} colleges ready to import</span>
+                      </div>
+                      <ScrollArea className="h-48 border rounded-lg">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>University</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Contact</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {csvData.slice(0, 10).map((row, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="font-medium">{row.name}</TableCell>
+                                <TableCell>{row.university_name || 'Default'}</TableCell>
+                                <TableCell>{row.email || '-'}</TableCell>
+                                <TableCell>{row.contact_person_name || '-'}</TableCell>
+                              </TableRow>
+                            ))}
+                            {csvData.length > 10 && (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                  ... and {csvData.length - 10} more
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  {isImporting && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Importing...</span>
+                        <span>{importProgress}%</span>
+                      </div>
+                      <Progress value={importProgress} />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsBulkImportDialogOpen(false)} disabled={isImporting}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleBulkImport} disabled={csvData.length === 0 || isImporting}>
+                    {isImporting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Import {csvData.length} Colleges
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Add College Button */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -472,6 +804,16 @@ export const CollegeManagement = () => {
                     <TableCell>{new Date(college.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
+                        {/* View Students */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openStudentsDialog(college)}
+                          title="View Students"
+                        >
+                          <Users className="h-4 w-4 text-primary" />
+                        </Button>
+
                         {/* View Details */}
                         <Button
                           variant="ghost"
@@ -812,6 +1154,102 @@ export const CollegeManagement = () => {
               <Button onClick={handleEditCollege} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Students Dialog */}
+        <Dialog open={isStudentsDialogOpen} onOpenChange={setIsStudentsDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Students at {selectedCollege?.name}
+              </DialogTitle>
+              <DialogDescription>
+                View and manage students enrolled at this college
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search students by name, email, or department..."
+                  value={studentSearchTerm}
+                  onChange={(e) => setStudentSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {filteredStudents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {students.length === 0 
+                    ? 'No students enrolled at this college.' 
+                    : 'No students match your search.'}
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Graduation Year</TableHead>
+                        <TableHead>Skills</TableHead>
+                        <TableHead>Joined</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredStudents.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <GraduationCap className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{student.profile?.full_name || 'Unknown'}</p>
+                                <p className="text-sm text-muted-foreground">{student.profile?.email}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.department || '-'}</TableCell>
+                          <TableCell>{student.graduation_year || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-48">
+                              {student.skills?.slice(0, 3).map((skill, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {skill}
+                                </Badge>
+                              ))}
+                              {(student.skills?.length || 0) > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{(student.skills?.length || 0) - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(student.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Total: {students.length} students</span>
+                {studentSearchTerm && (
+                  <span>Showing: {filteredStudents.length} results</span>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsStudentsDialogOpen(false)}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
