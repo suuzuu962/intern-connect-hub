@@ -63,8 +63,8 @@ export const Footer = () => {
             <h3 className="font-heading font-semibold text-lg mb-6">Useful Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/university-auth" className="text-background/70 hover:text-primary transition-colors text-sm font-medium">
-                  University / Coordinator Login
+                <Link to="/for-universities" className="text-background/70 hover:text-primary transition-colors text-sm font-medium">
+                  For Universities
                 </Link>
               </li>
               <li>
