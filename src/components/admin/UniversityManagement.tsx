@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, ShieldCheck, ShieldX } from 'lucide-react';
+import { Loader2, Building, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, ShieldCheck, ShieldX, Clock, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface University {
@@ -54,6 +55,7 @@ export const UniversityManagement = () => {
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('pending');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UniversityFormData>(initialFormData);
@@ -225,6 +227,22 @@ export const UniversityManagement = () => {
       uni.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const pendingUniversities = filteredUniversities.filter((uni) => !uni.is_verified);
+  const approvedUniversities = filteredUniversities.filter((uni) => uni.is_verified);
+
+  const getDisplayedUniversities = () => {
+    switch (activeTab) {
+      case 'pending':
+        return pendingUniversities;
+      case 'approved':
+        return approvedUniversities;
+      default:
+        return filteredUniversities;
+    }
+  };
+
+  const displayedUniversities = getDisplayedUniversities();
+
   if (loading) {
     return (
       <Card>
@@ -355,113 +373,163 @@ export const UniversityManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {filteredUniversities.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No universities found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>University</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Contact Person</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Verified</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUniversities.map((university) => (
-                  <TableRow key={university.id}>
-                    <TableCell className="font-medium">{university.name}</TableCell>
-                    <TableCell>{university.email}</TableCell>
-                    <TableCell>
-                      {university.contact_person_name ? (
-                        <div>
-                          <p className="text-sm">{university.contact_person_name}</p>
-                          <p className="text-xs text-muted-foreground">{university.contact_person_phone}</p>
-                        </div>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={university.is_active ? 'default' : 'secondary'}>
-                        {university.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={university.is_verified ? 'default' : 'outline'}>
-                        {university.is_verified ? 'Verified' : 'Unverified'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(university.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleVerifyToggle(university)}
-                          title={university.is_verified ? 'Revoke verification' : 'Verify'}
-                        >
-                          {university.is_verified ? (
-                            <ShieldX className="h-4 w-4 text-amber-500" />
-                          ) : (
-                            <ShieldCheck className="h-4 w-4 text-green-500" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleActiveToggle(university)}
-                          title={university.is_active ? 'Deactivate' : 'Activate'}
-                        >
-                          {university.is_active ? (
-                            <XCircle className="h-4 w-4 text-destructive" />
-                          ) : (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(university)}
-                          title="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" title="Delete">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete University</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{university.name}"? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(university.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        {/* Pending Alert Banner */}
+        {pendingUniversities.length > 0 && (
+          <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <div>
+              <p className="font-medium text-amber-700 dark:text-amber-400">
+                {pendingUniversities.length} pending university registration{pendingUniversities.length > 1 ? 's' : ''} awaiting approval
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Review and approve registrations to allow universities to access the platform.
+              </p>
+            </div>
           </div>
         )}
+
+        {/* Filter Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pending
+              {pendingUniversities.length > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {pendingUniversities.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Approved ({approvedUniversities.length})
+            </TabsTrigger>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              All ({filteredUniversities.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab}>
+            {displayedUniversities.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {activeTab === 'pending' ? 'No pending university registrations.' : 
+                 activeTab === 'approved' ? 'No approved universities found.' : 
+                 'No universities found.'}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>University</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Contact Person</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Verified</TableHead>
+                      <TableHead>Registered</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedUniversities.map((university) => (
+                      <TableRow key={university.id} className={!university.is_verified ? 'bg-amber-500/5' : ''}>
+                        <TableCell className="font-medium">{university.name}</TableCell>
+                        <TableCell>{university.email}</TableCell>
+                        <TableCell>
+                          {university.contact_person_name ? (
+                            <div>
+                              <p className="text-sm">{university.contact_person_name}</p>
+                              <p className="text-xs text-muted-foreground">{university.contact_person_phone}</p>
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={university.is_active ? 'default' : 'secondary'}>
+                            {university.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={university.is_verified ? 'default' : 'outline'} className={!university.is_verified ? 'border-amber-500 text-amber-600' : ''}>
+                            {university.is_verified ? 'Approved' : 'Pending'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(university.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            {!university.is_verified ? (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleVerifyToggle(university)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleVerifyToggle(university)}
+                                title="Revoke approval"
+                              >
+                                <ShieldX className="h-4 w-4 text-amber-500" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleActiveToggle(university)}
+                              title={university.is_active ? 'Deactivate' : 'Activate'}
+                            >
+                              {university.is_active ? (
+                                <XCircle className="h-4 w-4 text-destructive" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(university)}
+                              title="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" title="Delete">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete University</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{university.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(university.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
 
       {/* Edit Dialog */}
