@@ -159,35 +159,57 @@ const UniversityAuth = () => {
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: fullName,
-          phone_number: phoneNumber,
-          institution_name: institutionName,
-        },
+    // Use the university-signup edge function to create user without email verification
+    const { data: functionData, error: functionError } = await supabase.functions.invoke('university-signup', {
+      body: {
+        email,
+        password,
+        fullName,
+        role,
+        phoneNumber,
+        institutionName,
       },
     });
 
-    if (error) {
+    if (functionError || functionData?.error) {
       toast({
         title: 'Signup Failed',
-        description: error.message,
+        description: functionData?.error || functionError?.message || 'Failed to create account',
         variant: 'destructive',
       });
       setLoading(false);
       return;
     }
 
-    toast({
-      title: 'Verification Code Sent',
-      description: 'Please check your email for the OTP code',
+    // Sign in the user directly after account creation
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-    setSignupStep('verify-email');
-    startResendCooldown();
+
+    if (signInError) {
+      toast({
+        title: 'Account Created',
+        description: 'Your account was created. Please log in.',
+      });
+      setMode('login');
+      setLoading(false);
+      return;
+    }
+
+    toast({
+      title: 'Account Created!',
+      description: role === 'university' 
+        ? 'Your university account is pending approval.' 
+        : 'Your account is pending university approval.',
+    });
+
+    if (role === 'university') {
+      navigate('/university/dashboard');
+    } else {
+      navigate('/coordinator/dashboard');
+    }
+
     setLoading(false);
   };
 
