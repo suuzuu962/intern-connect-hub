@@ -650,6 +650,23 @@ const UniversityAuth = () => {
               InternHub
             </Link>
           </div>
+          {/* Role indicator badge */}
+          {mode !== 'forgot-password' && (
+            <div className="flex justify-center mb-2">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                role === 'university' 
+                  ? 'bg-primary/10 text-primary border border-primary/20' 
+                  : 'bg-secondary text-secondary-foreground border border-border'
+              }`}>
+                {role === 'university' ? (
+                  <Building className="h-3 w-3" />
+                ) : (
+                  <Users className="h-3 w-3" />
+                )}
+                {role === 'university' ? 'University Login' : 'College Coordinator Login'}
+              </span>
+            </div>
+          )}
           <CardTitle className="text-2xl">{getTitle()}</CardTitle>
           <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
