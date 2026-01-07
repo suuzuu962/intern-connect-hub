@@ -170,22 +170,24 @@ export const UniversityCoordinators = ({ universityId }: UniversityCoordinatorsP
                   <TableCell>
                     {coordinator.college ? (
                       coordinator.college.name
-                    ) : (
+                    ) : colleges.length > 0 ? (
                       <Select
-                        value={coordinator.college_id || ''}
+                        value={coordinator.college_id || undefined}
                         onValueChange={(value) => handleAssignCollege(coordinator.id, value)}
                       >
                         <SelectTrigger className="w-40">
                           <SelectValue placeholder="Assign college" />
                         </SelectTrigger>
                         <SelectContent>
-                          {colleges.map((college) => (
+                          {colleges.filter(college => college.id).map((college) => (
                             <SelectItem key={college.id} value={college.id}>
                               {college.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No colleges</span>
                     )}
                   </TableCell>
                   <TableCell>
