@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, ClipboardCheck } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
 import { CollegeStudents } from '@/components/college/CollegeStudents';
 import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
-import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
+import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval';
 import { College } from '@/types/database';
 
 interface CollegeWithStats extends College {
@@ -25,6 +25,7 @@ const CollegeDashboard = () => {
   const [college, setCollege] = useState<CollegeWithStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ students: 0, coordinators: 0, diaryEntries: 0 });
+  const [pendingDiaryCount, setPendingDiaryCount] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -148,7 +149,17 @@ const CollegeDashboard = () => {
           <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="diary-approvals">Diary Approvals</TabsTrigger>
+            <TabsTrigger value="diary-approvals" className="relative">
+              Diary Approvals
+              {pendingDiaryCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
+                >
+                  {pendingDiaryCount > 99 ? '99+' : pendingDiaryCount}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -195,7 +206,11 @@ const CollegeDashboard = () => {
           </TabsContent>
 
           <TabsContent value="diary-approvals">
-            <CoordinatorDiaryApproval coordinatorId="" collegeId={college.id} />
+            <CollegeDiaryApproval 
+              collegeId={college.id} 
+              collegeName={college.name}
+              onPendingCountChange={setPendingDiaryCount}
+            />
           </TabsContent>
 
           <TabsContent value="coordinators">
