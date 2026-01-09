@@ -5,12 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, ClipboardCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
 import { CollegeStudents } from '@/components/college/CollegeStudents';
 import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
+import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
 import { College } from '@/types/database';
 
 interface CollegeWithStats extends College {
@@ -144,9 +145,10 @@ const CollegeDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="diary-approvals">Diary Approvals</TabsTrigger>
             <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -190,6 +192,10 @@ const CollegeDashboard = () => {
 
           <TabsContent value="students">
             <CollegeStudents collegeId={college.id} viewMode="detailed" />
+          </TabsContent>
+
+          <TabsContent value="diary-approvals">
+            <CoordinatorDiaryApproval coordinatorId="" collegeId={college.id} />
           </TabsContent>
 
           <TabsContent value="coordinators">
