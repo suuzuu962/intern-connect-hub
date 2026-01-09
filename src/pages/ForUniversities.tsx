@@ -102,12 +102,14 @@ const ForUniversities = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="gradient-primary text-primary-foreground">
-                <Link to="/university-auth">
-                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to="/university-auth?role=university&mode=signup">
+                  Register Your University <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/about">Learn More</Link>
+                <Link to="/university-auth?role=university&mode=login">
+                  University Login
+                </Link>
               </Button>
             </div>
           </div>
@@ -233,12 +235,12 @@ const ForUniversities = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="gradient-primary text-primary-foreground">
-                <Link to="/university-auth">
+                <Link to="/university-auth?role=university&mode=signup">
                   Register Your University <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/university-auth">
+                <Link to="/university-auth?role=university&mode=login">
                   Already Registered? Login
                 </Link>
               </Button>
