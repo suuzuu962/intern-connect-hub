@@ -709,6 +709,13 @@ const Auth = () => {
               <div className="mt-6 text-center text-sm">
                 {mode === 'login' ? <p>Don't have an account? <button onClick={() => setMode('signup')} className="text-primary font-medium">Sign up</button></p> : <p>Already have an account? <button onClick={() => setMode('login')} className="text-primary font-medium">Sign in</button></p>}
               </div>
+
+              <div className="mt-4 pt-4 border-t text-center">
+                <p className="text-sm text-muted-foreground mb-2">Are you a University, College or Coordinator?</p>
+                <Link to="/university-auth" className="text-sm text-primary font-medium hover:underline">
+                  Login / Register here →
+                </Link>
+              </div>
             </>}
         </CardContent>
       </Card>
