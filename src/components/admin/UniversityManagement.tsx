@@ -122,7 +122,7 @@ export const UniversityManagement = () => {
         body: {
           email: formData.email,
           password: formData.password,
-          full_name: formData.name,
+          fullName: formData.name,
           role: 'university',
         },
       });
