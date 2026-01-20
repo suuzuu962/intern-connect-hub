@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Briefcase, CheckCircle, Clock, AlertCircle, UserCog } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { InternshipRecommendations } from './InternshipRecommendations';
 
 interface StudentInfo {
   id: string;
@@ -15,6 +16,7 @@ interface StudentInfo {
   university: string | null;
   degree: string | null;
   skills: string[] | null;
+  interested_domains: string[] | null;
 }
 
 interface Application {
@@ -36,18 +38,42 @@ interface StudentOverviewProps {
   onEditProfile: () => void;
 }
 
+interface StudentFullData extends StudentInfo {
+  skills: string[] | null;
+  interested_domains: string[] | null;
+}
+
 export const StudentOverview = ({ student, loading, onEditProfile }: StudentOverviewProps) => {
   const { user } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [loadingApplications, setLoadingApplications] = useState(true);
+  const [studentFullData, setStudentFullData] = useState<StudentFullData | null>(null);
 
   useEffect(() => {
     if (student?.id) {
       fetchApplications();
       calculateProfileCompletion();
+      fetchStudentFullData();
     }
   }, [student]);
+
+  const fetchStudentFullData = async () => {
+    if (!student?.id) return;
+    try {
+      const { data } = await supabase
+        .from('students')
+        .select('id, user_id, university, degree, skills, interested_domains')
+        .eq('id', student.id)
+        .maybeSingle();
+      
+      if (data) {
+        setStudentFullData(data as StudentFullData);
+      }
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -232,6 +258,12 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
           </CardContent>
         </Card>
       </div>
+
+      {/* Internship Recommendations */}
+      <InternshipRecommendations 
+        studentSkills={studentFullData?.skills || student?.skills || null}
+        interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
+      />
 
       {/* Recent Applications */}
       <Card>

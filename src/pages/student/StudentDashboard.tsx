@@ -17,6 +17,7 @@ interface StudentInfo {
   university: string | null;
   degree: string | null;
   skills: string[] | null;
+  interested_domains: string[] | null;
 }
 
 type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'change-password';

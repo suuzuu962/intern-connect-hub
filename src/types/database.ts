@@ -18,6 +18,7 @@ export interface Company {
   user_id: string;
   name: string;
   logo_url: string | null;
+  cover_image_url: string | null;
   industry: string | null;
   location: string | null;
   website: string | null;
