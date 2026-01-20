@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Briefcase, DollarSign, Building2, Send } from 'lucide-react';
+import { MapPin, Clock, Briefcase, IndianRupee, Building2, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -100,8 +100,8 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                   )}
                   {internship.stipend && (
                     <span className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      ₹{internship.stipend.toLocaleString('en-IN')}
+                      <IndianRupee className="h-4 w-4" />
+                      {internship.stipend.toLocaleString('en-IN')}
                     </span>
                   )}
                 </div>
