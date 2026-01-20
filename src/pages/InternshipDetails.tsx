@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ApplyModal } from '@/components/internships/ApplyModal';
+import { cn } from '@/lib/utils';
 import { 
   Building2, MapPin, Clock, Briefcase, DollarSign, Calendar, 
-  Users, ArrowLeft, CheckCircle, Send, Globe
+  Users, ArrowLeft, CheckCircle, Send, Globe, IndianRupee
 } from 'lucide-react';
 
 const workModeLabels = {
@@ -161,10 +162,15 @@ const InternshipDetails = () => {
                         </Link>
                       </div>
                       <Badge
-                        variant={internship.is_paid ? 'default' : 'secondary'}
-                        className={internship.is_paid ? 'gradient-primary border-0 text-base px-4 py-1' : 'text-base px-4 py-1'}
+                        variant="outline"
+                        className={cn(
+                          "border-0 text-base px-4 py-1",
+                          internship.internship_type === 'free' && 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+                          internship.internship_type === 'paid' && 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+                          internship.internship_type === 'stipended' && 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                        )}
                       >
-                        {internship.is_paid ? 'Paid' : 'Unpaid'}
+                        {internshipTypeLabels[internship.internship_type]}
                       </Badge>
                     </div>
                   </div>
@@ -210,9 +216,9 @@ const InternshipDetails = () => {
                   {internship.stipend && (
                     <div className="flex flex-col gap-1">
                       <span className="text-sm text-muted-foreground flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" /> Stipend
+                        <IndianRupee className="h-4 w-4" /> Stipend
                       </span>
-                      <span className="font-medium">${internship.stipend}/month</span>
+                      <span className="font-medium">₹{internship.stipend.toLocaleString('en-IN')}</span>
                     </div>
                   )}
                   {internship.positions_available && (

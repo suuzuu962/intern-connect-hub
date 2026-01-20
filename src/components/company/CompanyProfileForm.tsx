@@ -8,9 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2, Briefcase } from 'lucide-react';
+import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2, Briefcase, X, ImageIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { PhoneInput } from '@/components/ui/phone-input';
+import { internshipDomains, getSuggestedSkills, getAllSkills } from '@/lib/domain-skills';
 
 const domainCategories = [
   'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
@@ -20,12 +23,6 @@ const domainCategories = [
 ];
 
 const internshipModes = ['Remote', 'On-site', 'Hybrid'];
-const internshipDomains = [
-  'Software Development', 'Web Development', 'Mobile Development', 'Data Science',
-  'Machine Learning', 'Cloud Computing', 'DevOps', 'Cybersecurity', 'UI/UX Design',
-  'Digital Marketing', 'Content Writing', 'Business Development', 'Finance',
-  'Human Resources', 'Operations', 'Research', 'Other'
-];
 
 const designationTitles = [
   'CEO', 'CTO', 'CFO', 'COO', 'CMO', 'Director', 'Managing Director',
@@ -68,7 +65,8 @@ interface CompanyData {
   internship_mode: string | null;
   internship_domain: string | null;
   internship_duration: string | null;
-  stipend_offered: string | null;
+  internship_domains: string[] | null;
+  internship_skills: string[] | null;
   certifications: string[] | null;
   awards: string[] | null;
   company_profile_url: string | null;
@@ -86,6 +84,12 @@ export const CompanyProfileForm = () => {
   const [certificationInput, setCertificationInput] = useState('');
   const [awardInput, setAwardInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [skillInput, setSkillInput] = useState('');
+
+  // Get suggested skills based on selected domains
+  const selectedDomains = company?.internship_domains || [];
+  const suggestedSkills = getSuggestedSkills(selectedDomains);
+  const selectedSkills = company?.internship_skills || [];
 
   useEffect(() => {
     if (user) fetchCompany();
@@ -99,9 +103,12 @@ export const CompanyProfileForm = () => {
       .single();
 
     if (data) {
-      setCompany(data as CompanyData);
+      setCompany({
+        ...data,
+        internship_domains: data.internship_domains || [],
+        internship_skills: data.internship_skills || [],
+      } as CompanyData);
     } else if (error?.code === 'PGRST116') {
-      // No company record found - create one
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
@@ -118,7 +125,11 @@ export const CompanyProfileForm = () => {
         .single();
 
       if (newCompany) {
-        setCompany(newCompany as CompanyData);
+        setCompany({
+          ...newCompany,
+          internship_domains: [],
+          internship_skills: [],
+        } as CompanyData);
         toast.info('Company profile created. Please fill in the required details.');
       } else if (createError) {
         console.error('Error creating company:', createError);
@@ -138,7 +149,7 @@ export const CompanyProfileForm = () => {
   };
 
   const handleFileUpload = async (file: File, field: 'logo_url' | 'cover_image_url' | 'company_profile_url' | 'registration_profile_url', isPdf = false) => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error('File size must be less than 5MB');
       return;
@@ -196,6 +207,31 @@ export const CompanyProfileForm = () => {
     const newAwards = [...(company?.awards || [])];
     newAwards.splice(index, 1);
     handleChange('awards', newAwards);
+  };
+
+  const toggleDomain = (domain: string) => {
+    const current = company?.internship_domains || [];
+    if (current.includes(domain)) {
+      handleChange('internship_domains', current.filter(d => d !== domain));
+    } else {
+      handleChange('internship_domains', [...current, domain]);
+    }
+  };
+
+  const toggleSkill = (skill: string) => {
+    const current = company?.internship_skills || [];
+    if (current.includes(skill)) {
+      handleChange('internship_skills', current.filter(s => s !== skill));
+    } else {
+      handleChange('internship_skills', [...current, skill]);
+    }
+  };
+
+  const addCustomSkill = () => {
+    if (skillInput.trim() && !selectedSkills.includes(skillInput.trim())) {
+      handleChange('internship_skills', [...selectedSkills, skillInput.trim()]);
+      setSkillInput('');
+    }
   };
 
   const validateForm = (): boolean => {
@@ -269,14 +305,15 @@ export const CompanyProfileForm = () => {
         internship_mode: company.internship_mode,
         internship_domain: company.internship_domain,
         internship_duration: company.internship_duration,
-        stipend_offered: company.stipend_offered,
+        internship_domains: company.internship_domains,
+        internship_skills: company.internship_skills,
         certifications: company.certifications,
         awards: company.awards,
         company_profile_url: company.company_profile_url,
         registration_profile_url: company.registration_profile_url,
         terms_accepted: company.terms_accepted,
         declaration_accepted: company.declaration_accepted,
-        is_verified: false, // Reset verification status - requires admin re-approval
+        is_verified: false,
       })
       .eq('id', company.id);
 
@@ -387,17 +424,57 @@ export const CompanyProfileForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <Label>Company Logo</Label>
-              {company.logo_url && <img src={company.logo_url} alt="Logo" className="h-20 w-20 object-contain rounded-lg border" />}
+              <div className="border rounded-lg p-4 bg-muted/30">
+                {company.logo_url ? (
+                  <div className="space-y-3">
+                    <img 
+                      src={company.logo_url} 
+                      alt="Company Logo" 
+                      className="h-24 w-24 object-contain rounded-lg border bg-white mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <p className="text-xs text-center text-muted-foreground">Current logo uploaded</p>
+                  </div>
+                ) : (
+                  <div className="h-24 flex items-center justify-center">
+                    <div className="text-center">
+                      <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground mt-1">No logo uploaded</p>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Input type="file" accept="image/*" disabled={uploading === 'logo_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} />
               {uploading === 'logo_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB</p>
             </div>
             <div className="space-y-3">
               <Label>Cover Image</Label>
-              {company.cover_image_url && <img src={company.cover_image_url} alt="Cover" className="h-20 w-full object-cover rounded-lg border" />}
+              <div className="border rounded-lg p-4 bg-muted/30">
+                {company.cover_image_url ? (
+                  <div className="space-y-3">
+                    <img 
+                      src={company.cover_image_url} 
+                      alt="Cover Image" 
+                      className="h-24 w-full object-cover rounded-lg border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <p className="text-xs text-center text-muted-foreground">Current cover image uploaded</p>
+                  </div>
+                ) : (
+                  <div className="h-24 flex items-center justify-center">
+                    <div className="text-center">
+                      <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground mt-1">No cover image uploaded</p>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Input type="file" accept="image/*" disabled={uploading === 'cover_image_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} />
               {uploading === 'cover_image_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB</p>
             </div>
           </div>
         </CardContent>
@@ -446,7 +523,7 @@ export const CompanyProfileForm = () => {
             <Textarea rows={2} value={company.address || ''} onChange={(e) => handleChange('address', e.target.value)} className={errors.address ? 'border-destructive' : ''} />
             {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <RequiredLabel>Country</RequiredLabel>
               <Input value={company.country || ''} onChange={(e) => handleChange('country', e.target.value)} className={errors.country ? 'border-destructive' : ''} />
@@ -489,9 +566,13 @@ export const CompanyProfileForm = () => {
               <Input type="email" value={company.contact_person_email || ''} onChange={(e) => handleChange('contact_person_email', e.target.value)} className={errors.contact_person_email ? 'border-destructive' : ''} />
               {errors.contact_person_email && <p className="text-xs text-destructive">{errors.contact_person_email}</p>}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <RequiredLabel>Phone</RequiredLabel>
-              <Input value={company.contact_person_phone || ''} onChange={(e) => handleChange('contact_person_phone', e.target.value)} className={errors.contact_person_phone ? 'border-destructive' : ''} />
+              <PhoneInput 
+                value={company.contact_person_phone || ''} 
+                onChange={(v) => handleChange('contact_person_phone', v)} 
+                error={!!errors.contact_person_phone}
+              />
               {errors.contact_person_phone && <p className="text-xs text-destructive">{errors.contact_person_phone}</p>}
             </div>
           </div>
@@ -526,7 +607,10 @@ export const CompanyProfileForm = () => {
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input value={company.designation_phone || ''} onChange={(e) => handleChange('designation_phone', e.target.value)} placeholder="Phone number" />
+              <PhoneInput 
+                value={company.designation_phone || ''} 
+                onChange={(v) => handleChange('designation_phone', v)} 
+              />
             </div>
           </div>
         </CardContent>
@@ -550,15 +634,6 @@ export const CompanyProfileForm = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Domain</Label>
-              <Select value={company.internship_domain || ''} onValueChange={(v) => handleChange('internship_domain', v)}>
-                <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
-                <SelectContent>
-                  {internshipDomains.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Duration</Label>
               <Select value={company.internship_duration || ''} onValueChange={(v) => handleChange('internship_duration', v)}>
                 <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
@@ -571,19 +646,74 @@ export const CompanyProfileForm = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Stipend Offered</Label>
-              <Select value={company.stipend_offered || ''} onValueChange={(v) => handleChange('stipend_offered', v)}>
-                <SelectTrigger><SelectValue placeholder="Select stipend range" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="0-5000">₹0 - ₹5,000/month</SelectItem>
-                  <SelectItem value="5000-10000">₹5,000 - ₹10,000/month</SelectItem>
-                  <SelectItem value="10000-20000">₹10,000 - ₹20,000/month</SelectItem>
-                  <SelectItem value="20000-30000">₹20,000 - ₹30,000/month</SelectItem>
-                  <SelectItem value="30000+">₹30,000+/month</SelectItem>
-                </SelectContent>
-              </Select>
+          </div>
+
+          {/* Multi-select Domains */}
+          <div className="space-y-3">
+            <Label>Internship Domains (select multiple)</Label>
+            <div className="flex flex-wrap gap-2">
+              {internshipDomains.map(domain => (
+                <Badge
+                  key={domain}
+                  variant={selectedDomains.includes(domain) ? 'default' : 'outline'}
+                  className={`cursor-pointer transition-colors ${selectedDomains.includes(domain) ? 'bg-primary' : 'hover:bg-muted'}`}
+                  onClick={() => toggleDomain(domain)}
+                >
+                  {domain}
+                  {selectedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Skills based on selected domains */}
+          <div className="space-y-3">
+            <Label>Skills (based on selected domains)</Label>
+            {selectedDomains.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Select domains above to see suggested skills</p>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">Click to add/remove skills</p>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
+                  {suggestedSkills.map(skill => (
+                    <Badge
+                      key={skill}
+                      variant={selectedSkills.includes(skill) ? 'default' : 'outline'}
+                      className={`cursor-pointer transition-colors ${selectedSkills.includes(skill) ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-muted'}`}
+                      onClick={() => toggleSkill(skill)}
+                    >
+                      {skill}
+                      {selectedSkills.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Selected skills display */}
+            {selectedSkills.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm">Selected Skills ({selectedSkills.length})</Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSkills.map(skill => (
+                    <Badge key={skill} variant="secondary" className="gap-1">
+                      {skill}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => toggleSkill(skill)} />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add custom skill */}
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Add custom skill" 
+                value={skillInput} 
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomSkill())}
+              />
+              <Button type="button" variant="outline" onClick={addCustomSkill}>Add</Button>
             </div>
           </div>
         </CardContent>
@@ -598,17 +728,19 @@ export const CompanyProfileForm = () => {
           <div className="space-y-3">
             <Label>Certifications</Label>
             <div className="flex gap-2">
-              <Input value={certificationInput} onChange={(e) => setCertificationInput(e.target.value)} placeholder="Add certification" onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())} />
-              <Button type="button" onClick={addCertification} variant="outline">Add</Button>
+              <Input placeholder="Add certification" value={certificationInput} onChange={(e) => setCertificationInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())} />
+              <Button type="button" variant="outline" onClick={addCertification}>Add</Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {company.certifications?.map((cert, i) => (
-                <span key={i} className="px-3 py-1 bg-secondary rounded-full text-sm flex items-center gap-2">
-                  {cert}
-                  <button onClick={() => removeCertification(i)} className="text-muted-foreground hover:text-foreground">&times;</button>
-                </span>
-              ))}
-            </div>
+            {company.certifications && company.certifications.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {company.certifications.map((cert, i) => (
+                  <Badge key={i} variant="secondary" className="gap-1">
+                    {cert}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeCertification(i)} />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -616,37 +748,48 @@ export const CompanyProfileForm = () => {
           <div className="space-y-3">
             <Label>Awards & Recognitions</Label>
             <div className="flex gap-2">
-              <Input value={awardInput} onChange={(e) => setAwardInput(e.target.value)} placeholder="Add award" onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAward())} />
-              <Button type="button" onClick={addAward} variant="outline">Add</Button>
+              <Input placeholder="Add award" value={awardInput} onChange={(e) => setAwardInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAward())} />
+              <Button type="button" variant="outline" onClick={addAward}>Add</Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {company.awards?.map((award, i) => (
-                <span key={i} className="px-3 py-1 bg-secondary rounded-full text-sm flex items-center gap-2">
-                  {award}
-                  <button onClick={() => removeAward(i)} className="text-muted-foreground hover:text-foreground">&times;</button>
-                </span>
-              ))}
-            </div>
+            {company.awards && company.awards.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {company.awards.map((award, i) => (
+                  <Badge key={i} variant="secondary" className="gap-1">
+                    {award}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeAward(i)} />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
+        </CardContent>
+      </Card>
 
-          <Separator />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Required Documents</CardTitle>
+          <CardDescription>Upload company documents (PDF only, max 5MB each)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <RequiredLabel>Company Profile Document (PDF only)</RequiredLabel>
-              {company.company_profile_url && <a href={company.company_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
+              <RequiredLabel>Company Profile PDF</RequiredLabel>
+              {company.company_profile_url && (
+                <a href={company.company_profile_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block">View uploaded document</a>
+              )}
               <Input type="file" accept=".pdf" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url', true)} className={errors.company_profile_url ? 'border-destructive' : ''} />
               {uploading === 'company_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
               {errors.company_profile_url && <p className="text-xs text-destructive">{errors.company_profile_url}</p>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
             <div className="space-y-3">
-              <RequiredLabel>Registration Proof (PDF only)</RequiredLabel>
-              {company.registration_profile_url && <a href={company.registration_profile_url} target="_blank" className="text-primary underline text-sm block">View uploaded file</a>}
+              <RequiredLabel>Registration Proof PDF</RequiredLabel>
+              {company.registration_profile_url && (
+                <a href={company.registration_profile_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block">View uploaded document</a>
+              )}
               <Input type="file" accept=".pdf" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url', true)} className={errors.registration_profile_url ? 'border-destructive' : ''} />
               {uploading === 'registration_profile_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
               {errors.registration_profile_url && <p className="text-xs text-destructive">{errors.registration_profile_url}</p>}
-              <p className="text-xs text-muted-foreground">Max file size: 5MB (PDF only)</p>
             </div>
           </div>
         </CardContent>
@@ -655,34 +798,32 @@ export const CompanyProfileForm = () => {
       {/* Declaration */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Declaration & Terms</CardTitle>
+          <CardTitle>Declaration & Terms</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-start gap-3">
-            <Checkbox checked={company.terms_accepted || false} onCheckedChange={(checked) => handleChange('terms_accepted', checked)} id="terms" />
-            <div>
-              <label htmlFor="terms" className="text-sm cursor-pointer">
-                I accept the <a href="#" className="text-primary underline">Terms & Conditions</a> and agree to abide by the platform policies. <span className="text-destructive">*</span>
-              </label>
-              {errors.terms_accepted && <p className="text-xs text-destructive mt-1">{errors.terms_accepted}</p>}
-            </div>
+            <Checkbox id="terms" checked={company.terms_accepted || false} onCheckedChange={(checked) => handleChange('terms_accepted', checked)} className={errors.terms_accepted ? 'border-destructive' : ''} />
+            <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
+              I accept the Terms & Conditions and Privacy Policy of the platform. I understand that my company profile will be reviewed before approval.
+            </label>
           </div>
+          {errors.terms_accepted && <p className="text-xs text-destructive">{errors.terms_accepted}</p>}
+
           <div className="flex items-start gap-3">
-            <Checkbox checked={company.declaration_accepted || false} onCheckedChange={(checked) => handleChange('declaration_accepted', checked)} id="declaration" />
-            <div>
-              <label htmlFor="declaration" className="text-sm cursor-pointer">
-                I declare that all information provided is accurate and complete to the best of my knowledge. <span className="text-destructive">*</span>
-              </label>
-              {errors.declaration_accepted && <p className="text-xs text-destructive mt-1">{errors.declaration_accepted}</p>}
-            </div>
+            <Checkbox id="declaration" checked={company.declaration_accepted || false} onCheckedChange={(checked) => handleChange('declaration_accepted', checked)} className={errors.declaration_accepted ? 'border-destructive' : ''} />
+            <label htmlFor="declaration" className="text-sm leading-relaxed cursor-pointer">
+              I declare that all the information provided above is true and accurate to the best of my knowledge. I understand that providing false information may result in account suspension.
+            </label>
           </div>
+          {errors.declaration_accepted && <p className="text-xs text-destructive">{errors.declaration_accepted}</p>}
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-4 pb-8">
-        <Button variant="outline" onClick={fetchCompany}>Cancel</Button>
+      {/* Submit */}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" disabled={saving}>Cancel</Button>
         <Button onClick={handleSubmit} disabled={saving} className="gradient-primary border-0">
-          {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</> : 'Submit for Approval'}
+          {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Profile'}
         </Button>
       </div>
     </div>
