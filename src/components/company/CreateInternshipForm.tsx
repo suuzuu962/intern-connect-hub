@@ -40,6 +40,7 @@ interface FormData {
   state: string;
   pincode: string;
   stipend: number | null;
+  fees: number | null;
   is_paid: boolean;
   positions_available: number;
 }
@@ -62,6 +63,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     state: '',
     pincode: '',
     stipend: null,
+    fees: null,
     is_paid: false,
     positions_available: 1,
   });
@@ -125,6 +127,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       skills: formData.skills,
       location: locationString || null,
       stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
+      fees: formData.internship_type === 'paid' ? formData.fees : null,
       is_paid: formData.internship_type === 'paid' || formData.internship_type === 'stipended',
       positions_available: formData.positions_available,
       is_active: true,
@@ -218,6 +221,20 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
               </Select>
             </div>
 
+            {formData.internship_type === 'paid' && (
+              <div className="space-y-2">
+                <Label>Fees Amount (₹)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={formData.fees || ''}
+                  onChange={(e) => handleChange('fees', parseInt(e.target.value) || null)}
+                  placeholder="e.g., 5000"
+                />
+                <p className="text-xs text-muted-foreground">Amount students will pay for this internship</p>
+              </div>
+            )}
+
             {formData.internship_type === 'stipended' && (
               <div className="space-y-2">
                 <Label>Monthly Stipend (₹)</Label>
@@ -228,6 +245,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                   onChange={(e) => handleChange('stipend', parseInt(e.target.value) || null)}
                   placeholder="e.g., 10000"
                 />
+                <p className="text-xs text-muted-foreground">Amount you'll pay to interns monthly</p>
               </div>
             )}
 
