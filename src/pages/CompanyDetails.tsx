@@ -15,6 +15,8 @@ const CompanyDetails = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [internships, setInternships] = useState<Internship[]>([]);
   const [loading, setLoading] = useState(true);
+  const [coverImageError, setCoverImageError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -24,6 +26,8 @@ const CompanyDetails = () => {
 
   const fetchCompanyDetails = async () => {
     setLoading(true);
+    setCoverImageError(false);
+    setLogoError(false);
     
     // Fetch company details
     const { data: companyData, error: companyError } = await supabase
@@ -31,7 +35,7 @@ const CompanyDetails = () => {
       .select('*')
       .eq('id', id)
       .eq('is_verified', true)
-      .single();
+      .maybeSingle();
 
     if (!companyError && companyData) {
       setCompany(companyData as Company);
@@ -90,17 +94,31 @@ const CompanyDetails = () => {
           Back to Companies
         </Link>
 
+        {/* Cover Image */}
+        {company.cover_image_url && !coverImageError && (
+          <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden mb-8">
+            <img
+              src={company.cover_image_url}
+              alt={`${company.name} cover`}
+              className="w-full h-full object-cover"
+              onError={() => setCoverImageError(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+          </div>
+        )}
+
         {/* Company Header */}
         <Card className="mb-8">
           <CardContent className="p-8">
             <div className="flex flex-col md:flex-row items-start gap-6">
               {/* Logo */}
-              <div className="h-24 w-24 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                {company.logo_url ? (
+              <div className="h-24 w-24 rounded-xl bg-muted flex items-center justify-center shrink-0 border border-border overflow-hidden">
+                {company.logo_url && !logoError ? (
                   <img
                     src={company.logo_url}
                     alt={company.name}
-                    className="h-full w-full object-cover rounded-xl"
+                    className="h-full w-full object-cover"
+                    onError={() => setLogoError(true)}
                   />
                 ) : (
                   <Building2 className="h-12 w-12 text-muted-foreground" />
