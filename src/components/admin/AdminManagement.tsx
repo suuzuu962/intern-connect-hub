@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Shield, Plus, User, Mail, Calendar, Loader2, Trash2, Pencil, Key, ShieldCheck, ShieldAlert, QrCode } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 interface AdminUser {
   id: string;
@@ -632,12 +633,9 @@ export const AdminManagement = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+91 1234567890"
+                    <PhoneInput
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(v) => setFormData({ ...formData, phone: v })}
                     />
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
@@ -785,12 +783,9 @@ export const AdminManagement = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="editPhone">Phone Number</Label>
-              <Input
-                id="editPhone"
-                type="tel"
-                placeholder="+91 1234567890"
+              <PhoneInput
                 value={editFormData.phone}
-                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                onChange={(v) => setEditFormData({ ...editFormData, phone: v })}
               />
             </div>
             <div className="flex gap-2">

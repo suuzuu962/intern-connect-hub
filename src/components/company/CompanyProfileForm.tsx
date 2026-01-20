@@ -103,10 +103,12 @@ export const CompanyProfileForm = () => {
       .single();
 
     if (data) {
+      // Handle both old and new column names for backwards compatibility
+      const companyData = data as any;
       setCompany({
-        ...data,
-        internship_domains: data.internship_domains || [],
-        internship_skills: data.internship_skills || [],
+        ...companyData,
+        internship_domains: companyData.internship_domains || [],
+        internship_skills: companyData.internship_skills || [],
       } as CompanyData);
     } else if (error?.code === 'PGRST116') {
       const { data: profile } = await supabase
@@ -305,8 +307,8 @@ export const CompanyProfileForm = () => {
         internship_mode: company.internship_mode,
         internship_domain: company.internship_domain,
         internship_duration: company.internship_duration,
-        internship_domains: company.internship_domains,
-        internship_skills: company.internship_skills,
+        internship_domains: company.internship_domains || [],
+        internship_skills: company.internship_skills || [],
         certifications: company.certifications,
         awards: company.awards,
         company_profile_url: company.company_profile_url,

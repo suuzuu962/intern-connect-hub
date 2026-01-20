@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building, Users, Phone, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Building, Users, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
@@ -845,17 +846,10 @@ const UniversityAuth = () => {
                   {mode === 'signup' && (
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="+91 98765 43210"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
+                      <PhoneInput
+                        value={phoneNumber}
+                        onChange={setPhoneNumber}
+                      />
                     </div>
                   )}
 

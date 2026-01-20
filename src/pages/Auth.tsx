@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building2, GraduationCap, Phone, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Building2, GraduationCap, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -675,10 +676,7 @@ const Auth = () => {
                     </div>
                     <div>
                       <Label>Phone Number <span className="text-destructive">*</span></Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+91 9876543210" className="pl-10" />
-                      </div>
+                      <PhoneInput value={phoneNumber} onChange={setPhoneNumber} />
                     </div>
                   </>}
                 <div>

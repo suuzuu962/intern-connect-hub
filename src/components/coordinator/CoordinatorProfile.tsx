@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, Phone, Mail, MapPin, Briefcase, School } from 'lucide-react';
+import { Loader2, User, Mail, MapPin, Briefcase, School } from 'lucide-react';
 import { CollegeCoordinator } from '@/types/database';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 interface CoordinatorProfileProps {
   coordinator: CollegeCoordinator;
@@ -107,15 +108,10 @@ export const CoordinatorProfile = ({ coordinator, onUpdate }: CoordinatorProfile
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <PhoneInput
+                value={formData.phone}
+                onChange={(v) => handleChange('phone', v)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="designation">Designation</Label>

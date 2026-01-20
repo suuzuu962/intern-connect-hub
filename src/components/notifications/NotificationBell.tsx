@@ -174,9 +174,9 @@ export const NotificationBell = () => {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                    !notification.is_read ? 'bg-primary/5' : ''
-                  } ${notification.link ? 'hover:bg-primary/10' : ''}`}
+                  className={`p-4 cursor-pointer transition-all hover:bg-muted/50 ${
+                    !notification.is_read ? 'bg-primary/5 border-l-2 border-l-primary' : ''
+                  } ${notification.link ? 'hover:bg-primary/10 hover:translate-x-1' : ''}`}
                 >
                 <div className="flex items-start gap-3">
                     {(() => {
@@ -194,7 +194,12 @@ export const NotificationBell = () => {
                       }
                     })()}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{notification.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate">{notification.title}</p>
+                        {notification.link && (
+                          <span className="text-xs text-primary">→</span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {notification.message}
                       </p>
