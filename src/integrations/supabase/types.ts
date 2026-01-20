@@ -208,8 +208,10 @@ export type Database = {
           industry: string | null
           instagram_url: string | null
           internship_domain: string | null
+          internship_domains: string[] | null
           internship_duration: string | null
           internship_mode: string | null
+          internship_skills: string[] | null
           is_verified: boolean | null
           linkedin_url: string | null
           location: string | null
@@ -256,8 +258,10 @@ export type Database = {
           industry?: string | null
           instagram_url?: string | null
           internship_domain?: string | null
+          internship_domains?: string[] | null
           internship_duration?: string | null
           internship_mode?: string | null
+          internship_skills?: string[] | null
           is_verified?: boolean | null
           linkedin_url?: string | null
           location?: string | null
@@ -304,8 +308,10 @@ export type Database = {
           industry?: string | null
           instagram_url?: string | null
           internship_domain?: string | null
+          internship_domains?: string[] | null
           internship_duration?: string | null
           internship_mode?: string | null
+          internship_skills?: string[] | null
           is_verified?: boolean | null
           linkedin_url?: string | null
           location?: string | null

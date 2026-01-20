@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle } from 'lucide-react';
 import { StudentProfileView } from './StudentProfileView';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const SKILL_OPTIONS = [
   'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue.js', 'Node.js', 'Python', 'Java',
@@ -499,11 +500,9 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="phoneNumber">Phone Number *</Label>
-            <Input
-              id="phoneNumber"
+            <PhoneInput
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
+              onChange={setPhoneNumber}
             />
           </div>
           <div className="space-y-2">
