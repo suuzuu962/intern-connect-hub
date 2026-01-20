@@ -26,6 +26,12 @@ const internshipTypeLabels = {
   stipended: 'Stipended',
 };
 
+const internshipTypeBadgeStyles = {
+  free: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  paid: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  stipended: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+};
+
 export const InternshipCard = ({ internship, className }: InternshipCardProps) => {
   const { user, role } = useAuth();
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -67,10 +73,10 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                     </p>
                   </div>
                   <Badge
-                    variant={internship.is_paid ? 'default' : 'secondary'}
-                    className={internship.is_paid ? 'gradient-primary border-0' : ''}
+                    variant="outline"
+                    className={cn("border-0", internshipTypeBadgeStyles[internship.internship_type])}
                   >
-                    {internship.is_paid ? 'Paid' : 'Unpaid'}
+                    {internshipTypeLabels[internship.internship_type]}
                   </Badge>
                 </div>
 
@@ -95,7 +101,7 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                   {internship.stipend && (
                     <span className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      ${internship.stipend}/month
+                      ₹{internship.stipend.toLocaleString('en-IN')}
                     </span>
                   )}
                 </div>
