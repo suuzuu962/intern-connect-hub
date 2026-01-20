@@ -98,10 +98,16 @@ export const InternshipCard = ({ internship, className }: InternshipCardProps) =
                       {internship.duration}
                     </span>
                   )}
-                  {internship.stipend && (
-                    <span className="flex items-center gap-1">
+                  {internship.internship_type === 'stipended' && internship.stipend && (
+                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                       <IndianRupee className="h-4 w-4" />
-                      {internship.stipend.toLocaleString('en-IN')}
+                      {internship.stipend.toLocaleString('en-IN')} stipend
+                    </span>
+                  )}
+                  {internship.internship_type === 'paid' && internship.fees && (
+                    <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+                      <IndianRupee className="h-4 w-4" />
+                      {internship.fees.toLocaleString('en-IN')} fees
                     </span>
                   )}
                 </div>

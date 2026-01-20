@@ -213,12 +213,24 @@ const InternshipDetails = () => {
                       <span className="font-medium">{internship.duration}</span>
                     </div>
                   )}
-                  {internship.stipend && (
+                  {internship.internship_type === 'stipended' && internship.stipend && (
                     <div className="flex flex-col gap-1">
                       <span className="text-sm text-muted-foreground flex items-center gap-2">
                         <IndianRupee className="h-4 w-4" /> Stipend
                       </span>
-                      <span className="font-medium">₹{internship.stipend.toLocaleString('en-IN')}</span>
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        ₹{internship.stipend.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  )}
+                  {internship.internship_type === 'paid' && internship.fees && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground flex items-center gap-2">
+                        <IndianRupee className="h-4 w-4" /> Fees
+                      </span>
+                      <span className="font-medium text-orange-600 dark:text-orange-400">
+                        ₹{internship.fees.toLocaleString('en-IN')}
+                      </span>
                     </div>
                   )}
                   {internship.positions_available && (

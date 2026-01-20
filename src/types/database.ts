@@ -81,8 +81,8 @@ export interface Internship {
   work_mode: WorkMode;
   duration: string | null;
   stipend: number | null;
-  is_paid: boolean;
   fees: number | null;
+  is_paid: boolean;
   start_date: string | null;
   application_deadline: string | null;
   positions_available: number;
