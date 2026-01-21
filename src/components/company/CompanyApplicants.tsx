@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'rejected' | 'withdrawn';
+type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'offer_accepted' | 'rejected' | 'withdrawn';
 
 interface Application {
   id: string;
@@ -62,6 +62,7 @@ const STATUS_OPTIONS: { value: ApplicationStatus; label: string; color: string }
   { value: 'under_review', label: 'Under Review', color: 'bg-yellow-500' },
   { value: 'shortlisted', label: 'Shortlisted', color: 'bg-purple-500' },
   { value: 'offer_released', label: 'Offer Released', color: 'bg-green-500' },
+  { value: 'offer_accepted', label: 'Offer Accepted', color: 'bg-emerald-600' },
   { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
 ];
 
@@ -348,6 +349,7 @@ export const CompanyApplicants = ({ companyId }: Props) => {
   const underReviewCount = applications.filter(a => a.status === 'under_review').length;
   const shortlistedCount = applications.filter(a => a.status === 'shortlisted').length;
   const offerReleasedCount = applications.filter(a => a.status === 'offer_released').length;
+  const offerAcceptedCount = applications.filter(a => a.status === 'offer_accepted').length;
   const rejectedCount = applications.filter(a => a.status === 'rejected').length;
 
   const statusBadge = (status: string) => {
@@ -356,6 +358,7 @@ export const CompanyApplicants = ({ companyId }: Props) => {
       under_review: { className: 'bg-yellow-500/10 text-yellow-500', icon: FileSearch, label: 'Under Review' },
       shortlisted: { className: 'bg-purple-500/10 text-purple-500', icon: ThumbsUp, label: 'Shortlisted' },
       offer_released: { className: 'bg-green-500/10 text-green-500', icon: Check, label: 'Offer Released' },
+      offer_accepted: { className: 'bg-emerald-600/10 text-emerald-600', icon: Check, label: 'Offer Accepted' },
       rejected: { className: 'bg-red-500/10 text-red-500', icon: X, label: 'Rejected' },
       withdrawn: { className: 'bg-gray-500/10 text-gray-500', icon: X, label: 'Withdrawn' },
     };
@@ -371,7 +374,8 @@ export const CompanyApplicants = ({ companyId }: Props) => {
   const getAvailableStatusOptions = (currentStatus: ApplicationStatus) => {
     if (currentStatus === 'rejected') return [];
     if (currentStatus === 'withdrawn') return [];
-    return STATUS_OPTIONS.filter(opt => opt.value !== currentStatus);
+    if (currentStatus === 'offer_accepted') return []; // Cannot change status after student accepts
+    return STATUS_OPTIONS.filter(opt => opt.value !== currentStatus && opt.value !== 'offer_accepted');
   };
 
   if (loading) {
@@ -388,6 +392,7 @@ export const CompanyApplicants = ({ companyId }: Props) => {
             <span>{underReviewCount} under review</span>
             <span>{shortlistedCount} shortlisted</span>
             <span>{offerReleasedCount} offers</span>
+            <span className="text-emerald-600 font-medium">{offerAcceptedCount} accepted</span>
             <span>{rejectedCount} rejected</span>
           </div>
         </div>
@@ -447,19 +452,20 @@ export const CompanyApplicants = ({ companyId }: Props) => {
           <TabsTrigger value="under_review">Under Review ({underReviewCount})</TabsTrigger>
           <TabsTrigger value="shortlisted">Shortlisted ({shortlistedCount})</TabsTrigger>
           <TabsTrigger value="offer_released">Offers ({offerReleasedCount})</TabsTrigger>
+          <TabsTrigger value="offer_accepted">Accepted ({offerAcceptedCount})</TabsTrigger>
           <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
-        {['applied', 'under_review', 'shortlisted', 'offer_released', 'rejected', 'all'].map((tab) => {
+        {['applied', 'under_review', 'shortlisted', 'offer_released', 'offer_accepted', 'rejected', 'all'].map((tab) => {
           const tabApplications = filteredApplications.filter(a => tab === 'all' || a.status === tab);
-          const selectableApplications = tabApplications.filter(a => a.status !== 'rejected' && a.status !== 'withdrawn');
+          const selectableApplications = tabApplications.filter(a => a.status !== 'rejected' && a.status !== 'withdrawn' && a.status !== 'offer_accepted');
           const allSelected = selectableApplications.length > 0 && selectableApplications.every(a => selectedIds.has(a.id));
 
           return (
             <TabsContent key={tab} value={tab} className="space-y-4">
               {/* Select All for Tab */}
-              {tabApplications.length > 0 && tab !== 'rejected' && (
+              {tabApplications.length > 0 && tab !== 'rejected' && tab !== 'offer_accepted' && (
                 <div className="flex items-center gap-3 px-2">
                   <Checkbox
                     checked={allSelected}
