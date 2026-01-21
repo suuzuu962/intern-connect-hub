@@ -85,7 +85,7 @@ export const InternshipDiary = ({ studentId }: InternshipDiaryProps) => {
           )
         `)
         .eq('student_id', studentId)
-        .eq('status', 'offer_released');
+        .eq('status', 'offer_accepted');
 
       if (data) {
         const formatted = data.map((app: any) => ({
