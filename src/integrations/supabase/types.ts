@@ -832,6 +832,7 @@ export type Database = {
         | "offer_released"
         | "rejected"
         | "withdrawn"
+        | "offer_accepted"
       internship_type: "free" | "paid" | "stipended"
       work_mode: "remote" | "onsite" | "hybrid"
     }
@@ -975,6 +976,7 @@ export const Constants = {
         "offer_released",
         "rejected",
         "withdrawn",
+        "offer_accepted",
       ],
       internship_type: ["free", "paid", "stipended"],
       work_mode: ["remote", "onsite", "hybrid"],

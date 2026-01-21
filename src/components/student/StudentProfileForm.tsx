@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,22 +9,26 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle } from 'lucide-react';
+import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles } from 'lucide-react';
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { departmentSkillsMap, getSuggestedSkillsForDepartment, getSuggestedDomainsForDepartment } from '@/lib/department-skills';
 
-const SKILL_OPTIONS = [
+const ALL_SKILL_OPTIONS = [
   'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue.js', 'Node.js', 'Python', 'Java',
   'C++', 'C#', '.NET', 'SQL', 'MongoDB', 'PostgreSQL', 'AWS', 'Azure', 'Docker',
   'Kubernetes', 'Git', 'Machine Learning', 'Data Science', 'UI/UX Design', 'Figma',
-  'Adobe XD', 'Communication', 'Problem Solving', 'Team Work', 'Leadership'
+  'Adobe XD', 'Communication', 'Problem Solving', 'Team Work', 'Leadership', 'TensorFlow',
+  'PyTorch', 'MATLAB', 'AutoCAD', 'SolidWorks', 'Excel', 'Tally', 'R', 'Statistics',
+  'Embedded Systems', 'IoT', 'Linux', 'Networking', 'NLP', 'Computer Vision', 'Deep Learning'
 ];
 
-const DOMAIN_OPTIONS = [
+const ALL_DOMAIN_OPTIONS = [
   'Web Development', 'Mobile Development', 'Data Science', 'Machine Learning',
   'Artificial Intelligence', 'Cloud Computing', 'DevOps', 'Cybersecurity',
   'UI/UX Design', 'Product Management', 'Digital Marketing', 'Content Writing',
-  'Finance', 'Human Resources', 'Business Development', 'Research & Development'
+  'Finance', 'Human Resources', 'Business Development', 'Research & Development',
+  'Software Development', 'Operations', 'Research', 'Other'
 ];
 
 const DEPARTMENT_OPTIONS = [
@@ -667,36 +671,94 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label>Skills (Select all that apply)</Label>
-            <div className="flex flex-wrap gap-2">
-              {SKILL_OPTIONS.map((skill) => (
-                <Badge
-                  key={skill}
-                  variant={skills.includes(skill) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleSkill(skill)}
-                >
-                  {skill}
-                  {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between">
+              <Label>Skills (Select all that apply)</Label>
+              {department && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Suggested for {department}
+                </span>
+              )}
+            </div>
+            {department && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Recommended skills for your department:</p>
+                <div className="flex flex-wrap gap-2">
+                  {getSuggestedSkillsForDepartment(department).map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant={skills.includes(skill) ? "default" : "secondary"}
+                      className="cursor-pointer transition-colors"
+                      onClick={() => toggleSkill(skill)}
+                    >
+                      {skill}
+                      {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              {department && <p className="text-xs text-muted-foreground">Other skills:</p>}
+              <div className="flex flex-wrap gap-2">
+                {ALL_SKILL_OPTIONS.filter(skill => !department || !getSuggestedSkillsForDepartment(department).includes(skill)).map((skill) => (
+                  <Badge
+                    key={skill}
+                    variant={skills.includes(skill) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleSkill(skill)}
+                  >
+                    {skill}
+                    {skills.includes(skill) && <X className="h-3 w-3 ml-1" />}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <Label>Interested Domains</Label>
-            <div className="flex flex-wrap gap-2">
-              {DOMAIN_OPTIONS.map((domain) => (
-                <Badge
-                  key={domain}
-                  variant={interestedDomains.includes(domain) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleDomain(domain)}
-                >
-                  {domain}
-                  {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between">
+              <Label>Interested Domains</Label>
+              {department && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Suggested for {department}
+                </span>
+              )}
+            </div>
+            {department && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Recommended domains for your department:</p>
+                <div className="flex flex-wrap gap-2">
+                  {getSuggestedDomainsForDepartment(department).map((domain) => (
+                    <Badge
+                      key={domain}
+                      variant={interestedDomains.includes(domain) ? "default" : "secondary"}
+                      className="cursor-pointer transition-colors"
+                      onClick={() => toggleDomain(domain)}
+                    >
+                      {domain}
+                      {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              {department && <p className="text-xs text-muted-foreground">Other domains:</p>}
+              <div className="flex flex-wrap gap-2">
+                {ALL_DOMAIN_OPTIONS.filter(domain => !department || !getSuggestedDomainsForDepartment(department).includes(domain)).map((domain) => (
+                  <Badge
+                    key={domain}
+                    variant={interestedDomains.includes(domain) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleDomain(domain)}
+                  >
+                    {domain}
+                    {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
