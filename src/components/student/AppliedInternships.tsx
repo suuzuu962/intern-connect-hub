@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -15,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard, MapPin, IndianRupee, ExternalLink, Undo2 } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard, MapPin, IndianRupee, ExternalLink, Undo2, BookOpen, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -42,9 +43,10 @@ interface Application {
 
 interface AppliedInternshipsProps {
   studentId: string | null;
+  onNavigateToDiary?: () => void;
 }
 
-export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
+export const AppliedInternships = ({ studentId, onNavigateToDiary }: AppliedInternshipsProps) => {
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -341,8 +343,40 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
-            <Card key={app.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={app.id} 
+              className={cn(
+                "hover:shadow-md transition-shadow",
+                app.status === 'offer_accepted' && "border-green-500/50 bg-green-500/5"
+              )}
+            >
               <CardContent className="p-4">
+                {/* Accepted Internship Banner */}
+                {app.status === 'offer_accepted' && (
+                  <div className="mb-4 pb-4 border-b border-green-500/30">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                        <CheckCheck className="h-5 w-5" />
+                        <span className="font-semibold">Internship Confirmed!</span>
+                      </div>
+                      {onNavigateToDiary && (
+                        <Button 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigateToDiary();
+                          }}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          Go to Internship Diary
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div 
                     className="flex items-start gap-4 flex-1 cursor-pointer group"
@@ -366,7 +400,16 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                         </h3>
                         <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <p className="text-muted-foreground">{app.internship.company.name}</p>
+                      <p className={cn(
+                        "text-muted-foreground",
+                        app.status === 'offer_accepted' && "text-green-600 dark:text-green-400 font-medium"
+                      )}>
+                        <Building2 className={cn(
+                          "h-4 w-4 inline-block mr-1",
+                          app.status === 'offer_accepted' ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                        )} />
+                        {app.internship.company.name}
+                      </p>
                       
                       {/* Internship Details */}
                       <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">

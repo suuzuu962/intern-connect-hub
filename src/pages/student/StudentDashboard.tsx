@@ -81,7 +81,7 @@ const StudentDashboard = () => {
       case 'profile':
         return <StudentProfileForm onSuccess={fetchStudentData} />;
       case 'applied':
-        return <AppliedInternships studentId={student?.id || null} />;
+        return <AppliedInternships studentId={student?.id || null} onNavigateToDiary={() => setActiveSection('diary')} />;
       case 'diary':
         return <InternshipDiary studentId={student?.id || null} />;
       case 'change-password':
