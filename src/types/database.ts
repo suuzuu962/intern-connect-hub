@@ -1,7 +1,7 @@
 export type AppRole = 'admin' | 'company' | 'student' | 'university' | 'college_coordinator';
 export type InternshipType = 'free' | 'paid' | 'stipended';
 export type WorkMode = 'remote' | 'onsite' | 'hybrid';
-export type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'rejected' | 'withdrawn';
+export type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'offer_accepted' | 'rejected' | 'withdrawn';
 
 export interface Profile {
   id: string;

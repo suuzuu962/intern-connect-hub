@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Application {
   id: string;
@@ -29,12 +31,33 @@ interface AppliedInternshipsProps {
 export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (studentId) {
       fetchApplications();
     }
   }, [studentId]);
+
+  const handleAcceptOffer = async (applicationId: string) => {
+    setAcceptingId(applicationId);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: 'offer_accepted' })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast.success('Congratulations! You have accepted the offer!');
+      fetchApplications();
+    } catch (error) {
+      console.error('Error accepting offer:', error);
+      toast.error('Failed to accept offer. Please try again.');
+    } finally {
+      setAcceptingId(null);
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -84,6 +107,7 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const underReviewCount = applications.filter(app => app.status === 'under_review').length;
   const shortlistedCount = applications.filter(app => app.status === 'shortlisted').length;
   const offerReleasedCount = applications.filter(app => app.status === 'offer_released').length;
+  const offerAcceptedCount = applications.filter(app => app.status === 'offer_accepted').length;
   const rejectedCount = applications.filter(app => app.status === 'rejected').length;
 
   const getStatusBadge = (status: string) => {
@@ -111,9 +135,16 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
         );
       case 'offer_released':
         return (
-          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
+          <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 animate-pulse">
             <CheckCircle className="h-3 w-3 mr-1" />
             Offer Released
+          </Badge>
+        );
+      case 'offer_accepted':
+        return (
+          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
+            <CheckCheck className="h-3 w-3 mr-1" />
+            Offer Accepted
           </Badge>
         );
       case 'rejected':
@@ -161,11 +192,22 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
       </div>
 
       {offerReleasedCount > 0 && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="p-4">
+            <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              You have {offerReleasedCount} offer{offerReleasedCount > 1 ? 's' : ''} waiting for your response! Accept below to confirm.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {offerAcceptedCount > 0 && (
         <Card className="border-green-500/50 bg-green-500/5">
           <CardContent className="p-4">
             <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Congratulations! You have {offerReleasedCount} offer{offerReleasedCount > 1 ? 's' : ''} released!
+              <CheckCheck className="h-4 w-4" />
+              Congratulations! You have accepted {offerAcceptedCount} offer{offerAcceptedCount > 1 ? 's' : ''}!
             </p>
           </CardContent>
         </Card>
@@ -196,8 +238,12 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
           {shortlistedCount} Shortlisted
         </span>
         <span className="flex items-center gap-1">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          {offerReleasedCount} Offers
+          <CheckCircle className="h-4 w-4 text-amber-500" />
+          {offerReleasedCount} Pending
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCheck className="h-4 w-4 text-green-500" />
+          {offerAcceptedCount} Accepted
         </span>
         <span className="flex items-center gap-1">
           <XCircle className="h-4 w-4 text-red-500" />
@@ -256,6 +302,26 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     {getStatusBadge(app.status)}
+                    {app.status === 'offer_released' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAcceptOffer(app.id)}
+                        disabled={acceptingId === app.id}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {acceptingId === app.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Accepting...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCheck className="h-4 w-4 mr-1" />
+                            Accept Offer
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
