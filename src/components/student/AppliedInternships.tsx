@@ -41,6 +41,10 @@ interface Application {
   };
 }
 
+interface DiaryEntryCounts {
+  [applicationId: string]: number;
+}
+
 interface AppliedInternshipsProps {
   studentId: string | null;
   onNavigateToDiary?: () => void;
@@ -52,6 +56,7 @@ export const AppliedInternships = ({ studentId, onNavigateToDiary }: AppliedInte
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [diaryEntryCounts, setDiaryEntryCounts] = useState<DiaryEntryCounts>({});
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     application: Application | null;
@@ -63,6 +68,28 @@ export const AppliedInternships = ({ studentId, onNavigateToDiary }: AppliedInte
       fetchApplications();
     }
   }, [studentId]);
+
+  // Fetch diary entry counts for accepted applications
+  const fetchDiaryEntryCounts = async (acceptedApplicationIds: string[]) => {
+    if (acceptedApplicationIds.length === 0) return;
+    
+    try {
+      const { data } = await supabase
+        .from('internship_diary')
+        .select('application_id')
+        .in('application_id', acceptedApplicationIds);
+      
+      if (data) {
+        const counts: DiaryEntryCounts = {};
+        acceptedApplicationIds.forEach(id => {
+          counts[id] = data.filter(entry => entry.application_id === id).length;
+        });
+        setDiaryEntryCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error fetching diary entry counts:', error);
+    }
+  };
 
   const openConfirmDialog = (application: Application, type: 'accept' | 'withdraw') => {
     setConfirmDialog({ open: true, application, type });
@@ -172,6 +199,12 @@ export const AppliedInternships = ({ studentId, onNavigateToDiary }: AppliedInte
           },
         }));
         setApplications(formatted);
+        
+        // Fetch diary counts for accepted applications
+        const acceptedIds = formatted
+          .filter(app => app.status === 'offer_accepted')
+          .map(app => app.id);
+        fetchDiaryEntryCounts(acceptedIds);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -358,6 +391,12 @@ export const AppliedInternships = ({ studentId, onNavigateToDiary }: AppliedInte
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <CheckCheck className="h-5 w-5" />
                         <span className="font-semibold">Internship Confirmed!</span>
+                        {diaryEntryCounts[app.id] !== undefined && (
+                          <Badge variant="secondary" className="bg-primary/10 text-primary">
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {diaryEntryCounts[app.id]} {diaryEntryCounts[app.id] === 1 ? 'Entry' : 'Entries'}
+                          </Badge>
+                        )}
                       </div>
                       {onNavigateToDiary && (
                         <Button 
