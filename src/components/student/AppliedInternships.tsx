@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard, MapPin, IndianRupee, ExternalLink } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard, MapPin, IndianRupee, ExternalLink, Undo2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -49,10 +49,12 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     application: Application | null;
-  }>({ open: false, application: null });
+    type: 'accept' | 'withdraw';
+  }>({ open: false, application: null, type: 'accept' });
 
   useEffect(() => {
     if (studentId) {
@@ -60,12 +62,12 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     }
   }, [studentId]);
 
-  const openConfirmDialog = (application: Application) => {
-    setConfirmDialog({ open: true, application });
+  const openConfirmDialog = (application: Application, type: 'accept' | 'withdraw') => {
+    setConfirmDialog({ open: true, application, type });
   };
 
   const closeConfirmDialog = () => {
-    setConfirmDialog({ open: false, application: null });
+    setConfirmDialog({ open: false, application: null, type: 'accept' });
   };
 
   const handleAcceptOffer = async () => {
@@ -91,6 +93,35 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     } finally {
       setAcceptingId(null);
     }
+  };
+
+  const handleWithdraw = async () => {
+    if (!confirmDialog.application) return;
+    
+    const applicationId = confirmDialog.application.id;
+    closeConfirmDialog();
+    setWithdrawingId(applicationId);
+    
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: 'withdrawn' })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast.success('Application withdrawn successfully');
+      fetchApplications();
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+      toast.error('Failed to withdraw application. Please try again.');
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
+  const canWithdraw = (status: string) => {
+    return ['applied', 'under_review', 'shortlisted'].includes(status);
   };
 
   const fetchApplications = async () => {
@@ -389,36 +420,59 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-3 shrink-0">
+                  <div className="flex flex-col items-end gap-2 shrink-0">
                     {getStatusBadge(app.status)}
-                    {app.status === 'offer_released' && (
-                      <Button
-                        size="sm"
-                        onClick={() => openConfirmDialog(app)}
-                        disabled={acceptingId === app.id}
-                        className={isPaidInternship(app) 
-                          ? "bg-orange-600 hover:bg-orange-700 text-white" 
-                          : "bg-green-600 hover:bg-green-700 text-white"
-                        }
-                      >
-                        {acceptingId === app.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            Accepting...
-                          </>
-                        ) : isPaidInternship(app) ? (
-                          <>
-                            <CreditCard className="h-4 w-4 mr-1" />
-                            Pay & Accept
-                          </>
-                        ) : (
-                          <>
-                            <CheckCheck className="h-4 w-4 mr-1" />
-                            Accept Offer
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {app.status === 'offer_released' && (
+                        <Button
+                          size="sm"
+                          onClick={() => openConfirmDialog(app, 'accept')}
+                          disabled={acceptingId === app.id}
+                          className={isPaidInternship(app) 
+                            ? "bg-orange-600 hover:bg-orange-700 text-white" 
+                            : "bg-green-600 hover:bg-green-700 text-white"
+                          }
+                        >
+                          {acceptingId === app.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              Accepting...
+                            </>
+                          ) : isPaidInternship(app) ? (
+                            <>
+                              <CreditCard className="h-4 w-4 mr-1" />
+                              Pay & Accept
+                            </>
+                          ) : (
+                            <>
+                              <CheckCheck className="h-4 w-4 mr-1" />
+                              Accept Offer
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      {canWithdraw(app.status) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openConfirmDialog(app, 'withdraw')}
+                          disabled={withdrawingId === app.id}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {withdrawingId === app.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              Withdrawing...
+                            </>
+                          ) : (
+                            <>
+                              <Undo2 className="h-4 w-4 mr-1" />
+                              Withdraw
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -432,57 +486,95 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog.application && isPaidInternship(confirmDialog.application)
-                ? 'Pay & Accept Offer'
-                : 'Accept Offer'
+              {confirmDialog.type === 'withdraw' 
+                ? 'Withdraw Application'
+                : confirmDialog.application && isPaidInternship(confirmDialog.application)
+                  ? 'Pay & Accept Offer'
+                  : 'Accept Offer'
               }
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               {confirmDialog.application && (
                 <>
-                  <p>
-                    Are you sure you want to accept the offer for{' '}
-                    <span className="font-semibold text-foreground">
-                      {confirmDialog.application.internship.title}
-                    </span>{' '}
-                    at{' '}
-                    <span className="font-semibold text-foreground">
-                      {confirmDialog.application.internship.company.name}
-                    </span>
-                    ?
-                  </p>
-                  {isPaidInternship(confirmDialog.application) && (
-                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mt-2">
-                      <p className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        This is a paid internship
+                  {confirmDialog.type === 'withdraw' ? (
+                    <>
+                      <p>
+                        Are you sure you want to withdraw your application for{' '}
+                        <span className="font-semibold text-foreground">
+                          {confirmDialog.application.internship.title}
+                        </span>{' '}
+                        at{' '}
+                        <span className="font-semibold text-foreground">
+                          {confirmDialog.application.internship.company.name}
+                        </span>
+                        ?
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Fees: <span className="font-semibold text-orange-600">₹{confirmDialog.application.internship.fees?.toLocaleString('en-IN')}</span>
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mt-2">
+                        <p className="text-destructive font-medium flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          This action cannot be undone
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          You will not be able to apply again for this internship.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p>
+                        Are you sure you want to accept the offer for{' '}
+                        <span className="font-semibold text-foreground">
+                          {confirmDialog.application.internship.title}
+                        </span>{' '}
+                        at{' '}
+                        <span className="font-semibold text-foreground">
+                          {confirmDialog.application.internship.company.name}
+                        </span>
+                        ?
                       </p>
-                    </div>
+                      {isPaidInternship(confirmDialog.application) && (
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mt-2">
+                          <p className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            This is a paid internship
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Fees: <span className="font-semibold text-orange-600">₹{confirmDialog.application.internship.fees?.toLocaleString('en-IN')}</span>
+                          </p>
+                        </div>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        This action cannot be undone.
+                      </p>
+                    </>
                   )}
-                  <p className="text-sm text-muted-foreground">
-                    This action cannot be undone.
-                  </p>
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleAcceptOffer}
-              className={confirmDialog.application && isPaidInternship(confirmDialog.application)
-                ? "bg-orange-600 hover:bg-orange-700"
-                : "bg-green-600 hover:bg-green-700"
-              }
-            >
-              {confirmDialog.application && isPaidInternship(confirmDialog.application)
-                ? 'Pay & Accept'
-                : 'Accept Offer'
-              }
-            </AlertDialogAction>
+            {confirmDialog.type === 'withdraw' ? (
+              <AlertDialogAction
+                onClick={handleWithdraw}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Withdraw Application
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction
+                onClick={handleAcceptOffer}
+                className={confirmDialog.application && isPaidInternship(confirmDialog.application)
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-green-600 hover:bg-green-700"
+                }
+              >
+                {confirmDialog.application && isPaidInternship(confirmDialog.application)
+                  ? 'Pay & Accept'
+                  : 'Accept Offer'
+                }
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
