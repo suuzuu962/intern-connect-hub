@@ -4,7 +4,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -17,6 +27,8 @@ interface Application {
     title: string;
     domain: string | null;
     location: string | null;
+    internship_type: string;
+    fees: number | null;
     company: {
       name: string;
       logo_url: string | null;
@@ -32,6 +44,10 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    application: Application | null;
+  }>({ open: false, application: null });
 
   useEffect(() => {
     if (studentId) {
@@ -39,8 +55,21 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     }
   }, [studentId]);
 
-  const handleAcceptOffer = async (applicationId: string) => {
+  const openConfirmDialog = (application: Application) => {
+    setConfirmDialog({ open: true, application });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog({ open: false, application: null });
+  };
+
+  const handleAcceptOffer = async () => {
+    if (!confirmDialog.application) return;
+    
+    const applicationId = confirmDialog.application.id;
+    closeConfirmDialog();
     setAcceptingId(applicationId);
+    
     try {
       const { error } = await supabase
         .from('applications')
@@ -72,6 +101,8 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title,
             domain,
             location,
+            internship_type,
+            fees,
             company:companies(name, logo_url)
           )
         `)
@@ -88,6 +119,8 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             title: app.internship?.title || 'Unknown',
             domain: app.internship?.domain,
             location: app.internship?.location,
+            internship_type: app.internship?.internship_type || 'free',
+            fees: app.internship?.fees,
             company: {
               name: app.internship?.company?.name || 'Unknown',
               logo_url: app.internship?.company?.logo_url,
@@ -101,6 +134,10 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const isPaidInternship = (app: Application) => {
+    return app.internship.internship_type === 'paid' && app.internship.fees && app.internship.fees > 0;
   };
 
   const appliedCount = applications.filter(app => app.status === 'applied').length;
@@ -305,14 +342,22 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                     {app.status === 'offer_released' && (
                       <Button
                         size="sm"
-                        onClick={() => handleAcceptOffer(app.id)}
+                        onClick={() => openConfirmDialog(app)}
                         disabled={acceptingId === app.id}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className={isPaidInternship(app) 
+                          ? "bg-orange-600 hover:bg-orange-700 text-white" 
+                          : "bg-green-600 hover:bg-green-700 text-white"
+                        }
                       >
                         {acceptingId === app.id ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                             Accepting...
+                          </>
+                        ) : isPaidInternship(app) ? (
+                          <>
+                            <CreditCard className="h-4 w-4 mr-1" />
+                            Pay & Accept
                           </>
                         ) : (
                           <>
@@ -329,6 +374,66 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
           ))}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && closeConfirmDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.application && isPaidInternship(confirmDialog.application)
+                ? 'Pay & Accept Offer'
+                : 'Accept Offer'
+              }
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              {confirmDialog.application && (
+                <>
+                  <p>
+                    Are you sure you want to accept the offer for{' '}
+                    <span className="font-semibold text-foreground">
+                      {confirmDialog.application.internship.title}
+                    </span>{' '}
+                    at{' '}
+                    <span className="font-semibold text-foreground">
+                      {confirmDialog.application.internship.company.name}
+                    </span>
+                    ?
+                  </p>
+                  {isPaidInternship(confirmDialog.application) && (
+                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mt-2">
+                      <p className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        This is a paid internship
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Fees: <span className="font-semibold text-orange-600">₹{confirmDialog.application.internship.fees?.toLocaleString('en-IN')}</span>
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    This action cannot be undone.
+                  </p>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAcceptOffer}
+              className={confirmDialog.application && isPaidInternship(confirmDialog.application)
+                ? "bg-orange-600 hover:bg-orange-700"
+                : "bg-green-600 hover:bg-green-700"
+              }
+            >
+              {confirmDialog.application && isPaidInternship(confirmDialog.application)
+                ? 'Pay & Accept'
+                : 'Accept Offer'
+              }
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
