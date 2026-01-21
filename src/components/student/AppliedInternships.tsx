@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle, Clock, AlertCircle, XCircle, ThumbsUp, FileSearch, Send, CheckCheck, Loader2, CreditCard, MapPin, IndianRupee, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -29,6 +30,9 @@ interface Application {
     location: string | null;
     internship_type: string;
     fees: number | null;
+    stipend: number | null;
+    duration: string | null;
+    work_mode: string | null;
     company: {
       name: string;
       logo_url: string | null;
@@ -41,6 +45,7 @@ interface AppliedInternshipsProps {
 }
 
 export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -103,6 +108,9 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             location,
             internship_type,
             fees,
+            stipend,
+            duration,
+            work_mode,
             company:companies(name, logo_url)
           )
         `)
@@ -121,6 +129,9 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
             location: app.internship?.location,
             internship_type: app.internship?.internship_type || 'free',
             fees: app.internship?.fees,
+            stipend: app.internship?.stipend,
+            duration: app.internship?.duration,
+            work_mode: app.internship?.work_mode,
             company: {
               name: app.internship?.company?.name || 'Unknown',
               logo_url: app.internship?.company?.logo_url,
@@ -301,8 +312,11 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
           {applications.map((app) => (
             <Card key={app.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div 
+                    className="flex items-start gap-4 flex-1 cursor-pointer group"
+                    onClick={() => navigate(`/internships/${app.internship.id}`)}
+                  >
                     {app.internship.company.logo_url ? (
                       <img
                         src={app.internship.company.logo_url}
@@ -315,21 +329,59 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg">{app.internship.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                          {app.internship.title}
+                        </h3>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                       <p className="text-muted-foreground">{app.internship.company.name}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
+                      
+                      {/* Internship Details */}
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
                         {app.internship.domain && (
-                          <span className="flex items-center gap-1">
-                            <Briefcase className="h-3 w-3" />
+                          <Badge variant="secondary" className="font-normal">
+                            <Briefcase className="h-3 w-3 mr-1" />
                             {app.internship.domain}
-                          </span>
+                          </Badge>
                         )}
                         {app.internship.location && (
-                          <span className="flex items-center gap-1">
-                            • {app.internship.location}
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {app.internship.location}
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
+                        {app.internship.work_mode && (
+                          <Badge variant="outline" className="capitalize font-normal">
+                            {app.internship.work_mode}
+                          </Badge>
+                        )}
+                        {app.internship.duration && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {app.internship.duration}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Payment Info */}
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                        {app.internship.internship_type === 'paid' && app.internship.fees ? (
+                          <span className="flex items-center gap-1 text-orange-600 font-medium">
+                            <IndianRupee className="h-3 w-3" />
+                            {app.internship.fees.toLocaleString('en-IN')} (Fees)
+                          </span>
+                        ) : app.internship.internship_type === 'stipended' && app.internship.stipend ? (
+                          <span className="flex items-center gap-1 text-green-600 font-medium">
+                            <IndianRupee className="h-3 w-3" />
+                            {app.internship.stipend.toLocaleString('en-IN')} Stipend
+                          </span>
+                        ) : (
+                          <Badge variant="secondary" className="bg-green-500/10 text-green-600 font-normal">
+                            Free
+                          </Badge>
+                        )}
+                        <span className="flex items-center gap-1 text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           Applied {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
                         </span>
@@ -337,7 +389,7 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex flex-col items-end gap-3 shrink-0">
                     {getStatusBadge(app.status)}
                     {app.status === 'offer_released' && (
                       <Button
