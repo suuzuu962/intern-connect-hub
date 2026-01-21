@@ -86,8 +86,7 @@ export const AppliedInternships = ({ studentId }: AppliedInternshipsProps) => {
       if (error) throw error;
 
       toast.success('Congratulations! You have accepted the offer!');
-      // Redirect to Internship Diary
-      navigate('/student/dashboard?section=diary');
+      fetchApplications();
     } catch (error) {
       console.error('Error accepting offer:', error);
       toast.error('Failed to accept offer. Please try again.');
