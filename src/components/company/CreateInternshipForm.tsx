@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Loader2, Briefcase, Plus } from 'lucide-react';
-import { internshipDomains, domainSkillsMap } from '@/lib/domain-skills';
+import { Loader2, Briefcase, Plus, ChevronDown, X } from 'lucide-react';
+import { internshipDomains, domainSkillsMap, getSuggestedSkills } from '@/lib/domain-skills';
 
 const durationOptions = [
   '1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', '1 Year'
@@ -28,7 +30,7 @@ interface FormData {
   internship_type: 'free' | 'paid' | 'stipended';
   duration: string;
   work_mode: 'remote' | 'onsite' | 'hybrid';
-  domain: string;
+  domains: string[];
   skills: string[];
   address: string;
   state: string;
@@ -51,7 +53,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     internship_type: 'free',
     duration: '',
     work_mode: 'onsite',
-    domain: '',
+    domains: [],
     skills: [],
     address: '',
     state: '',
@@ -80,6 +82,19 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     handleChange('skills', formData.skills.filter(s => s !== skill));
   };
 
+  const toggleDomain = (domain: string) => {
+    const current = formData.domains;
+    if (current.includes(domain)) {
+      handleChange('domains', current.filter(d => d !== domain));
+    } else {
+      handleChange('domains', [...current, domain]);
+    }
+  };
+
+  const suggestedSkills = useMemo(() => {
+    return getSuggestedSkills(formData.domains);
+  }, [formData.domains]);
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -87,7 +102,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     if (!formData.description.trim()) newErrors.description = 'About internship is required';
     if (!formData.application_deadline) newErrors.application_deadline = 'Application closing date is required';
     if (!formData.duration) newErrors.duration = 'Duration is required';
-    if (!formData.domain) newErrors.domain = 'Domain is required';
+    if (formData.domains.length === 0) newErrors.domains = 'At least one domain is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -117,7 +132,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       internship_type: formData.internship_type,
       duration: formData.duration,
       work_mode: formData.work_mode,
-      domain: formData.domain,
+      domain: formData.domains.join(', '),
       skills: formData.skills,
       location: locationString || null,
       stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
@@ -266,15 +281,54 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <RequiredLabel>Domain</RequiredLabel>
-              <Select value={formData.domain} onValueChange={(v) => handleChange('domain', v)}>
-                <SelectTrigger className={errors.domain ? 'border-destructive' : ''}><SelectValue placeholder="Select domain" /></SelectTrigger>
-                <SelectContent>
-                  {internshipDomains.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {errors.domain && <p className="text-xs text-destructive">{errors.domain}</p>}
+            <div className="space-y-2 md:col-span-2">
+              <RequiredLabel>Domains</RequiredLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full justify-between ${errors.domains ? 'border-destructive' : ''}`}
+                  >
+                    {formData.domains.length > 0 
+                      ? `${formData.domains.length} domain${formData.domains.length > 1 ? 's' : ''} selected`
+                      : 'Select domains'}
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 max-h-80 overflow-y-auto p-2">
+                  <div className="space-y-2">
+                    {internshipDomains.map(domain => (
+                      <div key={domain} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`domain-${domain}`}
+                          checked={formData.domains.includes(domain)}
+                          onCheckedChange={() => toggleDomain(domain)}
+                        />
+                        <label 
+                          htmlFor={`domain-${domain}`} 
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {domain}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {formData.domains.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {formData.domains.map(domain => (
+                    <Badge key={domain} variant="secondary" className="text-xs">
+                      {domain}
+                      <X 
+                        className="h-3 w-3 ml-1 cursor-pointer" 
+                        onClick={() => toggleDomain(domain)} 
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {errors.domains && <p className="text-xs text-destructive">{errors.domains}</p>}
             </div>
 
             <div className="space-y-2">
@@ -322,13 +376,16 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
           <div className="space-y-4">
             <Label>Skills Required</Label>
             
-            {/* Suggested Skills based on domain */}
-            {formData.domain && domainSkillsMap[formData.domain] && (
+            {/* Suggested Skills based on selected domains */}
+            {formData.domains.length > 0 && suggestedSkills.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Suggested skills for {formData.domain}:</p>
+                <p className="text-sm text-muted-foreground">
+                  Suggested skills for {formData.domains.length === 1 ? formData.domains[0] : `${formData.domains.length} domains`}:
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {domainSkillsMap[formData.domain]
+                  {suggestedSkills
                     .filter(skill => !formData.skills.includes(skill))
+                    .slice(0, 20)
                     .map(skill => (
                       <Badge 
                         key={skill} 
@@ -340,6 +397,11 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                         {skill}
                       </Badge>
                     ))}
+                  {suggestedSkills.filter(skill => !formData.skills.includes(skill)).length > 20 && (
+                    <span className="text-xs text-muted-foreground self-center">
+                      +{suggestedSkills.filter(skill => !formData.skills.includes(skill)).length - 20} more
+                    </span>
+                  )}
                 </div>
               </div>
             )}
