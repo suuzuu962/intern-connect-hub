@@ -9,17 +9,16 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Internship } from '@/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useViewMode } from '@/hooks/use-view-mode';
 
 const ITEMS_PER_PAGE = 24;
-
-type ViewMode = 'grid' | 'list';
 
 const Internships = () => {
   const [internships, setInternships] = useState<Internship[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useViewMode('internships');
   const [filters, setFilters] = useState<FilterValues>({
     search: '', skills: [], categories: [], location: '', internshipType: '', workMode: '', sortBy: 'newest',
   });
