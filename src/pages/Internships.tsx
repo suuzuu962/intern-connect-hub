@@ -20,7 +20,7 @@ const Internships = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useViewMode('internships');
   const [filters, setFilters] = useState<FilterValues>({
-    search: '', skills: [], categories: [], location: '', internshipType: '', workMode: '', sortBy: 'newest',
+    search: '', skills: [], categories: [], domains: [], location: '', internshipType: '', workMode: '', sortBy: 'newest',
   });
 
   useEffect(() => {
@@ -39,6 +39,12 @@ const Internships = () => {
     if (filters.location && filters.location !== 'Any Location') query = query.ilike('location', `%${filters.location}%`);
     if (filters.internshipType) query = query.eq('internship_type', filters.internshipType as 'free' | 'paid' | 'stipended');
     if (filters.workMode) query = query.eq('work_mode', filters.workMode as 'remote' | 'onsite' | 'hybrid');
+    
+    // Domain filtering - check if any of the selected domains are in the domain field
+    if (filters.domains.length > 0) {
+      const domainFilters = filters.domains.map(d => `domain.ilike.%${d}%`).join(',');
+      query = query.or(domainFilters);
+    }
 
     if (filters.sortBy === 'newest') query = query.order('created_at', { ascending: false });
     else if (filters.sortBy === 'oldest') query = query.order('created_at', { ascending: true });
