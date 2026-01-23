@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Briefcase } from 'lucide-react';
-
-const domainOptions = [
-  'Software Development', 'Web Development', 'Mobile Development', 'Data Science',
-  'Machine Learning', 'Cloud Computing', 'DevOps', 'Cybersecurity', 'UI/UX Design',
-  'Digital Marketing', 'Content Writing', 'Business Development', 'Finance',
-  'Human Resources', 'Operations', 'Research', 'Other'
-];
+import { Loader2, Briefcase, Plus } from 'lucide-react';
+import { internshipDomains, domainSkillsMap } from '@/lib/domain-skills';
 
 const durationOptions = [
   '1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', '1 Year'
@@ -277,7 +271,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
               <Select value={formData.domain} onValueChange={(v) => handleChange('domain', v)}>
                 <SelectTrigger className={errors.domain ? 'border-destructive' : ''}><SelectValue placeholder="Select domain" /></SelectTrigger>
                 <SelectContent>
-                  {domainOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  {internshipDomains.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
               {errors.domain && <p className="text-xs text-destructive">{errors.domain}</p>}
@@ -325,24 +319,56 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Label>Skills Required</Label>
-            <div className="flex gap-2">
-              <Input
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                placeholder="Add a skill"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-              />
-              <Button type="button" onClick={addSkill} variant="outline">Add</Button>
+            
+            {/* Suggested Skills based on domain */}
+            {formData.domain && domainSkillsMap[formData.domain] && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Suggested skills for {formData.domain}:</p>
+                <div className="flex flex-wrap gap-2">
+                  {domainSkillsMap[formData.domain]
+                    .filter(skill => !formData.skills.includes(skill))
+                    .map(skill => (
+                      <Badge 
+                        key={skill} 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => handleChange('skills', [...formData.skills, skill])}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {skill}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom skill input */}
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Add custom skill:</p>
+              <div className="flex gap-2">
+                <Input
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  placeholder="Type a skill and press Enter or Add"
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                />
+                <Button type="button" onClick={addSkill} variant="outline">Add</Button>
+              </div>
             </div>
+
+            {/* Selected skills */}
             {formData.skills.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.skills.map(skill => (
-                  <Badge key={skill} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(skill)}>
-                    {skill} &times;
-                  </Badge>
-                ))}
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Selected skills ({formData.skills.length}):</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map(skill => (
+                    <Badge key={skill} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(skill)}>
+                      {skill} &times;
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
           </div>
