@@ -31,6 +31,7 @@ interface FormData {
   duration: string;
   work_mode: 'remote' | 'onsite' | 'hybrid';
   domains: string[];
+  customDomains: string[];
   skills: string[];
   address: string;
   state: string;
@@ -44,6 +45,7 @@ interface FormData {
 export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
+  const [customDomainInput, setCustomDomainInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -54,6 +56,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     duration: '',
     work_mode: 'onsite',
     domains: [],
+    customDomains: [],
     skills: [],
     address: '',
     state: '',
@@ -91,8 +94,24 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     }
   };
 
+  const addCustomDomain = () => {
+    const trimmed = customDomainInput.trim();
+    if (trimmed && !formData.customDomains.includes(trimmed) && !formData.domains.includes(trimmed)) {
+      handleChange('customDomains', [...formData.customDomains, trimmed]);
+      setCustomDomainInput('');
+    }
+  };
+
+  const removeCustomDomain = (domain: string) => {
+    handleChange('customDomains', formData.customDomains.filter(d => d !== domain));
+  };
+
+  const allSelectedDomains = useMemo(() => {
+    return [...formData.domains, ...formData.customDomains];
+  }, [formData.domains, formData.customDomains]);
+
   const suggestedSkills = useMemo(() => {
-    return getSuggestedSkills(formData.domains);
+    return getSuggestedSkills(formData.domains.filter(d => d !== 'Other'));
   }, [formData.domains]);
 
   const validateForm = (): boolean => {
@@ -102,7 +121,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     if (!formData.description.trim()) newErrors.description = 'About internship is required';
     if (!formData.application_deadline) newErrors.application_deadline = 'Application closing date is required';
     if (!formData.duration) newErrors.duration = 'Duration is required';
-    if (formData.domains.length === 0) newErrors.domains = 'At least one domain is required';
+    if (formData.domains.length === 0 && formData.customDomains.length === 0) newErrors.domains = 'At least one domain is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,7 +151,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       internship_type: formData.internship_type,
       duration: formData.duration,
       work_mode: formData.work_mode,
-      domain: formData.domains.join(', '),
+      domain: allSelectedDomains.join(', '),
       skills: formData.skills,
       location: locationString || null,
       stipend: formData.internship_type === 'stipended' ? formData.stipend : null,
@@ -289,8 +308,8 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                     variant="outline" 
                     className={`w-full justify-between ${errors.domains ? 'border-destructive' : ''}`}
                   >
-                    {formData.domains.length > 0 
-                      ? `${formData.domains.length} domain${formData.domains.length > 1 ? 's' : ''} selected`
+                    {allSelectedDomains.length > 0 
+                      ? `${allSelectedDomains.length} domain${allSelectedDomains.length > 1 ? 's' : ''} selected`
                       : 'Select domains'}
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
@@ -315,19 +334,48 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
                   </div>
                 </PopoverContent>
               </Popover>
-              {formData.domains.length > 0 && (
+
+              {/* Selected domains display */}
+              {allSelectedDomains.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {formData.domains.map(domain => (
                     <Badge key={domain} variant="secondary" className="text-xs">
                       {domain}
-                      <X 
-                        className="h-3 w-3 ml-1 cursor-pointer" 
-                        onClick={() => toggleDomain(domain)} 
-                      />
+                      <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleDomain(domain)} />
+                    </Badge>
+                  ))}
+                  {formData.customDomains.map(domain => (
+                    <Badge key={domain} variant="outline" className="text-xs bg-primary/10">
+                      {domain}
+                      <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => removeCustomDomain(domain)} />
                     </Badge>
                   ))}
                 </div>
               )}
+
+              {/* Custom domain input when "Other" is selected */}
+              {formData.domains.includes('Other') && (
+                <div className="mt-3 p-3 border rounded-md bg-muted/30">
+                  <Label className="text-sm">Add Custom Domain</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={customDomainInput}
+                      onChange={(e) => setCustomDomainInput(e.target.value)}
+                      placeholder="Enter custom domain name"
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomDomain())}
+                    />
+                    <Button type="button" onClick={addCustomDomain} variant="outline" size="sm">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {formData.customDomains.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Custom domains added: {formData.customDomains.length}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {errors.domains && <p className="text-xs text-destructive">{errors.domains}</p>}
             </div>
 

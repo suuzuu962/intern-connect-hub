@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,17 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Eye, Calendar, MapPin, Clock, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calendar, MapPin, Clock, Loader2, ChevronDown, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { internshipDomains, getSuggestedSkills } from '@/lib/domain-skills';
 
 interface InternshipFormData {
   id?: string;
   title: string;
   short_description: string;
   description: string;
-  domain: string;
+  domains: string[];
+  customDomains: string[];
   skills: string[];
   duration: string;
   internship_type: 'free' | 'paid' | 'stipended';
@@ -34,18 +38,12 @@ interface InternshipFormData {
   is_active: boolean;
 }
 
-const domainOptions = [
-  'Software Development', 'Web Development', 'Mobile Development', 'Data Science',
-  'Machine Learning', 'Cloud Computing', 'DevOps', 'Cybersecurity', 'UI/UX Design',
-  'Digital Marketing', 'Content Writing', 'Business Development', 'Finance',
-  'Human Resources', 'Operations', 'Research', 'Other'
-];
-
 const initialFormData: InternshipFormData = {
   title: '',
   short_description: '',
   description: '',
-  domain: '',
+  domains: [],
+  customDomains: [],
   skills: [],
   duration: '',
   internship_type: 'free',
@@ -73,6 +71,7 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<InternshipFormData>(initialFormData);
   const [skillInput, setSkillInput] = useState('');
+  const [customDomainInput, setCustomDomainInput] = useState('');
 
   useEffect(() => {
     if (companyId) fetchInternships();
@@ -93,6 +92,35 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  const toggleDomain = (domain: string) => {
+    const current = formData.domains;
+    if (current.includes(domain)) {
+      handleChange('domains', current.filter(d => d !== domain));
+    } else {
+      handleChange('domains', [...current, domain]);
+    }
+  };
+
+  const addCustomDomain = () => {
+    const trimmed = customDomainInput.trim();
+    if (trimmed && !formData.customDomains.includes(trimmed) && !formData.domains.includes(trimmed)) {
+      handleChange('customDomains', [...formData.customDomains, trimmed]);
+      setCustomDomainInput('');
+    }
+  };
+
+  const removeCustomDomain = (domain: string) => {
+    handleChange('customDomains', formData.customDomains.filter(d => d !== domain));
+  };
+
+  const allSelectedDomains = useMemo(() => {
+    return [...formData.domains, ...formData.customDomains];
+  }, [formData.domains, formData.customDomains]);
+
+  const suggestedSkills = useMemo(() => {
+    return getSuggestedSkills(formData.domains.filter(d => d !== 'Other'));
+  }, [formData.domains]);
+
   const addSkill = () => {
     if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
       handleChange('skills', [...formData.skills, skillInput.trim()]);
@@ -107,16 +135,28 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
   const openCreateDialog = () => {
     setFormData(initialFormData);
     setEditingId(null);
+    setCustomDomainInput('');
     setDialogOpen(true);
   };
 
+  const parseDomains = (domainString: string): { domains: string[], customDomains: string[] } => {
+    if (!domainString) return { domains: [], customDomains: [] };
+    const allDomains = domainString.split(',').map(d => d.trim()).filter(Boolean);
+    const knownDomains = allDomains.filter(d => internshipDomains.includes(d));
+    const customDomains = allDomains.filter(d => !internshipDomains.includes(d));
+    return { domains: knownDomains, customDomains };
+  };
+
   const openEditDialog = (internship: any) => {
+    const { domains, customDomains } = parseDomains(internship.domain || '');
+    
     setFormData({
       id: internship.id,
       title: internship.title,
       short_description: internship.short_description || '',
       description: internship.description,
-      domain: internship.domain || '',
+      domains,
+      customDomains,
       skills: internship.skills || [],
       duration: internship.duration || '',
       internship_type: internship.internship_type,
@@ -131,6 +171,7 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
       is_active: internship.is_active,
     });
     setEditingId(internship.id);
+    setCustomDomainInput('');
     setDialogOpen(true);
   };
 
@@ -142,12 +183,14 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
 
     setSaving(true);
 
+    const domainString = allSelectedDomains.join(', ');
+
     const payload = {
       company_id: companyId,
       title: formData.title,
       short_description: formData.short_description,
       description: formData.description,
-      domain: formData.domain,
+      domain: domainString,
       skills: formData.skills,
       duration: formData.duration,
       internship_type: formData.internship_type,
@@ -219,20 +262,84 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
                 <Input value={formData.title} onChange={(e) => handleChange('title', e.target.value)} placeholder="e.g., Software Developer Intern" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Domain</Label>
-                  <Select value={formData.domain} onValueChange={(v) => handleChange('domain', v)}>
-                    <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
-                    <SelectContent>
-                      {domainOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Input value={formData.duration} onChange={(e) => handleChange('duration', e.target.value)} placeholder="e.g., 3 months" />
-                </div>
+              {/* Multi-domain selection */}
+              <div className="space-y-2">
+                <Label>Domains</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {allSelectedDomains.length > 0 
+                        ? `${allSelectedDomains.length} domain${allSelectedDomains.length > 1 ? 's' : ''} selected`
+                        : 'Select domains'}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 max-h-80 overflow-y-auto p-2">
+                    <div className="space-y-2">
+                      {internshipDomains.map(domain => (
+                        <div key={domain} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`edit-domain-${domain}`}
+                            checked={formData.domains.includes(domain)}
+                            onCheckedChange={() => toggleDomain(domain)}
+                          />
+                          <label 
+                            htmlFor={`edit-domain-${domain}`} 
+                            className="text-sm cursor-pointer flex-1"
+                          >
+                            {domain}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Selected domains display */}
+                {allSelectedDomains.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {formData.domains.map(domain => (
+                      <Badge key={domain} variant="secondary" className="text-xs">
+                        {domain}
+                        <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleDomain(domain)} />
+                      </Badge>
+                    ))}
+                    {formData.customDomains.map(domain => (
+                      <Badge key={domain} variant="outline" className="text-xs bg-primary/10">
+                        {domain}
+                        <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => removeCustomDomain(domain)} />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Custom domain input when "Other" is selected */}
+                {formData.domains.includes('Other') && (
+                  <div className="mt-3 p-3 border rounded-md bg-muted/30">
+                    <Label className="text-sm">Add Custom Domain</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={customDomainInput}
+                        onChange={(e) => setCustomDomainInput(e.target.value)}
+                        placeholder="Enter custom domain name"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomDomain())}
+                      />
+                      <Button type="button" onClick={addCustomDomain} variant="outline" size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {formData.customDomains.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Custom domains added: {formData.customDomains.length}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Duration</Label>
+                <Input value={formData.duration} onChange={(e) => handleChange('duration', e.target.value)} placeholder="e.g., 3 months" />
               </div>
 
               <div className="space-y-2">
@@ -245,19 +352,57 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
                 <Textarea rows={4} value={formData.description} onChange={(e) => handleChange('description', e.target.value)} />
               </div>
 
-              <div className="space-y-2">
+              {/* Skills section with suggestions */}
+              <div className="space-y-3">
                 <Label>Skills Required</Label>
+                
+                {/* Suggested skills from domains */}
+                {formData.domains.length > 0 && suggestedSkills.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Suggested skills:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedSkills
+                        .filter(skill => !formData.skills.includes(skill))
+                        .slice(0, 15)
+                        .map(skill => (
+                          <Badge 
+                            key={skill} 
+                            variant="outline" 
+                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onClick={() => handleChange('skills', [...formData.skills, skill])}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            {skill}
+                          </Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom skill input */}
                 <div className="flex gap-2">
-                  <Input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} placeholder="Add skill" onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} />
+                  <Input 
+                    value={skillInput} 
+                    onChange={(e) => setSkillInput(e.target.value)} 
+                    placeholder="Add custom skill" 
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} 
+                  />
                   <Button type="button" onClick={addSkill} variant="outline">Add</Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.skills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(skill)}>
-                      {skill} &times;
-                    </Badge>
-                  ))}
-                </div>
+
+                {/* Selected skills */}
+                {formData.skills.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Selected ({formData.skills.length}):</p>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.skills.map(skill => (
+                        <Badge key={skill} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(skill)}>
+                          {skill} &times;
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
