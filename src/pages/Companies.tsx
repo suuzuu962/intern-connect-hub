@@ -27,7 +27,7 @@ const Companies = () => {
   const [viewMode, setViewMode] = useViewMode('companies');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
   const [filters, setFilters] = useState<FilterValues>({
-    search: '', skills: [], categories: [], location: '', internshipType: '', workMode: '', sortBy: 'newest',
+    search: '', skills: [], categories: [], domains: [], location: '', internshipType: '', workMode: '', sortBy: 'newest',
   });
 
   useEffect(() => { fetchCompanies(); }, [currentPage, filters, showActiveOnly]);

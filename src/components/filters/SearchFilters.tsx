@@ -16,14 +16,21 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { internshipDomains } from '@/lib/domain-skills';
 
 export interface FilterValues {
   search: string;
   skills: string[];
   categories: string[];
+  domains: string[];
   location: string;
   internshipType: string;
   workMode: string;
@@ -79,11 +86,19 @@ export const SearchFilters = ({
     onFilterChange({ ...filters, categories: newCategories });
   };
 
+  const handleDomainToggle = (domain: string) => {
+    const newDomains = filters.domains.includes(domain)
+      ? filters.domains.filter((d) => d !== domain)
+      : [...filters.domains, domain];
+    onFilterChange({ ...filters, domains: newDomains });
+  };
+
   const clearFilters = () => {
     onFilterChange({
       search: '',
       skills: [],
       categories: [],
+      domains: [],
       location: '',
       internshipType: '',
       workMode: '',
@@ -94,6 +109,7 @@ export const SearchFilters = ({
   const activeFilterCount =
     filters.skills.length +
     filters.categories.length +
+    filters.domains.length +
     (filters.location ? 1 : 0) +
     (filters.internshipType ? 1 : 0) +
     (filters.workMode ? 1 : 0);
@@ -137,11 +153,30 @@ export const SearchFilters = ({
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80">
+          <SheetContent side="left" className="w-80 overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-6 space-y-6">
+              {/* Domains */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Domains</Label>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {internshipDomains.map((domain) => (
+                    <Badge
+                      key={domain}
+                      variant={filters.domains.includes(domain) ? 'default' : 'outline'}
+                      className={`cursor-pointer ${
+                        filters.domains.includes(domain) ? 'gradient-primary border-0' : ''
+                      }`}
+                      onClick={() => handleDomainToggle(domain)}
+                    >
+                      {domain}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
               {/* Skills */}
               <div>
                 <Label className="text-sm font-medium mb-3 block">Skills</Label>
@@ -245,6 +280,47 @@ export const SearchFilters = ({
 
         {/* Desktop Filters */}
         <div className="hidden md:flex flex-wrap gap-3">
+          {/* Domain Multi-Select Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-44 justify-between">
+                {filters.domains.length > 0 
+                  ? `${filters.domains.length} Domain${filters.domains.length > 1 ? 's' : ''}`
+                  : 'Domains'}
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 max-h-80 overflow-y-auto p-3">
+              <div className="space-y-2">
+                {internshipDomains.map((domain) => (
+                  <div key={domain} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`filter-domain-${domain}`}
+                      checked={filters.domains.includes(domain)}
+                      onCheckedChange={() => handleDomainToggle(domain)}
+                    />
+                    <label
+                      htmlFor={`filter-domain-${domain}`}
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {domain}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {filters.domains.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full mt-3"
+                  onClick={() => onFilterChange({ ...filters, domains: [] })}
+                >
+                  Clear domains
+                </Button>
+              )}
+            </PopoverContent>
+          </Popover>
+
           <Select
             value={filters.location}
             onValueChange={(value) => onFilterChange({ ...filters, location: value })}
@@ -314,8 +390,19 @@ export const SearchFilters = ({
       </div>
 
       {/* Active Filters Display */}
-      {(filters.skills.length > 0 || filters.categories.length > 0) && (
+      {(filters.skills.length > 0 || filters.categories.length > 0 || filters.domains.length > 0) && (
         <div className="flex flex-wrap gap-2">
+          {filters.domains.map((domain) => (
+            <Badge
+              key={domain}
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => handleDomainToggle(domain)}
+            >
+              {domain}
+              <X className="h-3 w-3 ml-1" />
+            </Badge>
+          ))}
           {filters.skills.map((skill) => (
             <Badge
               key={skill}
