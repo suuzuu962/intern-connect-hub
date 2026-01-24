@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2, Download } from 'lucide-react';
+import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2, Download, Search, Filter, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'offer_released' | 'offer_accepted' | 'rejected' | 'withdrawn';
 
@@ -57,6 +60,14 @@ interface Props {
   companyId: string | null;
 }
 
+interface ApplicantFilters {
+  search: string;
+  colleges: string[];
+  skills: string[];
+  domains: string[];
+  departments: string[];
+}
+
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string; color: string }[] = [
   { value: 'applied', label: 'Applied', color: 'bg-blue-500' },
   { value: 'under_review', label: 'Under Review', color: 'bg-yellow-500' },
@@ -75,6 +86,54 @@ export const CompanyApplicants = ({ companyId }: Props) => {
   const [updating, setUpdating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [filters, setFilters] = useState<ApplicantFilters>({
+    search: '',
+    colleges: [],
+    skills: [],
+    domains: [],
+    departments: [],
+  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Extract unique values for filter options from applications
+  const filterOptions = useMemo(() => {
+    const colleges = new Set<string>();
+    const skills = new Set<string>();
+    const domains = new Set<string>();
+    const departments = new Set<string>();
+
+    applications.forEach(app => {
+      if (app.student.college) colleges.add(app.student.college);
+      if (app.student.university) colleges.add(app.student.university);
+      if (app.student.department) departments.add(app.student.department);
+      app.student.skills?.forEach(skill => skills.add(skill));
+      app.student.interested_domains?.forEach(domain => domains.add(domain));
+    });
+
+    return {
+      colleges: Array.from(colleges).sort(),
+      skills: Array.from(skills).sort(),
+      domains: Array.from(domains).sort(),
+      departments: Array.from(departments).sort(),
+    };
+  }, [applications]);
+
+  const activeFilterCount = 
+    filters.colleges.length + 
+    filters.skills.length + 
+    filters.domains.length + 
+    filters.departments.length +
+    (filters.search ? 1 : 0);
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      colleges: [],
+      skills: [],
+      domains: [],
+      departments: [],
+    });
+  };
 
   useEffect(() => {
     if (companyId) {
@@ -341,16 +400,60 @@ export const CompanyApplicants = ({ companyId }: Props) => {
     toast.success(`Exported ${filteredApplications.length} application(s) to CSV`);
   };
 
-  const filteredApplications = selectedInternship === 'all'
-    ? applications
-    : applications.filter(a => a.internship.id === selectedInternship);
+  // Apply all filters
+  const filteredApplications = useMemo(() => {
+    let result = selectedInternship === 'all'
+      ? applications
+      : applications.filter(a => a.internship.id === selectedInternship);
 
-  const appliedCount = applications.filter(a => a.status === 'applied').length;
-  const underReviewCount = applications.filter(a => a.status === 'under_review').length;
-  const shortlistedCount = applications.filter(a => a.status === 'shortlisted').length;
-  const offerReleasedCount = applications.filter(a => a.status === 'offer_released').length;
-  const offerAcceptedCount = applications.filter(a => a.status === 'offer_accepted').length;
-  const rejectedCount = applications.filter(a => a.status === 'rejected').length;
+    // Search filter (name, email, USN)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      result = result.filter(a => 
+        a.student.profile.full_name?.toLowerCase().includes(searchLower) ||
+        a.student.profile.email.toLowerCase().includes(searchLower) ||
+        a.student.usn?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // College filter
+    if (filters.colleges.length > 0) {
+      result = result.filter(a => 
+        (a.student.college && filters.colleges.includes(a.student.college)) ||
+        (a.student.university && filters.colleges.includes(a.student.university))
+      );
+    }
+
+    // Department filter
+    if (filters.departments.length > 0) {
+      result = result.filter(a => 
+        a.student.department && filters.departments.includes(a.student.department)
+      );
+    }
+
+    // Skills filter (match any)
+    if (filters.skills.length > 0) {
+      result = result.filter(a => 
+        a.student.skills?.some(skill => filters.skills.includes(skill))
+      );
+    }
+
+    // Domains filter (match any)
+    if (filters.domains.length > 0) {
+      result = result.filter(a => 
+        a.student.interested_domains?.some(domain => filters.domains.includes(domain))
+      );
+    }
+
+    return result;
+  }, [applications, selectedInternship, filters]);
+
+  const appliedCount = filteredApplications.filter(a => a.status === 'applied').length;
+  const underReviewCount = filteredApplications.filter(a => a.status === 'under_review').length;
+  const shortlistedCount = filteredApplications.filter(a => a.status === 'shortlisted').length;
+  const offerReleasedCount = filteredApplications.filter(a => a.status === 'offer_released').length;
+  const offerAcceptedCount = filteredApplications.filter(a => a.status === 'offer_accepted').length;
+  const rejectedCount = filteredApplications.filter(a => a.status === 'rejected').length;
 
   const statusBadge = (status: string) => {
     const variants: Record<string, { className: string; icon: typeof Clock; label: string }> = {
@@ -384,9 +487,13 @@ export const CompanyApplicants = ({ companyId }: Props) => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Applications ({applications.length})</h2>
+          <h2 className="text-xl font-semibold">
+            Applications ({filteredApplications.length}
+            {activeFilterCount > 0 && ` of ${applications.length}`})
+          </h2>
           <div className="flex gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
             <span>{appliedCount} applied</span>
             <span>{underReviewCount} under review</span>
@@ -398,7 +505,7 @@ export const CompanyApplicants = ({ companyId }: Props) => {
         </div>
         <div className="flex gap-2">
           <Select value={selectedInternship} onValueChange={setSelectedInternship}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by internship" />
             </SelectTrigger>
             <SelectContent>
@@ -413,6 +520,251 @@ export const CompanyApplicants = ({ companyId }: Props) => {
             Export CSV
           </Button>
         </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, or USN..."
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              className="pl-10"
+            />
+          </div>
+          
+          {/* Filter Popover */}
+          <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-4" align="end">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Filter Applicants</h4>
+                  {activeFilterCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+
+                {/* College/University Filter */}
+                {filterOptions.colleges.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+                      College/University
+                      {filters.colleges.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5">{filters.colleges.length}</Badge>
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="h-32 mt-2">
+                        <div className="space-y-2">
+                          {filterOptions.colleges.map(college => (
+                            <label key={college} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <Checkbox
+                                checked={filters.colleges.includes(college)}
+                                onCheckedChange={(checked) => {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    colleges: checked 
+                                      ? [...prev.colleges, college]
+                                      : prev.colleges.filter(c => c !== college)
+                                  }));
+                                }}
+                              />
+                              <span className="truncate">{college}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Department Filter */}
+                {filterOptions.departments.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+                      Department
+                      {filters.departments.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5">{filters.departments.length}</Badge>
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="h-32 mt-2">
+                        <div className="space-y-2">
+                          {filterOptions.departments.map(dept => (
+                            <label key={dept} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <Checkbox
+                                checked={filters.departments.includes(dept)}
+                                onCheckedChange={(checked) => {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    departments: checked 
+                                      ? [...prev.departments, dept]
+                                      : prev.departments.filter(d => d !== dept)
+                                  }));
+                                }}
+                              />
+                              <span className="truncate">{dept}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Skills Filter */}
+                {filterOptions.skills.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+                      Skills
+                      {filters.skills.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5">{filters.skills.length}</Badge>
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="h-32 mt-2">
+                        <div className="space-y-2">
+                          {filterOptions.skills.map(skill => (
+                            <label key={skill} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <Checkbox
+                                checked={filters.skills.includes(skill)}
+                                onCheckedChange={(checked) => {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    skills: checked 
+                                      ? [...prev.skills, skill]
+                                      : prev.skills.filter(s => s !== skill)
+                                  }));
+                                }}
+                              />
+                              <span className="truncate">{skill}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Domains Filter */}
+                {filterOptions.domains.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+                      Domains
+                      {filters.domains.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5">{filters.domains.length}</Badge>
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="h-32 mt-2">
+                        <div className="space-y-2">
+                          {filterOptions.domains.map(domain => (
+                            <label key={domain} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <Checkbox
+                                checked={filters.domains.includes(domain)}
+                                onCheckedChange={(checked) => {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    domains: checked 
+                                      ? [...prev.domains, domain]
+                                      : prev.domains.filter(d => d !== domain)
+                                  }));
+                                }}
+                              />
+                              <span className="truncate">{domain}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Active Filter Badges */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {filters.search && (
+              <Badge variant="secondary" className="gap-1">
+                Search: "{filters.search}"
+                <XCircle 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setFilters(prev => ({ ...prev, search: '' }))} 
+                />
+              </Badge>
+            )}
+            {filters.colleges.map(college => (
+              <Badge key={college} variant="secondary" className="gap-1">
+                {college}
+                <XCircle 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setFilters(prev => ({ 
+                    ...prev, 
+                    colleges: prev.colleges.filter(c => c !== college) 
+                  }))} 
+                />
+              </Badge>
+            ))}
+            {filters.departments.map(dept => (
+              <Badge key={dept} variant="secondary" className="gap-1">
+                {dept}
+                <XCircle 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setFilters(prev => ({ 
+                    ...prev, 
+                    departments: prev.departments.filter(d => d !== dept) 
+                  }))} 
+                />
+              </Badge>
+            ))}
+            {filters.skills.map(skill => (
+              <Badge key={skill} variant="secondary" className="gap-1">
+                {skill}
+                <XCircle 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setFilters(prev => ({ 
+                    ...prev, 
+                    skills: prev.skills.filter(s => s !== skill) 
+                  }))} 
+                />
+              </Badge>
+            ))}
+            {filters.domains.map(domain => (
+              <Badge key={domain} variant="secondary" className="gap-1">
+                {domain}
+                <XCircle 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setFilters(prev => ({ 
+                    ...prev, 
+                    domains: prev.domains.filter(d => d !== domain) 
+                  }))} 
+                />
+              </Badge>
+            ))}
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 px-2 text-xs">
+              Clear all
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Bulk Action Bar */}
