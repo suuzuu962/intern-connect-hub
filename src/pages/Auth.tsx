@@ -137,7 +137,7 @@ const Auth = () => {
     }
     setLoading(true);
 
-    // Sign up with email - this will send OTP to email
+    // Sign up with email - auto-confirm is enabled, no OTP needed
     const {
       data,
       error
@@ -162,13 +162,114 @@ const Auth = () => {
       return;
     }
 
-    // Move to OTP verification step
-    toast({
-      title: 'Verification Code Sent',
-      description: 'Please check your email for the OTP code'
-    });
-    setSignupStep('verify-email');
-    startResendCooldown();
+    // With auto-confirm enabled, user is immediately signed in
+    if (data.user && data.session) {
+      // Update profile with phone number
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone_number: phoneNumber
+        })
+        .eq('user_id', data.user.id);
+      
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+
+      // Check if user role already exists
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (!existingRole) {
+        // Create user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: role
+          });
+        if (roleError) {
+          console.error('Error creating user role:', roleError);
+          toast({
+            title: 'Error',
+            description: 'Failed to create user role. Please try again.',
+            variant: 'destructive'
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Create company or student record if it doesn't exist
+      if (role === 'company') {
+        const { data: existingCompany } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (!existingCompany) {
+          const { error: companyError } = await supabase
+            .from('companies')
+            .insert({
+              user_id: data.user.id,
+              name: fullName,
+              contact_person_phone: phoneNumber
+            });
+          if (companyError) {
+            console.error('Error creating company:', companyError);
+            toast({
+              title: 'Error',
+              description: 'Failed to create company profile. Please try again.',
+              variant: 'destructive'
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      } else {
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (!existingStudent) {
+          const { error: studentError } = await supabase
+            .from('students')
+            .insert({
+              user_id: data.user.id
+            });
+          if (studentError) {
+            console.error('Error creating student:', studentError);
+            toast({
+              title: 'Error',
+              description: 'Failed to create student profile. Please try again.',
+              variant: 'destructive'
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      toast({
+        title: 'Account Created!',
+        description: 'Your account has been created successfully'
+      });
+      navigate(role === 'company' ? '/company/dashboard' : '/student/dashboard');
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Account created but session not established. Please try logging in.',
+        variant: 'destructive'
+      });
+      setMode('login');
+    }
     setLoading(false);
   };
   const handleVerifyOtp = async () => {
@@ -468,11 +569,7 @@ const Auth = () => {
     if (mode === 'login') {
       await handleLogin();
     } else if (mode === 'signup') {
-      if (signupStep === 'details') {
-        await handleSignupSubmit();
-      } else if (signupStep === 'verify-email') {
-        await handleVerifyOtp();
-      }
+      await handleSignupSubmit();
     }
   };
   const resetToDetails = () => {
@@ -500,7 +597,6 @@ const Auth = () => {
       }
     }
     if (mode === 'login') return 'Welcome Back';
-    if (signupStep === 'verify-email') return 'Verify Your Email';
     return 'Create Account';
   };
   const getDescription = () => {
@@ -517,7 +613,6 @@ const Auth = () => {
       }
     }
     if (mode === 'login') return 'Sign in to your account';
-    if (signupStep === 'verify-email') return `Enter the 6-digit code sent to ${email}`;
     return 'Join Economic Labs today';
   };
 
@@ -634,31 +729,7 @@ const Auth = () => {
         </CardHeader>
 
         <CardContent>
-          {mode === 'forgot-password' ? renderForgotPassword() : mode === 'signup' && signupStep === 'verify-email' ? <div className="space-y-6">
-              <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Mail className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-
-              
-
-              <Button onClick={handleVerifyOtp} className="w-full gradient-primary border-0" disabled={loading || otp.length !== 6}>
-                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Email'}
-              </Button>
-
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Didn't receive the code?{' '}
-                  <button onClick={handleResendOtp} disabled={resendCooldown > 0 || loading} className="text-primary font-medium disabled:opacity-50">
-                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                  </button>
-                </p>
-                <button onClick={resetToDetails} className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 w-full">
-                  <ArrowLeft className="h-3 w-3" /> Change email address
-                </button>
-              </div>
-            </div> : <>
+          {mode === 'forgot-password' ? renderForgotPassword() : <>
               {mode === 'signup' && <div className="grid grid-cols-2 gap-3 mb-6">
                   <Button type="button" variant={role === 'student' ? 'default' : 'outline'} className={role === 'student' ? 'gradient-primary border-0' : ''} onClick={() => setRole('student')}>
                     <GraduationCap className="h-4 w-4 mr-2" /> Student
