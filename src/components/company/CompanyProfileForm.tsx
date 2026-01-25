@@ -91,6 +91,7 @@ export const CompanyProfileForm = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   // Get suggested skills based on selected domains
   const selectedDomains = company?.internship_domains || [];
@@ -390,10 +391,19 @@ export const CompanyProfileForm = () => {
   );
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Company Profile</h1>
-        <p className="text-muted-foreground">Complete your company profile to get verified and start posting internships</p>
+    <div className={`space-y-6 max-w-4xl ${!isEditing ? 'pointer-events-none select-none' : ''}`} style={!isEditing ? { opacity: 0.7 } : undefined}>
+      <div className="mb-6 pointer-events-auto" style={{ opacity: 1 }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Company Profile</h1>
+            <p className="text-muted-foreground">Complete your company profile to get verified and start posting internships</p>
+          </div>
+          {!isEditing && (
+            <Button onClick={() => setIsEditing(true)} className="gap-2">
+              <Pencil className="h-4 w-4" /> Edit Profile
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Basic Information */}
@@ -965,12 +975,14 @@ export const CompanyProfileForm = () => {
       </Card>
 
       {/* Submit */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" disabled={saving}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={saving} className="gradient-primary border-0">
-          {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Profile'}
-        </Button>
-      </div>
+      {isEditing && (
+        <div className="flex justify-end gap-4 pointer-events-auto" style={{ opacity: 1 }}>
+          <Button variant="outline" disabled={saving} onClick={() => setIsEditing(false)}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={saving} className="gradient-primary border-0">
+            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Profile'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
