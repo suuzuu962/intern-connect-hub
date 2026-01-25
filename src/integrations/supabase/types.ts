@@ -193,6 +193,7 @@ export type Database = {
           country: string | null
           cover_image_url: string | null
           created_at: string
+          custom_domains: string[] | null
           declaration_accepted: boolean | null
           description: string | null
           designation_email: string | null
@@ -210,7 +211,9 @@ export type Database = {
           internship_domain: string | null
           internship_domains: string[] | null
           internship_duration: string | null
+          internship_durations: string[] | null
           internship_mode: string | null
+          internship_modes: string[] | null
           internship_skills: string[] | null
           is_verified: boolean | null
           linkedin_url: string | null
@@ -243,6 +246,7 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string
+          custom_domains?: string[] | null
           declaration_accepted?: boolean | null
           description?: string | null
           designation_email?: string | null
@@ -260,7 +264,9 @@ export type Database = {
           internship_domain?: string | null
           internship_domains?: string[] | null
           internship_duration?: string | null
+          internship_durations?: string[] | null
           internship_mode?: string | null
+          internship_modes?: string[] | null
           internship_skills?: string[] | null
           is_verified?: boolean | null
           linkedin_url?: string | null
@@ -293,6 +299,7 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string
+          custom_domains?: string[] | null
           declaration_accepted?: boolean | null
           description?: string | null
           designation_email?: string | null
@@ -310,7 +317,9 @@ export type Database = {
           internship_domain?: string | null
           internship_domains?: string[] | null
           internship_duration?: string | null
+          internship_durations?: string[] | null
           internship_mode?: string | null
+          internship_modes?: string[] | null
           internship_skills?: string[] | null
           is_verified?: boolean | null
           linkedin_url?: string | null
