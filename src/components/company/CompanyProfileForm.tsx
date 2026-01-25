@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2, Briefcase, X, ImageIcon } from 'lucide-react';
+import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2, Briefcase, X, ImageIcon, Camera, Pencil, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { PhoneInput } from '@/components/ui/phone-input';
-import { internshipDomains, getSuggestedSkills, getAllSkills } from '@/lib/domain-skills';
+import { getSuggestedSkills } from '@/lib/domain-skills';
 
 const domainCategories = [
   'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
@@ -23,6 +23,10 @@ const domainCategories = [
 ];
 
 const internshipModes = ['Remote', 'On-site', 'Hybrid'];
+
+const internshipDurations = ['1 Month', '2 Months', '3 Months', '6 Months', '1 Year'];
+
+const internshipDomainOptions = ['Management', 'Engineering', 'Arts & Science', 'Law'];
 
 const designationTitles = [
   'CEO', 'CTO', 'CFO', 'COO', 'CMO', 'Director', 'Managing Director',
@@ -62,10 +66,11 @@ interface CompanyData {
   designation_name: string | null;
   designation_email: string | null;
   designation_phone: string | null;
-  internship_mode: string | null;
+  internship_modes: string[] | null;
   internship_domain: string | null;
-  internship_duration: string | null;
+  internship_durations: string[] | null;
   internship_domains: string[] | null;
+  custom_domains: string[] | null;
   internship_skills: string[] | null;
   certifications: string[] | null;
   awards: string[] | null;
@@ -85,11 +90,16 @@ export const CompanyProfileForm = () => {
   const [awardInput, setAwardInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [skillInput, setSkillInput] = useState('');
+  const [customDomainInput, setCustomDomainInput] = useState('');
 
   // Get suggested skills based on selected domains
   const selectedDomains = company?.internship_domains || [];
-  const suggestedSkills = getSuggestedSkills(selectedDomains);
+  const customDomains = company?.custom_domains || [];
+  const allDomains = [...selectedDomains, ...customDomains];
+  const suggestedSkills = getSuggestedSkills(allDomains);
   const selectedSkills = company?.internship_skills || [];
+  const selectedModes = company?.internship_modes || [];
+  const selectedDurations = company?.internship_durations || [];
 
   useEffect(() => {
     if (user) fetchCompany();
@@ -108,7 +118,10 @@ export const CompanyProfileForm = () => {
       setCompany({
         ...companyData,
         internship_domains: companyData.internship_domains || [],
+        custom_domains: companyData.custom_domains || [],
         internship_skills: companyData.internship_skills || [],
+        internship_modes: companyData.internship_modes || [],
+        internship_durations: companyData.internship_durations || [],
       } as CompanyData);
     } else if (error?.code === 'PGRST116') {
       const { data: profile } = await supabase
@@ -130,7 +143,10 @@ export const CompanyProfileForm = () => {
         setCompany({
           ...newCompany,
           internship_domains: [],
+          custom_domains: [],
           internship_skills: [],
+          internship_modes: [],
+          internship_durations: [],
         } as CompanyData);
         toast.info('Company profile created. Please fill in the required details.');
       } else if (createError) {
@@ -236,6 +252,35 @@ export const CompanyProfileForm = () => {
     }
   };
 
+  const toggleMode = (mode: string) => {
+    const current = company?.internship_modes || [];
+    if (current.includes(mode)) {
+      handleChange('internship_modes', current.filter(m => m !== mode));
+    } else {
+      handleChange('internship_modes', [...current, mode]);
+    }
+  };
+
+  const toggleDuration = (duration: string) => {
+    const current = company?.internship_durations || [];
+    if (current.includes(duration)) {
+      handleChange('internship_durations', current.filter(d => d !== duration));
+    } else {
+      handleChange('internship_durations', [...current, duration]);
+    }
+  };
+
+  const addCustomDomain = () => {
+    if (customDomainInput.trim() && !customDomains.includes(customDomainInput.trim())) {
+      handleChange('custom_domains', [...customDomains, customDomainInput.trim()]);
+      setCustomDomainInput('');
+    }
+  };
+
+  const removeCustomDomain = (domain: string) => {
+    handleChange('custom_domains', customDomains.filter(d => d !== domain));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -304,10 +349,11 @@ export const CompanyProfileForm = () => {
         designation_name: company.designation_name,
         designation_email: company.designation_email,
         designation_phone: company.designation_phone,
-        internship_mode: company.internship_mode,
+        internship_modes: company.internship_modes || [],
         internship_domain: company.internship_domain,
-        internship_duration: company.internship_duration,
+        internship_durations: company.internship_durations || [],
         internship_domains: company.internship_domains || [],
+        custom_domains: company.custom_domains || [],
         internship_skills: company.internship_skills || [],
         certifications: company.certifications,
         awards: company.awards,
@@ -422,61 +468,121 @@ export const CompanyProfileForm = () => {
           <CardTitle className="flex items-center gap-2"><Upload className="h-5 w-5" /> Media & Branding</CardTitle>
           <CardDescription>Upload logo and cover image (max 5MB each)</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <Label>Company Logo</Label>
-              <div className="border rounded-lg p-4 bg-muted/30">
-                {company.logo_url ? (
-                  <div className="space-y-3">
-                    <img 
-                      src={company.logo_url} 
-                      alt="Company Logo" 
-                      className="h-24 w-24 object-contain rounded-lg border bg-white mx-auto"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                    <p className="text-xs text-center text-muted-foreground">Current logo uploaded</p>
-                  </div>
-                ) : (
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="text-center">
-                      <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground mt-1">No logo uploaded</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <Input type="file" accept="image/*" disabled={uploading === 'logo_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} />
-              {uploading === 'logo_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
-            </div>
-            <div className="space-y-3">
-              <Label>Cover Image</Label>
-              <div className="border rounded-lg p-4 bg-muted/30">
+        <CardContent className="space-y-6">
+          {/* Cover Image - Full Width Banner */}
+          <div className="space-y-3">
+            <Label>Cover Image <span className="text-muted-foreground text-xs">(Recommended: 1130 × 200 px)</span></Label>
+            <div className="relative w-full" style={{ maxWidth: '1130px' }}>
+              <div 
+                className="relative border-2 border-dashed rounded-lg overflow-hidden bg-muted/30"
+                style={{ height: '200px', aspectRatio: '1130/200' }}
+              >
                 {company.cover_image_url ? (
-                  <div className="space-y-3">
+                  <>
                     <img 
                       src={company.cover_image_url} 
                       alt="Cover Image" 
-                      className="h-24 w-full object-cover rounded-lg border"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
-                    <p className="text-xs text-center text-muted-foreground">Current cover image uploaded</p>
-                  </div>
+                    <label className="absolute bottom-3 right-3 cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        disabled={uploading === 'cover_image_url'} 
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
+                      />
+                      <div className="flex items-center gap-2 bg-background/90 hover:bg-background text-foreground px-3 py-2 rounded-lg shadow-md transition-colors">
+                        {uploading === 'cover_image_url' ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Pencil className="h-4 w-4" />
+                        )}
+                        <span className="text-sm font-medium">Edit Cover</span>
+                      </div>
+                    </label>
+                  </>
                 ) : (
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="text-center">
-                      <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground mt-1">No cover image uploaded</p>
-                    </div>
-                  </div>
+                  <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploading === 'cover_image_url'} 
+                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
+                    />
+                    {uploading === 'cover_image_url' ? (
+                      <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+                    ) : (
+                      <>
+                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mt-2">Click to upload cover image</p>
+                        <p className="text-xs text-muted-foreground">1130 × 200 px recommended</p>
+                      </>
+                    )}
+                  </label>
                 )}
               </div>
-              <Input type="file" accept="image/*" disabled={uploading === 'cover_image_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} />
-              {uploading === 'cover_image_url' && <span className="text-sm text-muted-foreground">Uploading...</span>}
+            </div>
+          </div>
+
+          {/* Logo - Icon Based Upload */}
+          <div className="space-y-3">
+            <Label>Company Logo</Label>
+            <div className="flex items-start gap-6">
+              <div className="relative">
+                <div className="h-28 w-28 rounded-xl border-2 border-dashed bg-muted/30 flex items-center justify-center overflow-hidden">
+                  {company.logo_url ? (
+                    <img 
+                      src={company.logo_url} 
+                      alt="Company Logo" 
+                      className="h-full w-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Building2 className="h-12 w-12 text-muted-foreground" />
+                  )}
+                </div>
+                <label className="absolute -bottom-2 -right-2 cursor-pointer">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    disabled={uploading === 'logo_url'} 
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} 
+                  />
+                  <div className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-colors">
+                    {uploading === 'logo_url' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : company.logo_url ? (
+                      <Pencil className="h-4 w-4" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </div>
+                </label>
+              </div>
+              <div className="flex-1 pt-2">
+                <p className="text-sm font-medium">{company.logo_url ? 'Logo uploaded' : 'Upload your company logo'}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Square image recommended (e.g., 200 × 200 px)
+                </p>
+                {company.logo_url && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="mt-2 text-destructive hover:text-destructive h-auto p-0"
+                    onClick={() => handleChange('logo_url', null)}
+                  >
+                    Remove logo
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -624,29 +730,40 @@ export const CompanyProfileForm = () => {
           <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" /> Internship Offering Details</CardTitle>
           <CardDescription>General information about internships you offer</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Mode of Internship</Label>
-              <Select value={company.internship_mode || ''} onValueChange={(v) => handleChange('internship_mode', v)}>
-                <SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger>
-                <SelectContent>
-                  {internshipModes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
+        <CardContent className="space-y-6">
+          {/* Mode of Internship - Multi Select */}
+          <div className="space-y-3">
+            <Label>Mode of Internship (select multiple)</Label>
+            <div className="flex flex-wrap gap-2">
+              {internshipModes.map(mode => (
+                <Badge
+                  key={mode}
+                  variant={selectedModes.includes(mode) ? 'default' : 'outline'}
+                  className={`cursor-pointer transition-colors ${selectedModes.includes(mode) ? 'bg-primary' : 'hover:bg-muted'}`}
+                  onClick={() => toggleMode(mode)}
+                >
+                  {mode}
+                  {selectedModes.includes(mode) && <X className="h-3 w-3 ml-1" />}
+                </Badge>
+              ))}
             </div>
-            <div className="space-y-2">
-              <Label>Duration</Label>
-              <Select value={company.internship_duration || ''} onValueChange={(v) => handleChange('internship_duration', v)}>
-                <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1-month">1 Month</SelectItem>
-                  <SelectItem value="2-months">2 Months</SelectItem>
-                  <SelectItem value="3-months">3 Months</SelectItem>
-                  <SelectItem value="6-months">6 Months</SelectItem>
-                  <SelectItem value="1-year">1 Year</SelectItem>
-                </SelectContent>
-              </Select>
+          </div>
+
+          {/* Duration - Multi Select */}
+          <div className="space-y-3">
+            <Label>Duration (select multiple)</Label>
+            <div className="flex flex-wrap gap-2">
+              {internshipDurations.map(duration => (
+                <Badge
+                  key={duration}
+                  variant={selectedDurations.includes(duration) ? 'default' : 'outline'}
+                  className={`cursor-pointer transition-colors ${selectedDurations.includes(duration) ? 'bg-primary' : 'hover:bg-muted'}`}
+                  onClick={() => toggleDuration(duration)}
+                >
+                  {duration}
+                  {selectedDurations.includes(duration) && <X className="h-3 w-3 ml-1" />}
+                </Badge>
+              ))}
             </div>
           </div>
 
@@ -654,7 +771,7 @@ export const CompanyProfileForm = () => {
           <div className="space-y-3">
             <Label>Internship Domains (select multiple)</Label>
             <div className="flex flex-wrap gap-2">
-              {internshipDomains.map(domain => (
+              {internshipDomainOptions.map(domain => (
                 <Badge
                   key={domain}
                   variant={selectedDomains.includes(domain) ? 'default' : 'outline'}
@@ -666,12 +783,38 @@ export const CompanyProfileForm = () => {
                 </Badge>
               ))}
             </div>
+
+            {/* Custom Domains - Other */}
+            <div className="space-y-2 pt-2">
+              <Label className="text-sm text-muted-foreground">Add Other Domains</Label>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Enter custom domain" 
+                  value={customDomainInput} 
+                  onChange={(e) => setCustomDomainInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomDomain())}
+                />
+                <Button type="button" variant="outline" onClick={addCustomDomain} className="gap-1">
+                  <Plus className="h-4 w-4" /> Add
+                </Button>
+              </div>
+              {customDomains.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {customDomains.map(domain => (
+                    <Badge key={domain} variant="secondary" className="gap-1">
+                      {domain}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeCustomDomain(domain)} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Skills based on selected domains */}
           <div className="space-y-3">
             <Label>Skills (based on selected domains)</Label>
-            {selectedDomains.length === 0 ? (
+            {allDomains.length === 0 ? (
               <p className="text-sm text-muted-foreground">Select domains above to see suggested skills</p>
             ) : (
               <>
