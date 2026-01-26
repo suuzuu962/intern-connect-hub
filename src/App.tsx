@@ -21,7 +21,7 @@ import CompanyDashboard from "./pages/company/CompanyDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UniversityDashboard from "./pages/university/UniversityDashboard";
-import CoordinatorDashboard from "./pages/coordinator/CoordinatorDashboard";
+
 import CollegeDashboard from "./pages/college/CollegeDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -76,14 +76,6 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['university']}>
                   <UniversityDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/coordinator/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['college_coordinator']}>
-                  <CoordinatorDashboard />
                 </ProtectedRoute>
               } 
             />
