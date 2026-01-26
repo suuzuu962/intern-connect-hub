@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building, Users, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Building, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,10 +25,10 @@ const UniversityAuth = () => {
   const { toast } = useToast();
 
   const initialMode = searchParams.get('mode') || 'login';
-  const initialRole = (searchParams.get('role') as 'university' | 'college' | 'college_coordinator') || 'university';
+  const initialRole = (searchParams.get('role') as 'university' | 'college') || 'university';
 
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(initialMode as 'login' | 'signup');
-  const [role, setRole] = useState<'university' | 'college' | 'college_coordinator'>(initialRole);
+  const [role, setRole] = useState<'university' | 'college'>(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -110,12 +110,12 @@ const UniversityAuth = () => {
       if (roleData?.role === 'university') {
         navigate('/university/dashboard');
       } else if (roleData?.role === 'college_coordinator') {
-        // Both college admins and coordinators use the same role
-        navigate('/coordinator/dashboard');
+        // College admins use college_coordinator role
+        navigate('/college/dashboard');
       } else {
         toast({
           title: 'Access Denied',
-          description: 'This login is for universities, colleges and coordinators only.',
+          description: 'This login is for universities and colleges only.',
           variant: 'destructive',
         });
         await supabase.auth.signOut();
@@ -207,17 +207,13 @@ const UniversityAuth = () => {
       title: 'Account Created!',
       description: role === 'university' 
         ? 'Your university account is pending approval.' 
-        : role === 'college'
-        ? 'Your college account is pending approval.'
-        : 'Your account is pending university approval.',
+        : 'Your college account is pending approval.',
     });
 
     if (role === 'university') {
       navigate('/university/dashboard');
-    } else if (role === 'college') {
-      navigate('/college/dashboard');
     } else {
-      navigate('/coordinator/dashboard');
+      navigate('/college/dashboard');
     }
 
     setLoading(false);
@@ -663,24 +659,20 @@ const UniversityAuth = () => {
               InternHub
             </Link>
           </div>
-          {/* Role indicator badge */}
-          {mode !== 'forgot-password' && (
+          {/* Role indicator badge - only show in signup mode */}
+          {mode === 'signup' && signupStep === 'details' && (
             <div className="flex justify-center mb-2">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                 role === 'university' 
                   ? 'bg-primary/10 text-primary border border-primary/20' 
-                  : role === 'college'
-                  ? 'bg-accent text-accent-foreground border border-accent'
-                  : 'bg-secondary text-secondary-foreground border border-border'
+                  : 'bg-accent text-accent-foreground border border-accent'
               }`}>
                 {role === 'university' ? (
                   <Building className="h-3 w-3" />
-                ) : role === 'college' ? (
-                  <GraduationCap className="h-3 w-3" />
                 ) : (
-                  <Users className="h-3 w-3" />
+                  <GraduationCap className="h-3 w-3" />
                 )}
-                {role === 'university' ? 'University Login' : role === 'college' ? 'College Login' : 'College Coordinator Login'}
+                {role === 'university' ? 'University Signup' : 'College Signup'}
               </span>
             </div>
           )}
@@ -693,9 +685,9 @@ const UniversityAuth = () => {
             renderForgotPassword()
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Role selection for both login and signup */}
-              {(mode === 'login' || (mode === 'signup' && signupStep === 'details')) && (
-                <div className="grid grid-cols-3 gap-2 mb-4">
+              {/* Role selection - only for signup */}
+              {mode === 'signup' && signupStep === 'details' && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
                   <Button
                     type="button"
                     variant={role === 'university' ? 'default' : 'outline'}
@@ -713,15 +705,6 @@ const UniversityAuth = () => {
                   >
                     <GraduationCap className="h-5 w-5" />
                     <span className="text-xs">College</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={role === 'college_coordinator' ? 'default' : 'outline'}
-                    className="flex flex-col items-center gap-1 h-auto py-3"
-                    onClick={() => setRole('college_coordinator')}
-                  >
-                    <Users className="h-5 w-5" />
-                    <span className="text-xs">Coordinator</span>
                   </Button>
                 </div>
               )}
