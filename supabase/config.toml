@@ -2,3 +2,9 @@ project_id = "rasmcxfnlovalvbavitb"
 
 [functions.university-signup]
 verify_jwt = false
+
+[functions.create-college-account]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = false
