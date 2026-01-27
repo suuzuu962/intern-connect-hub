@@ -779,10 +779,21 @@ const Auth = () => {
                 {mode === 'login' ? <p>Don't have an account? <button onClick={() => setMode('signup')} className="text-primary font-medium">Sign up</button></p> : <p>Already have an account? <button onClick={() => setMode('login')} className="text-primary font-medium">Sign in</button></p>}
               </div>
 
-              <div className="mt-4 pt-4 border-t text-center">
-                <p className="text-sm text-muted-foreground mb-2">Are you a University, College or Coordinator?</p>
-                <Link to="/university-auth" className="text-sm text-primary font-medium hover:underline">
-                  Login / Register here →
+              <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-sm">University or College?</p>
+                    <p className="text-xs text-muted-foreground">Use our dedicated institutional portal</p>
+                  </div>
+                </div>
+                <Link 
+                  to="/university-auth" 
+                  className="inline-flex items-center justify-center w-full mt-2 px-4 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+                >
+                  Go to University Login →
                 </Link>
               </div>
             </>}
