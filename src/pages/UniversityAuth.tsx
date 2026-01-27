@@ -761,7 +761,7 @@ const UniversityAuth = () => {
                         </Label>
                         <Input
                           id="institutionName"
-                          placeholder={role === 'university' ? 'e.g., VTU University' : 'e.g., ABC Engineering College'}
+                          placeholder={role === 'university' ? 'e.g., xyz university' : 'e.g., ABC Engineering College'}
                           value={institutionName}
                           onChange={(e) => setInstitutionName(e.target.value)}
                         />
