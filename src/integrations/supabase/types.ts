@@ -599,17 +599,23 @@ export type Database = {
           degree: string | null
           department: string | null
           dob: string | null
+          facebook_url: string | null
           gender: string | null
           github_url: string | null
           graduation_year: number | null
           id: string
+          instagram_url: string | null
           interested_domains: string[] | null
           linkedin_url: string | null
+          other_social_url: string | null
+          reddit_url: string | null
           resume_url: string | null
           semester: number | null
           skills: string[] | null
+          slack_url: string | null
           state: string | null
           terms_accepted: boolean | null
+          twitter_url: string | null
           university: string | null
           updated_at: string
           user_id: string
@@ -628,17 +634,23 @@ export type Database = {
           degree?: string | null
           department?: string | null
           dob?: string | null
+          facebook_url?: string | null
           gender?: string | null
           github_url?: string | null
           graduation_year?: number | null
           id?: string
+          instagram_url?: string | null
           interested_domains?: string[] | null
           linkedin_url?: string | null
+          other_social_url?: string | null
+          reddit_url?: string | null
           resume_url?: string | null
           semester?: number | null
           skills?: string[] | null
+          slack_url?: string | null
           state?: string | null
           terms_accepted?: boolean | null
+          twitter_url?: string | null
           university?: string | null
           updated_at?: string
           user_id: string
@@ -657,17 +669,23 @@ export type Database = {
           degree?: string | null
           department?: string | null
           dob?: string | null
+          facebook_url?: string | null
           gender?: string | null
           github_url?: string | null
           graduation_year?: number | null
           id?: string
+          instagram_url?: string | null
           interested_domains?: string[] | null
           linkedin_url?: string | null
+          other_social_url?: string | null
+          reddit_url?: string | null
           resume_url?: string | null
           semester?: number | null
           skills?: string[] | null
+          slack_url?: string | null
           state?: string | null
           terms_accepted?: boolean | null
+          twitter_url?: string | null
           university?: string | null
           updated_at?: string
           user_id?: string

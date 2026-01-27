@@ -149,6 +149,13 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   // Social Links
   const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [redditUrl, setRedditUrl] = useState('');
+  const [slackUrl, setSlackUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [otherSocialUrl, setOtherSocialUrl] = useState('');
 
   // Additional Info
   const [skills, setSkills] = useState<string[]>([]);
@@ -203,6 +210,13 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setState(studentData.state || '');
         setCity(studentData.city || '');
         setLinkedinUrl(studentData.linkedin_url || '');
+        setFacebookUrl((studentData as any).facebook_url || '');
+        setTwitterUrl((studentData as any).twitter_url || '');
+        setGithubUrl(studentData.github_url || '');
+        setRedditUrl((studentData as any).reddit_url || '');
+        setSlackUrl((studentData as any).slack_url || '');
+        setInstagramUrl((studentData as any).instagram_url || '');
+        setOtherSocialUrl((studentData as any).other_social_url || '');
         setSkills(studentData.skills || []);
         setInterestedDomains(studentData.interested_domains || []);
         setResumeUrl(studentData.resume_url || '');
@@ -386,6 +400,13 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         state: state || null,
         city: city || null,
         linkedin_url: linkedinUrl || null,
+        facebook_url: facebookUrl || null,
+        twitter_url: twitterUrl || null,
+        github_url: githubUrl || null,
+        reddit_url: redditUrl || null,
+        slack_url: slackUrl || null,
+        instagram_url: instagramUrl || null,
+        other_social_url: otherSocialUrl || null,
         skills,
         interested_domains: interestedDomains,
         resume_url: resumeUrl || null,
@@ -433,6 +454,13 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           state,
           city,
           linkedinUrl,
+          facebookUrl,
+          twitterUrl,
+          githubUrl,
+          redditUrl,
+          slackUrl,
+          instagramUrl,
+          otherSocialUrl,
           skills,
           interestedDomains,
           resumeUrl,
@@ -650,7 +678,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             Social Links
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
             <Input
@@ -659,6 +687,76 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
               placeholder="https://linkedin.com/in/yourprofile"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="githubUrl">GitHub URL</Label>
+            <Input
+              id="githubUrl"
+              type="url"
+              placeholder="https://github.com/yourusername"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="facebookUrl">Facebook URL</Label>
+            <Input
+              id="facebookUrl"
+              type="url"
+              placeholder="https://facebook.com/yourprofile"
+              value={facebookUrl}
+              onChange={(e) => setFacebookUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="twitterUrl">Twitter / X URL</Label>
+            <Input
+              id="twitterUrl"
+              type="url"
+              placeholder="https://twitter.com/yourusername"
+              value={twitterUrl}
+              onChange={(e) => setTwitterUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="instagramUrl">Instagram URL</Label>
+            <Input
+              id="instagramUrl"
+              type="url"
+              placeholder="https://instagram.com/yourusername"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="redditUrl">Reddit URL</Label>
+            <Input
+              id="redditUrl"
+              type="url"
+              placeholder="https://reddit.com/user/yourusername"
+              value={redditUrl}
+              onChange={(e) => setRedditUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="slackUrl">Slack URL</Label>
+            <Input
+              id="slackUrl"
+              type="url"
+              placeholder="https://yourworkspace.slack.com"
+              value={slackUrl}
+              onChange={(e) => setSlackUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="otherSocialUrl">Other Social URL</Label>
+            <Input
+              id="otherSocialUrl"
+              type="url"
+              placeholder="https://yourprofile.com"
+              value={otherSocialUrl}
+              onChange={(e) => setOtherSocialUrl(e.target.value)}
             />
           </div>
         </CardContent>
