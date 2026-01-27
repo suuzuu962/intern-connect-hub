@@ -19,6 +19,13 @@ interface StudentData {
   state: string;
   city: string;
   linkedinUrl: string;
+  facebookUrl: string;
+  twitterUrl: string;
+  githubUrl: string;
+  redditUrl: string;
+  slackUrl: string;
+  instagramUrl: string;
+  otherSocialUrl: string;
   skills: string[];
   interestedDomains: string[];
   resumeUrl: string;
@@ -122,19 +129,16 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {data.linkedinUrl ? (
-            <a
-              href={data.linkedinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline flex items-center gap-1"
-            >
-              LinkedIn Profile
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          ) : (
-            <p className="text-muted-foreground">No LinkedIn profile added</p>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SocialLinkItem label="LinkedIn" url={data.linkedinUrl} />
+            <SocialLinkItem label="GitHub" url={data.githubUrl} />
+            <SocialLinkItem label="Facebook" url={data.facebookUrl} />
+            <SocialLinkItem label="Twitter / X" url={data.twitterUrl} />
+            <SocialLinkItem label="Instagram" url={data.instagramUrl} />
+            <SocialLinkItem label="Reddit" url={data.redditUrl} />
+            <SocialLinkItem label="Slack" url={data.slackUrl} />
+            <SocialLinkItem label="Other" url={data.otherSocialUrl} />
+          </div>
         </CardContent>
       </Card>
 
@@ -229,5 +233,24 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
   <div>
     <p className="text-sm text-muted-foreground">{label}</p>
     <p className="font-medium">{value || '-'}</p>
+  </div>
+);
+
+const SocialLinkItem = ({ label, url }: { label: string; url: string }) => (
+  <div>
+    <p className="text-sm text-muted-foreground">{label}</p>
+    {url ? (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary hover:underline flex items-center gap-1 font-medium"
+      >
+        View Profile
+        <ExternalLink className="h-4 w-4" />
+      </a>
+    ) : (
+      <p className="text-muted-foreground">-</p>
+    )}
   </div>
 );
