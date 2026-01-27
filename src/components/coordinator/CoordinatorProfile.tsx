@@ -100,9 +100,8 @@ export const CoordinatorProfile = ({ coordinator, onUpdate }: CoordinatorProfile
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className="pl-10"
-                  required
+                  disabled
+                  className="pl-10 bg-muted cursor-not-allowed"
                 />
               </div>
             </div>
