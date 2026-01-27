@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Plus, Edit, Trash2, School, Search } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, School, Search, Eye, EyeOff } from 'lucide-react';
 import { College } from '@/types/database';
 
 interface UniversityCollegesProps {
@@ -22,11 +22,13 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCollege, setEditingCollege] = useState<College | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     contact_person_name: '',
     contact_person_email: '',
     contact_person_phone: '',
@@ -61,6 +63,7 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
     setFormData({
       name: '',
       email: '',
+      password: '',
       contact_person_name: '',
       contact_person_email: '',
       contact_person_phone: '',
@@ -68,6 +71,7 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
       address: '',
     });
     setEditingCollege(null);
+    setShowPassword(false);
   };
 
   const handleEdit = (college: College) => {
@@ -75,6 +79,7 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
     setFormData({
       name: college.name || '',
       email: college.email || '',
+      password: '', // Don't show password when editing
       contact_person_name: college.contact_person_name || '',
       contact_person_email: college.contact_person_email || '',
       contact_person_phone: college.contact_person_phone || '',
@@ -94,9 +99,11 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
     setSaving(true);
 
     if (editingCollege) {
+      // Update existing college (no password update)
+      const { password, ...updateData } = formData;
       const { error } = await supabase
         .from('colleges')
-        .update(formData)
+        .update(updateData)
         .eq('id', editingCollege.id);
 
       if (error) {
@@ -108,18 +115,38 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
         resetForm();
       }
     } else {
-      const { error } = await supabase.from('colleges').insert({
-        ...formData,
-        university_id: universityId,
-      });
+      // Create new college with account
+      if (!formData.email.trim()) {
+        toast({ title: 'Error', description: 'Email is required for new college', variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      if (!formData.password.trim() || formData.password.length < 6) {
+        toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
 
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'College added successfully' });
-        fetchColleges();
-        setDialogOpen(false);
-        resetForm();
+      try {
+        const { data, error } = await supabase.functions.invoke('create-college-account', {
+          body: {
+            ...formData,
+            university_id: universityId,
+          },
+        });
+
+        if (error) {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } else if (data?.error) {
+          toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        } else {
+          toast({ title: 'College added successfully', description: 'Account created with the provided email and password' });
+          fetchColleges();
+          setDialogOpen(false);
+          resetForm();
+        }
+      } catch (err: any) {
+        toast({ title: 'Error', description: err.message || 'Failed to create college', variant: 'destructive' });
       }
     }
 
@@ -181,14 +208,44 @@ export const UniversityColleges = ({ universityId }: UniversityCollegesProps) =>
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
+                    required
+                    disabled={!!editingCollege}
                   />
+                  {editingCollege && (
+                    <p className="text-xs text-muted-foreground">Email cannot be changed after creation</p>
+                  )}
                 </div>
+                {!editingCollege && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        placeholder="Min 6 characters"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">This will be the login password for the college account</p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="contact_person_name">Contact Person Name</Label>
                   <Input
