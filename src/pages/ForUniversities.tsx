@@ -1,7 +1,9 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   GraduationCap, 
   Users, 
@@ -14,10 +16,50 @@ import {
   ClipboardList,
   UserCheck,
   FileText,
-  Bell
+  Bell,
+  Loader2
 } from 'lucide-react';
 
 const ForUniversities = () => {
+  const { user, role, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user && role) {
+      // Redirect to appropriate dashboard based on role
+      if (role === 'university') {
+        navigate('/university/dashboard', { replace: true });
+      } else if (role === 'college_coordinator') {
+        navigate('/college/dashboard', { replace: true });
+      }
+    }
+  }, [user, role, loading, navigate]);
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // If user is logged in as university or college, they'll be redirected
+  // Show loading briefly during redirect
+  if (user && (role === 'university' || role === 'college_coordinator')) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   const benefits = [
     {
       icon: Users,
