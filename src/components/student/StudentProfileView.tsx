@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink } from 'lucide-react';
+import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home } from 'lucide-react';
 
 interface StudentData {
   fullName: string;
@@ -9,15 +9,22 @@ interface StudentData {
   phoneNumber: string;
   dob: string;
   gender: string;
+  aboutMe?: string;
   usn: string;
   college: string;
   university: string;
-  department: string;
+  domain: string;
+  course: string;
+  specialization?: string;
   semester: string;
   address: string;
   country: string;
   state: string;
   city: string;
+  permanentAddress?: string;
+  permanentCountry?: string;
+  permanentState?: string;
+  permanentCity?: string;
   linkedinUrl: string;
   facebookUrl: string;
   twitterUrl: string;
@@ -70,7 +77,7 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
             Basic Information
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem label="Full Name" value={data.fullName} />
             <InfoItem label="Email" value={data.email} />
@@ -78,6 +85,12 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
             <InfoItem label="Date of Birth" value={data.dob ? new Date(data.dob).toLocaleDateString() : '-'} />
             <InfoItem label="Gender" value={formatGender(data.gender)} />
           </div>
+          {data.aboutMe && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-2">About Me</p>
+              <p className="text-sm whitespace-pre-wrap">{data.aboutMe}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -94,18 +107,22 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
             <InfoItem label="USN / Roll Number" value={data.usn} />
             <InfoItem label="College" value={data.college} />
             <InfoItem label="University" value={data.university} />
-            <InfoItem label="Department / Branch" value={data.department} />
+            <InfoItem label="Domain" value={data.domain} />
+            <InfoItem label="Course" value={data.course} />
+            {data.specialization && (
+              <InfoItem label="Specialization" value={data.specialization} />
+            )}
             <InfoItem label="Semester" value={data.semester ? `Semester ${data.semester}` : '-'} />
           </div>
         </CardContent>
       </Card>
 
-      {/* Location */}
+      {/* Current Address */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Location
+            Current Address
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -119,6 +136,28 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           </div>
         </CardContent>
       </Card>
+
+      {/* Permanent Address */}
+      {(data.permanentAddress || data.permanentCountry || data.permanentState || data.permanentCity) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Home className="h-5 w-5 text-primary" />
+              Permanent Address
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <InfoItem label="Address" value={data.permanentAddress || '-'} />
+              </div>
+              <InfoItem label="Country" value={data.permanentCountry || '-'} />
+              <InfoItem label="State" value={data.permanentState || '-'} />
+              <InfoItem label="City" value={data.permanentCity || '-'} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Social Links */}
       <Card>
