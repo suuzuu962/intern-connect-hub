@@ -587,6 +587,7 @@ export type Database = {
       }
       students: {
         Row: {
+          about_me: string | null
           accuracy_confirmation: boolean | null
           address: string | null
           bio: string | null
@@ -595,10 +596,14 @@ export type Database = {
           college_id: string | null
           college_id_url: string | null
           country: string | null
+          course: string | null
           created_at: string
+          custom_course: string | null
+          custom_domain: string | null
           degree: string | null
           department: string | null
           dob: string | null
+          domain: string | null
           facebook_url: string | null
           gender: string | null
           github_url: string | null
@@ -608,11 +613,16 @@ export type Database = {
           interested_domains: string[] | null
           linkedin_url: string | null
           other_social_url: string | null
+          permanent_address: string | null
+          permanent_city: string | null
+          permanent_country: string | null
+          permanent_state: string | null
           reddit_url: string | null
           resume_url: string | null
           semester: number | null
           skills: string[] | null
           slack_url: string | null
+          specialization: string | null
           state: string | null
           terms_accepted: boolean | null
           twitter_url: string | null
@@ -622,6 +632,7 @@ export type Database = {
           usn: string | null
         }
         Insert: {
+          about_me?: string | null
           accuracy_confirmation?: boolean | null
           address?: string | null
           bio?: string | null
@@ -630,10 +641,14 @@ export type Database = {
           college_id?: string | null
           college_id_url?: string | null
           country?: string | null
+          course?: string | null
           created_at?: string
+          custom_course?: string | null
+          custom_domain?: string | null
           degree?: string | null
           department?: string | null
           dob?: string | null
+          domain?: string | null
           facebook_url?: string | null
           gender?: string | null
           github_url?: string | null
@@ -643,11 +658,16 @@ export type Database = {
           interested_domains?: string[] | null
           linkedin_url?: string | null
           other_social_url?: string | null
+          permanent_address?: string | null
+          permanent_city?: string | null
+          permanent_country?: string | null
+          permanent_state?: string | null
           reddit_url?: string | null
           resume_url?: string | null
           semester?: number | null
           skills?: string[] | null
           slack_url?: string | null
+          specialization?: string | null
           state?: string | null
           terms_accepted?: boolean | null
           twitter_url?: string | null
@@ -657,6 +677,7 @@ export type Database = {
           usn?: string | null
         }
         Update: {
+          about_me?: string | null
           accuracy_confirmation?: boolean | null
           address?: string | null
           bio?: string | null
@@ -665,10 +686,14 @@ export type Database = {
           college_id?: string | null
           college_id_url?: string | null
           country?: string | null
+          course?: string | null
           created_at?: string
+          custom_course?: string | null
+          custom_domain?: string | null
           degree?: string | null
           department?: string | null
           dob?: string | null
+          domain?: string | null
           facebook_url?: string | null
           gender?: string | null
           github_url?: string | null
@@ -678,11 +703,16 @@ export type Database = {
           interested_domains?: string[] | null
           linkedin_url?: string | null
           other_social_url?: string | null
+          permanent_address?: string | null
+          permanent_city?: string | null
+          permanent_country?: string | null
+          permanent_state?: string | null
           reddit_url?: string | null
           resume_url?: string | null
           semester?: number | null
           skills?: string[] | null
           slack_url?: string | null
+          specialization?: string | null
           state?: string | null
           terms_accepted?: boolean | null
           twitter_url?: string | null

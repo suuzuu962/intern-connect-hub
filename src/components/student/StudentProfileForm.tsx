@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy } from 'lucide-react';
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
-import { departmentSkillsMap, getSuggestedSkillsForDepartment, getSuggestedDomainsForDepartment } from '@/lib/department-skills';
+import { getSuggestedSkillsForDepartment, getSuggestedDomainsForDepartment } from '@/lib/department-skills';
+import { DOMAIN_OPTIONS, getCoursesForDomain, getSpecializationsForCourse } from '@/lib/domain-course-mapping';
 
 const ALL_SKILL_OPTIONS = [
   'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue.js', 'Node.js', 'Python', 'Java',
@@ -29,31 +31,6 @@ const ALL_DOMAIN_OPTIONS = [
   'UI/UX Design', 'Product Management', 'Digital Marketing', 'Content Writing',
   'Finance', 'Human Resources', 'Business Development', 'Research & Development',
   'Software Development', 'Operations', 'Research', 'Other'
-];
-
-const DEPARTMENT_OPTIONS = [
-  'Computer Science & Engineering',
-  'Information Science & Engineering',
-  'Electronics & Communication Engineering',
-  'Electrical & Electronics Engineering',
-  'Mechanical Engineering',
-  'Civil Engineering',
-  'Chemical Engineering',
-  'Biotechnology',
-  'Aeronautical Engineering',
-  'Automobile Engineering',
-  'Information Technology',
-  'Artificial Intelligence & Machine Learning',
-  'Data Science',
-  'Business Administration',
-  'Commerce',
-  'Arts',
-  'Science',
-  'Law',
-  'Medicine',
-  'Pharmacy',
-  'Architecture',
-  'Other'
 ];
 
 const COUNTRY_OPTIONS = [
@@ -88,7 +65,8 @@ const isProfileComplete = (data: {
   usn: string;
   college: string;
   university: string;
-  department: string;
+  domain: string;
+  course: string;
   semester: string;
   address: string;
   country: string;
@@ -103,7 +81,8 @@ const isProfileComplete = (data: {
     data.usn &&
     data.college &&
     data.university &&
-    data.department &&
+    data.domain &&
+    data.course &&
     data.semester &&
     data.address &&
     data.country &&
@@ -116,7 +95,6 @@ const isProfileComplete = (data: {
   );
 };
 
-
 export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -126,26 +104,36 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
 
-
   // Basic Info
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
+  const [aboutMe, setAboutMe] = useState('');
 
   // Academic Info
   const [usn, setUsn] = useState('');
   const [college, setCollege] = useState('');
   const [university, setUniversity] = useState('');
-  const [department, setDepartment] = useState('');
+  const [domain, setDomain] = useState('');
+  const [customDomain, setCustomDomain] = useState('');
+  const [course, setCourse] = useState('');
+  const [customCourse, setCustomCourse] = useState('');
+  const [specialization, setSpecialization] = useState('');
   const [semester, setSemester] = useState('');
 
-  // Location
+  // Current Address
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
+
+  // Permanent Address
+  const [permanentAddress, setPermanentAddress] = useState('');
+  const [permanentCountry, setPermanentCountry] = useState('');
+  const [permanentState, setPermanentState] = useState('');
+  const [permanentCity, setPermanentCity] = useState('');
 
   // Social Links
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -167,12 +155,33 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [accuracyConfirmation, setAccuracyConfirmation] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Derived course options based on domain
+  const courseOptions = getCoursesForDomain(domain);
+  const specializationOptions = getSpecializationsForCourse(course);
+
   useEffect(() => {
     if (user) {
       fetchProfileData();
     }
   }, [user]);
 
+  // Reset course when domain changes
+  useEffect(() => {
+    if (domain !== 'Other') {
+      setCustomDomain('');
+    }
+    setCourse('');
+    setCustomCourse('');
+    setSpecialization('');
+  }, [domain]);
+
+  // Reset specialization when course changes
+  useEffect(() => {
+    if (course !== 'Other') {
+      setCustomCourse('');
+    }
+    setSpecialization('');
+  }, [course]);
 
   const fetchProfileData = async () => {
     try {
@@ -200,15 +209,24 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setStudentId(studentData.id);
         setDob(studentData.dob || '');
         setGender(studentData.gender || '');
+        setAboutMe((studentData as any).about_me || '');
         setUsn(studentData.usn || '');
         setCollege(studentData.college || '');
         setUniversity(studentData.university || '');
-        setDepartment(studentData.department || '');
+        setDomain((studentData as any).domain || '');
+        setCustomDomain((studentData as any).custom_domain || '');
+        setCourse((studentData as any).course || '');
+        setCustomCourse((studentData as any).custom_course || '');
+        setSpecialization((studentData as any).specialization || '');
         setSemester(studentData.semester?.toString() || '');
         setAddress(studentData.address || '');
         setCountry(studentData.country || '');
         setState(studentData.state || '');
         setCity(studentData.city || '');
+        setPermanentAddress((studentData as any).permanent_address || '');
+        setPermanentCountry((studentData as any).permanent_country || '');
+        setPermanentState((studentData as any).permanent_state || '');
+        setPermanentCity((studentData as any).permanent_city || '');
         setLinkedinUrl(studentData.linkedin_url || '');
         setFacebookUrl((studentData as any).facebook_url || '');
         setTwitterUrl((studentData as any).twitter_url || '');
@@ -229,7 +247,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           usn: studentData.usn || '',
           college: studentData.college || '',
           university: studentData.university || '',
-          department: studentData.department || '',
+          domain: (studentData as any).domain || '',
+          course: (studentData as any).course || '',
           semester: studentData.semester?.toString() || '',
           address: studentData.address || '',
           country: studentData.country || '',
@@ -335,12 +354,20 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     );
   };
 
-  const toggleDomain = (domain: string) => {
+  const toggleDomain = (domainItem: string) => {
     setInterestedDomains(prev =>
-      prev.includes(domain)
-        ? prev.filter(d => d !== domain)
-        : [...prev, domain]
+      prev.includes(domainItem)
+        ? prev.filter(d => d !== domainItem)
+        : [...prev, domainItem]
     );
+  };
+
+  const copyCurrentToPermanent = () => {
+    setPermanentAddress(address);
+    setPermanentCountry(country);
+    setPermanentState(state);
+    setPermanentCity(city);
+    toast.success('Current address copied to permanent address');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -352,13 +379,23 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     }
 
     // Validate required fields
-    if (!usn || !college || !university || !department || !semester) {
+    if (!usn || !college || !university || !domain || !course || !semester) {
       toast.error('Please complete all academic information fields');
       return;
     }
 
+    if (domain === 'Other' && !customDomain) {
+      toast.error('Please enter your domain');
+      return;
+    }
+
+    if (course === 'Other' && !customCourse) {
+      toast.error('Please enter your course');
+      return;
+    }
+
     if (!address || !country || !state || !city) {
-      toast.error('Please complete all location fields');
+      toast.error('Please complete all current address fields');
       return;
     }
 
@@ -389,16 +426,26 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       const studentUpdate = {
         dob: dob || null,
         gender: gender || null,
+        about_me: aboutMe || null,
         usn: usn || null,
         college: college || null,
         college_id: null,
         university: university || null,
-        department: department || null,
+        domain: domain || null,
+        custom_domain: customDomain || null,
+        course: course || null,
+        custom_course: customCourse || null,
+        specialization: specialization || null,
+        department: domain === 'Other' ? customDomain : domain, // Keep department for backward compatibility
         semester: semester ? parseInt(semester) : null,
         address: address || null,
         country: country || null,
         state: state || null,
         city: city || null,
+        permanent_address: permanentAddress || null,
+        permanent_country: permanentCountry || null,
+        permanent_state: permanentState || null,
+        permanent_city: permanentCity || null,
         linkedin_url: linkedinUrl || null,
         facebook_url: facebookUrl || null,
         twitter_url: twitterUrl || null,
@@ -444,15 +491,22 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           phoneNumber,
           dob,
           gender,
+          aboutMe,
           usn,
           college,
           university,
-          department,
+          domain: domain === 'Other' ? customDomain : domain,
+          course: course === 'Other' ? customCourse : course,
+          specialization,
           semester,
           address,
           country,
           state,
           city,
+          permanentAddress,
+          permanentCountry,
+          permanentState,
+          permanentCity,
           linkedinUrl,
           facebookUrl,
           twitterUrl,
@@ -481,49 +535,71 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             Basic Information
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" value={email} disabled className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number *</Label>
+              <PhoneInput
+                value={phoneNumber}
+                onChange={setPhoneNumber}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dob">Date of Birth</Label>
+              <Input
+                id="dob"
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* About Me */}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name *</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
+            <Label htmlFor="aboutMe">About Me (max 1000 words)</Label>
+            <Textarea
+              id="aboutMe"
+              value={aboutMe}
+              onChange={(e) => {
+                const words = e.target.value.split(/\s+/).filter(Boolean);
+                if (words.length <= 1000) {
+                  setAboutMe(e.target.value);
+                }
+              }}
+              placeholder="Tell us about yourself, your interests, goals, and aspirations..."
+              className="min-h-[150px]"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" value={email} disabled className="bg-muted" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Phone Number *</Label>
-            <PhoneInput
-              value={phoneNumber}
-              onChange={setPhoneNumber}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dob">Date of Birth</Label>
-            <Input
-              id="dob"
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-                <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-              </SelectContent>
-            </Select>
+            <p className="text-xs text-muted-foreground">
+              {aboutMe.split(/\s+/).filter(Boolean).length} / 1000 words
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -567,20 +643,90 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="department">Department / Branch <span className="text-destructive">*</span></Label>
-            <Select value={department} onValueChange={setDepartment}>
+            <Label htmlFor="domain">Domain <span className="text-destructive">*</span></Label>
+            <Select value={domain} onValueChange={setDomain}>
               <SelectTrigger>
-                <SelectValue placeholder="Select department" />
+                <SelectValue placeholder="Select domain" />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {DEPARTMENT_OPTIONS.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
+              <SelectContent>
+                {DOMAIN_OPTIONS.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+          {domain === 'Other' && (
+            <div className="space-y-2">
+              <Label htmlFor="customDomain">Enter Domain <span className="text-destructive">*</span></Label>
+              <Input
+                id="customDomain"
+                placeholder="Enter your domain"
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          {domain && domain !== 'Other' && (
+            <div className="space-y-2">
+              <Label htmlFor="course">Course <span className="text-destructive">*</span></Label>
+              <Select value={course} onValueChange={setCourse}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courseOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {domain === 'Other' && (
+            <div className="space-y-2">
+              <Label htmlFor="customCourse">Course <span className="text-destructive">*</span></Label>
+              <Input
+                id="customCourse"
+                placeholder="Enter your course"
+                value={customCourse}
+                onChange={(e) => setCustomCourse(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          {course === 'Other' && domain !== 'Other' && (
+            <div className="space-y-2">
+              <Label htmlFor="customCourse">Enter Course <span className="text-destructive">*</span></Label>
+              <Input
+                id="customCourse"
+                placeholder="Enter your course"
+                value={customCourse}
+                onChange={(e) => setCustomCourse(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          {course && course !== 'Other' && specializationOptions.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="specialization">Specialization</Label>
+              <Select value={specialization} onValueChange={setSpecialization}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select specialization" />
+                </SelectTrigger>
+                <SelectContent>
+                  {specializationOptions.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="semester">Semester <span className="text-destructive">*</span></Label>
             <Select value={semester} onValueChange={setSemester}>
@@ -599,12 +745,12 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardContent>
       </Card>
 
-      {/* Location */}
+      {/* Current Address */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Location
+            Current Address
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -665,6 +811,86 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               required
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Permanent Address */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Permanent Address
+            </CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyCurrentToPermanent}
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              Copy Current Address
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="permanentAddress">Address</Label>
+            <Input
+              id="permanentAddress"
+              value={permanentAddress}
+              onChange={(e) => setPermanentAddress(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="permanentCountry">Country</Label>
+            <Select value={permanentCountry} onValueChange={(value) => { setPermanentCountry(value); setPermanentState(''); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="permanentState">State</Label>
+            {permanentCountry === 'India' ? (
+              <Select value={permanentState} onValueChange={setPermanentState}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {INDIA_STATES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="permanentState"
+                placeholder="Enter your state"
+                value={permanentState}
+                onChange={(e) => setPermanentState(e.target.value)}
+              />
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="permanentCity">City</Label>
+            <Input
+              id="permanentCity"
+              placeholder="Enter your city"
+              value={permanentCity}
+              onChange={(e) => setPermanentCity(e.target.value)}
             />
           </div>
         </CardContent>
@@ -771,18 +997,18 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Skills (Select all that apply)</Label>
-              {department && (
+              {domain && domain !== 'Other' && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  Suggested for {department}
+                  Suggested for {domain}
                 </span>
               )}
             </div>
-            {department && (
+            {domain && domain !== 'Other' && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Recommended skills for your department:</p>
+                <p className="text-xs text-muted-foreground">Recommended skills for your domain:</p>
                 <div className="flex flex-wrap gap-2">
-                  {getSuggestedSkillsForDepartment(department).map((skill) => (
+                  {getSuggestedSkillsForDepartment(domain).map((skill) => (
                     <Badge
                       key={skill}
                       variant={skills.includes(skill) ? "default" : "secondary"}
@@ -797,9 +1023,9 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
               </div>
             )}
             <div className="space-y-2">
-              {department && <p className="text-xs text-muted-foreground">Other skills:</p>}
+              {domain && domain !== 'Other' && <p className="text-xs text-muted-foreground">Other skills:</p>}
               <div className="flex flex-wrap gap-2">
-                {ALL_SKILL_OPTIONS.filter(skill => !department || !getSuggestedSkillsForDepartment(department).includes(skill)).map((skill) => (
+                {ALL_SKILL_OPTIONS.filter(skill => !domain || domain === 'Other' || !getSuggestedSkillsForDepartment(domain).includes(skill)).map((skill) => (
                   <Badge
                     key={skill}
                     variant={skills.includes(skill) ? "default" : "outline"}
@@ -817,43 +1043,43 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Interested Domains</Label>
-              {department && (
+              {domain && domain !== 'Other' && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  Suggested for {department}
+                  Suggested for {domain}
                 </span>
               )}
             </div>
-            {department && (
+            {domain && domain !== 'Other' && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Recommended domains for your department:</p>
+                <p className="text-xs text-muted-foreground">Recommended domains for your field:</p>
                 <div className="flex flex-wrap gap-2">
-                  {getSuggestedDomainsForDepartment(department).map((domain) => (
+                  {getSuggestedDomainsForDepartment(domain).map((d) => (
                     <Badge
-                      key={domain}
-                      variant={interestedDomains.includes(domain) ? "default" : "secondary"}
+                      key={d}
+                      variant={interestedDomains.includes(d) ? "default" : "secondary"}
                       className="cursor-pointer transition-colors"
-                      onClick={() => toggleDomain(domain)}
+                      onClick={() => toggleDomain(d)}
                     >
-                      {domain}
-                      {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                      {d}
+                      {interestedDomains.includes(d) && <X className="h-3 w-3 ml-1" />}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
             <div className="space-y-2">
-              {department && <p className="text-xs text-muted-foreground">Other domains:</p>}
+              {domain && domain !== 'Other' && <p className="text-xs text-muted-foreground">Other domains:</p>}
               <div className="flex flex-wrap gap-2">
-                {ALL_DOMAIN_OPTIONS.filter(domain => !department || !getSuggestedDomainsForDepartment(department).includes(domain)).map((domain) => (
+                {ALL_DOMAIN_OPTIONS.filter(d => !domain || domain === 'Other' || !getSuggestedDomainsForDepartment(domain).includes(d)).map((d) => (
                   <Badge
-                    key={domain}
-                    variant={interestedDomains.includes(domain) ? "default" : "outline"}
+                    key={d}
+                    variant={interestedDomains.includes(d) ? "default" : "outline"}
                     className="cursor-pointer transition-colors"
-                    onClick={() => toggleDomain(domain)}
+                    onClick={() => toggleDomain(d)}
                   >
-                    {domain}
-                    {interestedDomains.includes(domain) && <X className="h-3 w-3 ml-1" />}
+                    {d}
+                    {interestedDomains.includes(d) && <X className="h-3 w-3 ml-1" />}
                   </Badge>
                 ))}
               </div>
