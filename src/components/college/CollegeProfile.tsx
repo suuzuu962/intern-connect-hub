@@ -79,7 +79,8 @@ export const CollegeProfile = ({ college, onUpdate }: CollegeProfileProps) => {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
             </div>
           </div>
