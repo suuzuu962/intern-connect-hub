@@ -142,15 +142,10 @@ const ForUniversities = () => {
               Streamline student internships, track progress across colleges, and build stronger 
               industry connections—all from one powerful platform.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <Button asChild size="lg" className="gradient-primary text-primary-foreground">
-                <Link to="/university-auth?mode=signup">
-                  Sign Up <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/university-auth?mode=login">
-                  Login
+                <Link to="/university-auth">
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
@@ -275,15 +270,10 @@ const ForUniversities = () => {
               Join universities across India that are already using our platform to connect 
               students with meaningful internship opportunities.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <Button asChild size="lg" className="gradient-primary text-primary-foreground">
-                <Link to="/university-auth?mode=signup">
-                  Sign Up <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/university-auth?mode=login">
-                  Login
+                <Link to="/university-auth">
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
