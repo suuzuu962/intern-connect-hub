@@ -259,7 +259,7 @@ interface PhoneInputProps {
 export const PhoneInput = ({
   value,
   onChange,
-  placeholder = '9876543210',
+  placeholder = '0000000000',
   className,
   disabled = false,
   error = false,
