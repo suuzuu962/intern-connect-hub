@@ -122,24 +122,11 @@ serve(async (req: Request) => {
     const userId = authData.user!.id;
     console.log("Auth user created with ID:", userId);
 
-    // Step 2: Create profile
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-      user_id: userId,
-      email: body.email,
-      full_name: body.name,
-    });
+    // Note: Profile is automatically created by the handle_new_user trigger
+    // We just need to wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      // Rollback: delete the auth user
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-      return new Response(
-        JSON.stringify({ error: "Failed to create profile: " + profileError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Step 3: Create user role as college_coordinator
+    // Step 2: Create user role as college_coordinator
     const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
       user_id: userId,
       role: "college_coordinator",
