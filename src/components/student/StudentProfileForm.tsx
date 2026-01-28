@@ -201,7 +201,10 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       { name: 'Country', value: country, required: true },
       { name: 'State', value: state, required: true },
       { name: 'City', value: city, required: true },
-      { name: 'Permanent Address', value: permanentAddress, required: false },
+      { name: 'Permanent Address', value: permanentAddress, required: true },
+      { name: 'Permanent Country', value: permanentCountry, required: true },
+      { name: 'Permanent State', value: permanentState, required: true },
+      { name: 'Permanent City', value: permanentCity, required: true },
       { name: 'LinkedIn', value: linkedinUrl, required: false },
       { name: 'GitHub', value: githubUrl, required: false },
       { name: 'Skills', value: skills.length > 0 ? 'filled' : '', required: false },
@@ -472,6 +475,11 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
     if (!address || !country || !state || !city) {
       toast.error('Please complete all current address fields');
+      return;
+    }
+
+    if (!permanentAddress || !permanentCountry || !permanentState || !permanentCity) {
+      toast.error('Please complete all permanent address fields');
       return;
     }
 
