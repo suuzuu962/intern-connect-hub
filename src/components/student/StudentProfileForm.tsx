@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy, Calendar } from 'lucide-react';
 import { StudentProfileView } from './StudentProfileView';
@@ -175,6 +176,58 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     }
     return null;
   }, [course, semester, yearOfStudy]);
+
+  // Calculate profile completion percentage
+  const profileCompletionInfo = useMemo(() => {
+    const fields = [
+      { name: 'Full Name', value: fullName, required: true },
+      { name: 'Phone Number', value: phoneNumber, required: true },
+      { name: 'Date of Birth', value: dob, required: false },
+      { name: 'Gender', value: gender, required: false },
+      { name: 'Profile Picture', value: avatarUrl, required: false },
+      { name: 'About Me', value: aboutMe, required: false },
+      { name: 'USN/Roll Number', value: usn, required: true },
+      { name: 'College', value: college, required: true },
+      { name: 'University', value: university, required: true },
+      { name: 'Domain', value: domain === 'Other' ? customDomain : domain, required: true },
+      { name: 'Course', value: course === 'Other' ? customCourse : course, required: true },
+      { name: 'Specialization', value: specialization, required: false },
+      { name: 'Semester', value: semester, required: true },
+      { name: 'Year of Study', value: yearOfStudy, required: false },
+      { name: 'Address', value: address, required: true },
+      { name: 'Country', value: country, required: true },
+      { name: 'State', value: state, required: true },
+      { name: 'City', value: city, required: true },
+      { name: 'Permanent Address', value: permanentAddress, required: false },
+      { name: 'LinkedIn', value: linkedinUrl, required: false },
+      { name: 'GitHub', value: githubUrl, required: false },
+      { name: 'Skills', value: skills.length > 0 ? 'filled' : '', required: false },
+      { name: 'Interested Domains', value: interestedDomains.length > 0 ? 'filled' : '', required: false },
+      { name: 'Resume', value: resumeUrl, required: true },
+      { name: 'College ID', value: collegeIdUrl, required: true },
+    ];
+
+    const filledFields = fields.filter(f => f.value).length;
+    const totalFields = fields.length;
+    const percentage = Math.round((filledFields / totalFields) * 100);
+    
+    const missingRequired = fields.filter(f => f.required && !f.value).map(f => f.name);
+    const missingOptional = fields.filter(f => !f.required && !f.value).map(f => f.name);
+
+    return {
+      percentage,
+      filledFields,
+      totalFields,
+      missingRequired,
+      missingOptional,
+    };
+  }, [
+    fullName, phoneNumber, dob, gender, avatarUrl, aboutMe,
+    usn, college, university, domain, customDomain, course, customCourse,
+    specialization, semester, yearOfStudy, address, country, state, city,
+    permanentAddress, linkedinUrl, githubUrl, skills, interestedDomains,
+    resumeUrl, collegeIdUrl
+  ]);
 
   useEffect(() => {
     if (user) {
@@ -552,6 +605,73 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Profile Completion Progress */}
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                profileCompletionInfo.percentage === 100 
+                  ? 'bg-green-500/10 text-green-500' 
+                  : 'bg-primary/10 text-primary'
+              }`}>
+                {profileCompletionInfo.percentage === 100 ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Profile Completion</h3>
+                <p className="text-xs text-muted-foreground">
+                  {profileCompletionInfo.filledFields} of {profileCompletionInfo.totalFields} fields completed
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`text-2xl font-bold ${
+                profileCompletionInfo.percentage === 100 
+                  ? 'text-green-500' 
+                  : profileCompletionInfo.percentage >= 70 
+                    ? 'text-primary' 
+                    : 'text-yellow-500'
+              }`}>
+                {profileCompletionInfo.percentage}%
+              </span>
+            </div>
+          </div>
+          <Progress 
+            value={profileCompletionInfo.percentage} 
+            className={`h-2 ${
+              profileCompletionInfo.percentage === 100 
+                ? '[&>div]:bg-green-500' 
+                : profileCompletionInfo.percentage >= 70 
+                  ? '' 
+                  : '[&>div]:bg-yellow-500'
+            }`}
+          />
+          {profileCompletionInfo.missingRequired.length > 0 && (
+            <div className="mt-3 p-2 bg-yellow-500/10 rounded-md">
+              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mb-1">
+                Required fields missing:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {profileCompletionInfo.missingRequired.slice(0, 5).map((field) => (
+                  <Badge key={field} variant="outline" className="text-xs border-yellow-500/30 text-yellow-600 dark:text-yellow-400">
+                    {field}
+                  </Badge>
+                ))}
+                {profileCompletionInfo.missingRequired.length > 5 && (
+                  <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-600 dark:text-yellow-400">
+                    +{profileCompletionInfo.missingRequired.length - 5} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Basic Info */}
       <Card>
         <CardHeader>
