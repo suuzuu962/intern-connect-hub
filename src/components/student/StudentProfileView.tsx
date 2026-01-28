@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home, Calendar } from 'lucide-react';
 
 interface StudentData {
   fullName: string;
@@ -10,6 +11,7 @@ interface StudentData {
   dob: string;
   gender: string;
   aboutMe?: string;
+  avatarUrl?: string;
   usn: string;
   college: string;
   university: string;
@@ -17,6 +19,8 @@ interface StudentData {
   course: string;
   specialization?: string;
   semester: string;
+  yearOfStudy?: string;
+  expectedGraduationYear?: string;
   address: string;
   country: string;
   state: string;
@@ -54,6 +58,23 @@ const formatGender = (gender: string) => {
   }
 };
 
+const formatYearOfStudy = (year: string) => {
+  const num = parseInt(year);
+  if (num === 1) return '1st Year';
+  if (num === 2) return '2nd Year';
+  if (num === 3) return '3rd Year';
+  return `${num}th Year`;
+};
+
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) => {
   return (
     <div className="space-y-6">
@@ -78,6 +99,17 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Profile Picture */}
+          {data.avatarUrl && (
+            <div className="flex justify-center pb-4 border-b">
+              <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                <AvatarImage src={data.avatarUrl} alt={data.fullName} />
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                  {getInitials(data.fullName) || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem label="Full Name" value={data.fullName} />
             <InfoItem label="Email" value={data.email} />
@@ -113,6 +145,18 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
               <InfoItem label="Specialization" value={data.specialization} />
             )}
             <InfoItem label="Semester" value={data.semester ? `Semester ${data.semester}` : '-'} />
+            {data.yearOfStudy && (
+              <InfoItem label="Year of Study" value={formatYearOfStudy(data.yearOfStudy)} />
+            )}
+            {data.expectedGraduationYear && (
+              <div>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Expected Graduation
+                </p>
+                <p className="font-medium">{data.expectedGraduationYear}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
