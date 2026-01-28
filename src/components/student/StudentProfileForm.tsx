@@ -1044,7 +1044,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="permanentAddress">Address</Label>
+            <Label htmlFor="permanentAddress">Address <span className="text-destructive">*</span></Label>
             <Input
               id="permanentAddress"
               value={permanentAddress}
@@ -1052,7 +1052,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="permanentCountry">Country</Label>
+            <Label htmlFor="permanentCountry">Country <span className="text-destructive">*</span></Label>
             <Select value={permanentCountry} onValueChange={(value) => { setPermanentCountry(value); setPermanentState(''); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select country" />
@@ -1067,7 +1067,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="permanentState">State</Label>
+            <Label htmlFor="permanentState">State <span className="text-destructive">*</span></Label>
             {permanentCountry === 'India' ? (
               <Select value={permanentState} onValueChange={setPermanentState}>
                 <SelectTrigger>
@@ -1091,7 +1091,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="permanentCity">City</Label>
+            <Label htmlFor="permanentCity">City <span className="text-destructive">*</span></Label>
             <Input
               id="permanentCity"
               placeholder="Enter your city"
