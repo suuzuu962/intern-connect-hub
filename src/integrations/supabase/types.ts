@@ -630,6 +630,7 @@ export type Database = {
           updated_at: string
           user_id: string
           usn: string | null
+          year_of_study: number | null
         }
         Insert: {
           about_me?: string | null
@@ -675,6 +676,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           usn?: string | null
+          year_of_study?: number | null
         }
         Update: {
           about_me?: string | null
@@ -720,6 +722,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           usn?: string | null
+          year_of_study?: number | null
         }
         Relationships: [
           {

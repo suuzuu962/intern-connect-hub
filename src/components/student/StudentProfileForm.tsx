@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy } from 'lucide-react';
+import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy, Calendar } from 'lucide-react';
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { ProfilePictureUpload } from './ProfilePictureUpload';
 import { getSuggestedSkillsForDepartment, getSuggestedDomainsForDepartment } from '@/lib/department-skills';
 import { DOMAIN_OPTIONS, getCoursesForDomain, getSpecializationsForCourse } from '@/lib/domain-course-mapping';
+import { calculateGraduationYear, getYearOfStudyOptions } from '@/lib/graduation-year-calculator';
 
 const ALL_SKILL_OPTIONS = [
   'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue.js', 'Node.js', 'Python', 'Java',
@@ -111,6 +113,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
   const [aboutMe, setAboutMe] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   // Academic Info
   const [usn, setUsn] = useState('');
@@ -122,6 +125,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [customCourse, setCustomCourse] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [semester, setSemester] = useState('');
+  const [yearOfStudy, setYearOfStudy] = useState('');
 
   // Current Address
   const [address, setAddress] = useState('');
@@ -158,6 +162,19 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   // Derived course options based on domain
   const courseOptions = getCoursesForDomain(domain);
   const specializationOptions = getSpecializationsForCourse(course);
+  const yearOfStudyOptions = getYearOfStudyOptions(course || 'B.Tech');
+
+  // Calculate expected graduation year
+  const graduationInfo = useMemo(() => {
+    if (course && semester) {
+      return calculateGraduationYear(
+        course,
+        parseInt(semester),
+        yearOfStudy ? parseInt(yearOfStudy) : undefined
+      );
+    }
+    return null;
+  }, [course, semester, yearOfStudy]);
 
   useEffect(() => {
     if (user) {
@@ -196,6 +213,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setFullName(profileData.full_name || '');
         setEmail(profileData.email || '');
         setPhoneNumber(profileData.phone_number || '');
+        setAvatarUrl(profileData.avatar_url || '');
       }
 
       // Fetch student data
@@ -219,6 +237,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setCustomCourse((studentData as any).custom_course || '');
         setSpecialization((studentData as any).specialization || '');
         setSemester(studentData.semester?.toString() || '');
+        setYearOfStudy((studentData as any).year_of_study?.toString() || '');
         setAddress(studentData.address || '');
         setCountry(studentData.country || '');
         setState(studentData.state || '');
@@ -417,6 +436,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         .update({
           full_name: fullName,
           phone_number: phoneNumber,
+          avatar_url: avatarUrl || null,
         })
         .eq('user_id', user?.id);
 
@@ -438,6 +458,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         specialization: specialization || null,
         department: domain === 'Other' ? customDomain : domain, // Keep department for backward compatibility
         semester: semester ? parseInt(semester) : null,
+        year_of_study: yearOfStudy ? parseInt(yearOfStudy) : null,
+        graduation_year: graduationInfo?.expectedGraduationYear || null,
         address: address || null,
         country: country || null,
         state: state || null,
@@ -492,6 +514,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           dob,
           gender,
           aboutMe,
+          avatarUrl,
           usn,
           college,
           university,
@@ -499,6 +522,8 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           course: course === 'Other' ? customCourse : course,
           specialization,
           semester,
+          yearOfStudy,
+          expectedGraduationYear: graduationInfo?.expectedGraduationYear?.toString() || '',
           address,
           country,
           state,
@@ -536,6 +561,16 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Profile Picture */}
+          <div className="flex justify-center pb-4 border-b">
+            <ProfilePictureUpload
+              currentImageUrl={avatarUrl}
+              userId={user?.id || ''}
+              onUploadComplete={setAvatarUrl}
+              fullName={fullName}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name *</Label>
@@ -734,7 +769,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
                 <SelectValue placeholder="Select semester" />
               </SelectTrigger>
               <SelectContent>
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => (
                   <SelectItem key={sem} value={sem.toString()}>
                     Semester {sem}
                   </SelectItem>
@@ -742,6 +777,37 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="yearOfStudy">Year of Study</Label>
+            <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOfStudyOptions.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year === 1 ? '1st Year' : year === 2 ? '2nd Year' : year === 3 ? '3rd Year' : `${year}th Year`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {graduationInfo && (
+            <div className="space-y-2 md:col-span-2">
+              <Label className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Expected Graduation Year
+              </Label>
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <span className="text-lg font-semibold">{graduationInfo.expectedGraduationYear}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {graduationInfo.remainingYears > 0 
+                    ? `${graduationInfo.remainingYears} year${graduationInfo.remainingYears > 1 ? 's' : ''} remaining` 
+                    : 'Final Year'}
+                </Badge>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
