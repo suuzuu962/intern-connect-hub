@@ -597,6 +597,7 @@ export type Database = {
           college_id_url: string | null
           country: string | null
           course: string | null
+          cover_image_url: string | null
           created_at: string
           custom_course: string | null
           custom_domain: string | null
@@ -643,6 +644,7 @@ export type Database = {
           college_id_url?: string | null
           country?: string | null
           course?: string | null
+          cover_image_url?: string | null
           created_at?: string
           custom_course?: string | null
           custom_domain?: string | null
@@ -689,6 +691,7 @@ export type Database = {
           college_id_url?: string | null
           country?: string | null
           course?: string | null
+          cover_image_url?: string | null
           created_at?: string
           custom_course?: string | null
           custom_domain?: string | null
