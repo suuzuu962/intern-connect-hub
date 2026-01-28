@@ -212,10 +212,6 @@ export const ProfilePictureUpload = ({
           <Camera className="h-6 w-6 text-white" />
         </button>
       </div>
-      <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => setIsAvatarPickerOpen(true)}>
-        <ImageIcon className="h-4 w-4" />
-        {currentImageUrl ? 'Change Photo' : 'Add Photo'}
-      </Button>
 
       {/* Avatar Picker Dialog */}
       <Dialog open={isAvatarPickerOpen} onOpenChange={setIsAvatarPickerOpen}>
