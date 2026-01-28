@@ -49,14 +49,33 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [studentFullData, setStudentFullData] = useState<StudentFullData | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (student?.id) {
       fetchApplications();
       calculateProfileCompletion();
       fetchStudentFullData();
+      fetchAvatarUrl();
     }
   }, [student]);
+
+  const fetchAvatarUrl = async () => {
+    if (!student?.user_id) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', student.user_id)
+        .maybeSingle();
+      
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error('Error fetching avatar:', error);
+    }
+  };
 
   const fetchStudentFullData = async () => {
     if (!student?.id) return;
@@ -231,9 +250,17 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
         <CardContent className="p-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
-                <User className="h-7 w-7 text-muted-foreground" />
-              </div>
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt="Profile" 
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-7 w-7 text-muted-foreground" />
+                </div>
+              )}
               <div>
                 <h2 className="text-lg font-semibold">Profile Completion</h2>
                 <p className="text-sm text-muted-foreground">
