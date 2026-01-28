@@ -31,6 +31,14 @@ const PRESET_AVATARS = [
   '/avatars/avatar-10.png',
   '/avatars/avatar-11.png',
   '/avatars/avatar-12.png',
+  '/avatars/avatar-13.png',
+  '/avatars/avatar-14.png',
+  '/avatars/avatar-15.png',
+  '/avatars/avatar-16.png',
+  '/avatars/avatar-17.png',
+  '/avatars/avatar-18.png',
+  '/avatars/avatar-19.png',
+  '/avatars/avatar-20.png',
 ];
 
 // Helper function to create image from URL

@@ -15,6 +15,7 @@ import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckC
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { ProfilePictureUpload } from './ProfilePictureUpload';
+import { CoverImagePicker } from './CoverImagePicker';
 import { getSuggestedSkillsForDepartment, getSuggestedDomainsForDepartment } from '@/lib/department-skills';
 import { DOMAIN_OPTIONS, getCoursesForDomain, getSpecializationsForCourse } from '@/lib/domain-course-mapping';
 import { calculateGraduationYear, getYearOfStudyOptions } from '@/lib/graduation-year-calculator';
@@ -115,6 +116,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [gender, setGender] = useState('');
   const [aboutMe, setAboutMe] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
 
   // Academic Info
   const [usn, setUsn] = useState('');
@@ -185,6 +187,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       { name: 'Date of Birth', value: dob, required: false },
       { name: 'Gender', value: gender, required: false },
       { name: 'Profile Picture', value: avatarUrl, required: false },
+      { name: 'Cover Image', value: coverImageUrl, required: false },
       { name: 'About Me', value: aboutMe, required: false },
       { name: 'USN/Roll Number', value: usn, required: true },
       { name: 'College', value: college, required: true },
@@ -222,7 +225,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       missingOptional,
     };
   }, [
-    fullName, phoneNumber, dob, gender, avatarUrl, aboutMe,
+    fullName, phoneNumber, dob, gender, avatarUrl, coverImageUrl, aboutMe,
     usn, college, university, domain, customDomain, course, customCourse,
     specialization, semester, yearOfStudy, address, country, state, city,
     permanentAddress, linkedinUrl, githubUrl, skills, interestedDomains,
@@ -281,6 +284,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setDob(studentData.dob || '');
         setGender(studentData.gender || '');
         setAboutMe((studentData as any).about_me || '');
+        setCoverImageUrl((studentData as any).cover_image_url || '');
         setUsn(studentData.usn || '');
         setCollege(studentData.college || '');
         setUniversity(studentData.university || '');
@@ -500,6 +504,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         dob: dob || null,
         gender: gender || null,
         about_me: aboutMe || null,
+        cover_image_url: coverImageUrl || null,
         usn: usn || null,
         college: college || null,
         college_id: null,
@@ -568,6 +573,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           gender,
           aboutMe,
           avatarUrl,
+          coverImageUrl,
           usn,
           college,
           university,
@@ -672,17 +678,18 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         </CardContent>
       </Card>
 
-      {/* Basic Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            Basic Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Profile Picture */}
-          <div className="flex justify-center pb-4 border-b">
+      {/* Basic Info with Cover Image */}
+      <Card className="overflow-hidden">
+        {/* Cover Image Picker */}
+        <CoverImagePicker
+          currentCoverUrl={coverImageUrl}
+          userId={user?.id || ''}
+          onCoverChange={setCoverImageUrl}
+        />
+
+        <CardHeader className="relative">
+          {/* Profile Picture - overlapping cover */}
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0">
             <ProfilePictureUpload
               currentImageUrl={avatarUrl}
               userId={user?.id || ''}
@@ -690,7 +697,12 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
               fullName={fullName}
             />
           </div>
-
+          <CardTitle className="flex items-center gap-2 pt-14 sm:pt-0 sm:pl-32">
+            <User className="h-5 w-5 text-primary hidden sm:inline" />
+            Basic Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name *</Label>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home, Calendar } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StudentData {
   fullName: string;
@@ -12,6 +13,7 @@ interface StudentData {
   gender: string;
   aboutMe?: string;
   avatarUrl?: string;
+  coverImageUrl?: string;
   usn: string;
   college: string;
   university: string;
@@ -75,6 +77,9 @@ const getInitials = (name: string) => {
     .slice(0, 2);
 };
 
+const isGradientCover = (url?: string) => url?.startsWith('gradient:');
+const getGradientClass = (url?: string) => url?.replace('gradient:', '') || '';
+
 export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) => {
   return (
     <div className="space-y-6">
@@ -90,26 +95,42 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
         </Button>
       </div>
 
-      {/* Basic Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            Basic Information
+      {/* Basic Info with Cover Image */}
+      <Card className="overflow-hidden">
+        {/* Cover Image */}
+        <div className="relative w-full h-32 sm:h-40">
+          {data.coverImageUrl ? (
+            isGradientCover(data.coverImageUrl) ? (
+              <div className={cn("w-full h-full bg-gradient-to-r", getGradientClass(data.coverImageUrl))} />
+            ) : (
+              <img
+                src={data.coverImageUrl}
+                alt="Cover"
+                className="w-full h-full object-cover"
+              />
+            )
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-primary/20 to-primary/40" />
+          )}
+          
+          {/* Profile Avatar overlapping cover */}
+          <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+              <AvatarImage src={data.avatarUrl} alt={data.fullName} />
+              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                {getInitials(data.fullName) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </div>
+
+        <CardHeader className="pt-14 sm:pt-6 sm:pl-36">
+          <CardTitle className="flex items-center gap-2 text-center sm:text-left">
+            <User className="h-5 w-5 text-primary hidden sm:inline" />
+            {data.fullName || 'Basic Information'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Profile Picture */}
-          {data.avatarUrl && (
-            <div className="flex justify-center pb-4 border-b">
-              <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                <AvatarImage src={data.avatarUrl} alt={data.fullName} />
-                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                  {getInitials(data.fullName) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem label="Full Name" value={data.fullName} />
             <InfoItem label="Email" value={data.email} />
