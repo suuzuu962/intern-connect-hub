@@ -114,6 +114,10 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
     }
   };
 
+  const [completedFields, setCompletedFields] = useState(0);
+  const [totalFields, setTotalFields] = useState(0);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+
   const calculateProfileCompletion = async () => {
     if (!student?.id) return;
 
@@ -130,31 +134,53 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
         .eq('user_id', student.user_id)
         .single();
 
-      let completed = 0;
-      const fields = [
-        profileData?.full_name,
-        profileData?.phone_number,
-        studentData?.dob,
-        studentData?.gender,
-        studentData?.usn,
-        studentData?.university,
-        studentData?.department,
-        studentData?.semester,
-        studentData?.address,
-        studentData?.country,
-        studentData?.state,
-        studentData?.city,
-        studentData?.linkedin_url,
-        studentData?.skills?.length,
-        studentData?.interested_domains?.length,
-        studentData?.resume_url,
+      const fieldChecks = [
+        { name: 'Full Name', value: profileData?.full_name },
+        { name: 'Phone Number', value: profileData?.phone_number },
+        { name: 'Date of Birth', value: studentData?.dob },
+        { name: 'Gender', value: studentData?.gender },
+        { name: 'USN', value: studentData?.usn },
+        { name: 'University', value: studentData?.university },
+        { name: 'Department', value: studentData?.department },
+        { name: 'Semester', value: studentData?.semester },
+        { name: 'Domain', value: studentData?.domain },
+        { name: 'Course', value: studentData?.course },
+        { name: 'Year of Study', value: studentData?.year_of_study },
+        { name: 'Graduation Year', value: studentData?.graduation_year },
+        { name: 'Current Address', value: studentData?.address },
+        { name: 'Current Country', value: studentData?.country },
+        { name: 'Current State', value: studentData?.state },
+        { name: 'Current City', value: studentData?.city },
+        { name: 'Permanent Address', value: studentData?.permanent_address },
+        { name: 'Permanent Country', value: studentData?.permanent_country },
+        { name: 'Permanent State', value: studentData?.permanent_state },
+        { name: 'Permanent City', value: studentData?.permanent_city },
+        { name: 'LinkedIn', value: studentData?.linkedin_url },
+        { name: 'Skills', value: studentData?.skills?.length },
+        { name: 'Interested Domains', value: studentData?.interested_domains?.length },
+        { name: 'Resume', value: studentData?.resume_url },
+        { name: 'About Me', value: studentData?.about_me },
+        { name: 'College', value: studentData?.college || studentData?.college_id },
+        { name: 'Degree', value: studentData?.degree },
+        { name: 'Specialization', value: studentData?.specialization },
+        { name: 'College ID', value: studentData?.college_id_url },
       ];
 
-      fields.forEach((field) => {
-        if (field) completed++;
+      let completed = 0;
+      const missing: string[] = [];
+
+      fieldChecks.forEach((field) => {
+        if (field.value) {
+          completed++;
+        } else {
+          missing.push(field.name);
+        }
       });
 
-      setProfileCompletion(Math.round((completed / fields.length) * 100));
+      setCompletedFields(completed);
+      setTotalFields(fieldChecks.length);
+      setMissingFields(missing);
+      setProfileCompletion(Math.round((completed / fieldChecks.length) * 100));
     } catch (error) {
       console.error('Error calculating profile completion:', error);
     }
@@ -190,40 +216,73 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
     approved: applications.filter(a => a.status === 'approved').length,
   };
 
+  const getProgressColor = () => {
+    if (profileCompletion === 100) return 'bg-green-500';
+    return 'bg-amber-500';
+  };
+
+  const displayedMissingFields = missingFields.slice(0, 5);
+  const remainingCount = missingFields.length - 5;
+
   return (
     <div className="space-y-6">
       {/* Profile Completion Card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                <User className="h-8 w-8 text-primary" />
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                <User className="h-7 w-7 text-muted-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Welcome Back!</h1>
-                <p className="text-muted-foreground">
-                  {student?.university || 'Complete your profile to apply for internships'}
+                <h2 className="text-lg font-semibold">Profile Completion</h2>
+                <p className="text-sm text-muted-foreground">
+                  {completedFields} of {totalFields} fields completed
                 </p>
               </div>
             </div>
-            <Button onClick={onEditProfile} variant="outline">
+            <span className={`text-3xl font-bold ${profileCompletion === 100 ? 'text-green-500' : 'text-amber-500'}`}>
+              {profileCompletion}%
+            </span>
+          </div>
+
+          <Progress 
+            value={profileCompletion} 
+            className={`h-2 mt-4 ${profileCompletion === 100 ? '[&>div]:bg-green-500' : '[&>div]:bg-amber-500'}`} 
+          />
+
+          {profileCompletion < 100 && missingFields.length > 0 && (
+            <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-3">
+                Required fields missing:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {displayedMissingFields.map((field) => (
+                  <Badge 
+                    key={field} 
+                    variant="outline" 
+                    className="bg-white dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200"
+                  >
+                    {field}
+                  </Badge>
+                ))}
+                {remainingCount > 0 && (
+                  <Badge 
+                    variant="outline" 
+                    className="bg-white dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200"
+                  >
+                    +{remainingCount} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={onEditProfile} variant="outline" size="sm">
               <UserCog className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Profile Completion</span>
-              <span className="text-sm text-muted-foreground">{profileCompletion}%</span>
-            </div>
-            <Progress value={profileCompletion} className="h-2" />
-            {profileCompletion < 100 && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Complete your profile to increase your chances of getting selected.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
