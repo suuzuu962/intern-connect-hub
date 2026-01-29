@@ -844,12 +844,14 @@ const Auth = () => {
                     <p className="text-xs text-muted-foreground">Use our dedicated institutional portal</p>
                   </div>
                 </div>
-                <Link 
-                  to="/university-auth" 
+                <a 
+                  href="/university-auth" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full mt-2 px-4 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
                 >
                   Go to University Login →
-                </Link>
+                </a>
               </div>
             </>}
         </CardContent>
