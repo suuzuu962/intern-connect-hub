@@ -5,3 +5,12 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
 }
 
 export { Skeleton };
+
+// Re-export dialog skeletons for convenience
+export { 
+  DialogSkeleton, 
+  FormSkeleton, 
+  TableSkeleton, 
+  CardSkeleton, 
+  ProfileSkeleton 
+} from './dialog-skeleton';

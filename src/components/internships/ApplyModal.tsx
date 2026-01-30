@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle, AlertCircle, FileText, LogIn } from 'lucide-react';
 import { Internship } from '@/types/database';
+import { DialogSkeleton } from '@/components/ui/dialog-skeleton';
 
 interface ApplyModalProps {
   internship: Internship;
@@ -181,8 +182,13 @@ export const ApplyModal = ({ internship, open, onOpenChange, onSuccess }: ApplyM
         </DialogHeader>
 
         {checkingStatus ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="py-4">
+            <DialogSkeleton 
+              lines={3} 
+              showHeader={false} 
+              showActions={true} 
+              showAvatar={false}
+            />
           </div>
         ) : alreadyApplied ? (
           <div className="py-8 text-center">
