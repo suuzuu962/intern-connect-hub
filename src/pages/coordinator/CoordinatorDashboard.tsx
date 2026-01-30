@@ -4,11 +4,12 @@ import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Network } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile';
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
 import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
+import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChart';
 import { CollegeCoordinator } from '@/types/database';
 
 const CoordinatorDashboard = () => {
@@ -103,8 +104,12 @@ const CoordinatorDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="org-chart" className="flex items-center gap-1">
+              <Network className="h-3 w-3" />
+              Org Chart
+            </TabsTrigger>
             <TabsTrigger value="students">All Students</TabsTrigger>
             <TabsTrigger value="diary">Diary Approvals</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -112,6 +117,10 @@ const CoordinatorDashboard = () => {
 
           <TabsContent value="dashboard">
             <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="summary" />
+          </TabsContent>
+
+          <TabsContent value="org-chart">
+            <CoordinatorOrgChart coordinatorId={coordinator.id} collegeId={coordinator.college_id} />
           </TabsContent>
 
           <TabsContent value="students">
