@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, UserCheck, Search, Filter, CheckCircle, XCircle } from 'lucide-react';
 import { CollegeCoordinator, College } from '@/types/database';
+import { AddCoordinatorDialog } from './AddCoordinatorDialog';
 
 interface UniversityCoordinatorsProps {
   universityId: string;
@@ -113,11 +114,16 @@ export const UniversityCoordinators = ({ universityId }: UniversityCoordinatorsP
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <UserCheck className="h-5 w-5" />
           College Coordinators ({coordinators.length})
         </CardTitle>
+        <AddCoordinatorDialog
+          universityId={universityId}
+          colleges={colleges}
+          onSuccess={fetchData}
+        />
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-4 mb-4">
