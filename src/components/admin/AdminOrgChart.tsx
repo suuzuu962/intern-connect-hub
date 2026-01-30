@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Loader2, 
@@ -22,7 +24,10 @@ import {
   User,
   Calendar,
   CheckCircle,
-  XCircle
+  XCircle,
+  Search,
+  X,
+  Filter
 } from 'lucide-react';
 
 interface University {
@@ -81,6 +86,8 @@ interface OrgData {
 
 type DetailType = 'university' | 'college' | 'coordinator' | 'student';
 
+type FilterType = 'all' | 'university' | 'college' | 'coordinator' | 'student';
+
 export const AdminOrgChart = () => {
   const [data, setData] = useState<OrgData>({
     universities: [],
@@ -95,6 +102,8 @@ export const AdminOrgChart = () => {
     type: DetailType;
     data: University | College | Coordinator | Student;
   } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
 
   useEffect(() => {
     fetchOrgData();
@@ -179,6 +188,129 @@ export const AdminOrgChart = () => {
 
   const handleItemClick = (type: DetailType, item: any) => {
     setSelectedItem({ type, data: item });
+  };
+
+  // Filter and search logic
+  const filteredData = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    if (!query && filterType === 'all') {
+      return data;
+    }
+
+    let filteredUniversities = data.universities;
+    let filteredColleges = data.colleges;
+    let filteredCoordinators = data.coordinators;
+    let filteredStudents = data.students;
+
+    // Apply search filter
+    if (query) {
+      filteredUniversities = data.universities.filter(u => 
+        u.name.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query) ||
+        u.contact_person_name?.toLowerCase().includes(query)
+      );
+      
+      filteredColleges = data.colleges.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.email?.toLowerCase().includes(query) ||
+        c.contact_person_name?.toLowerCase().includes(query)
+      );
+      
+      filteredCoordinators = data.coordinators.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.email.toLowerCase().includes(query) ||
+        c.designation?.toLowerCase().includes(query)
+      );
+      
+      filteredStudents = data.students.filter(s => 
+        s.name.toLowerCase().includes(query) ||
+        s.usn?.toLowerCase().includes(query) ||
+        s.department?.toLowerCase().includes(query) ||
+        s.course?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply type filter
+    if (filterType !== 'all') {
+      if (filterType !== 'university') filteredUniversities = [];
+      if (filterType !== 'college') filteredColleges = [];
+      if (filterType !== 'coordinator') filteredCoordinators = [];
+      if (filterType !== 'student') filteredStudents = [];
+    }
+
+    // If searching, also include parent entities that contain matching children
+    if (query && filterType === 'all') {
+      // Include colleges that have matching coordinators or students
+      const collegesWithMatchingChildren = new Set<string>();
+      filteredCoordinators.forEach(c => c.college_id && collegesWithMatchingChildren.add(c.college_id));
+      filteredStudents.forEach(s => s.college_id && collegesWithMatchingChildren.add(s.college_id));
+      
+      const additionalColleges = data.colleges.filter(c => 
+        collegesWithMatchingChildren.has(c.id) && !filteredColleges.find(fc => fc.id === c.id)
+      );
+      filteredColleges = [...filteredColleges, ...additionalColleges];
+
+      // Include universities that have matching colleges
+      const universitiesWithMatchingColleges = new Set<string>();
+      filteredColleges.forEach(c => universitiesWithMatchingColleges.add(c.university_id));
+      
+      const additionalUniversities = data.universities.filter(u => 
+        universitiesWithMatchingColleges.has(u.id) && !filteredUniversities.find(fu => fu.id === u.id)
+      );
+      filteredUniversities = [...filteredUniversities, ...additionalUniversities];
+    }
+
+    return {
+      universities: filteredUniversities,
+      colleges: filteredColleges,
+      coordinators: filteredCoordinators,
+      students: filteredStudents,
+    };
+  }, [data, searchQuery, filterType]);
+
+  // Auto-expand when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setExpandedUniversities(new Set(filteredData.universities.map(u => u.id)));
+      setExpandedColleges(new Set(filteredData.colleges.map(c => c.id)));
+    }
+  }, [searchQuery, filteredData.universities, filteredData.colleges]);
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setFilterType('all');
+  };
+
+  const getFilteredCollegesForUniversity = (universityId: string) => {
+    return filteredData.colleges.filter(c => c.university_id === universityId);
+  };
+
+  const getFilteredCoordinatorsForCollege = (collegeId: string) => {
+    return filteredData.coordinators.filter(c => c.college_id === collegeId);
+  };
+
+  const getFilteredStudentsForCollege = (collegeId: string) => {
+    return filteredData.students.filter(s => s.college_id === collegeId);
+  };
+
+  const highlightMatch = (text: string) => {
+    if (!searchQuery.trim()) return text;
+    
+    const query = searchQuery.toLowerCase();
+    const index = text.toLowerCase().indexOf(query);
+    
+    if (index === -1) return text;
+    
+    return (
+      <>
+        {text.substring(0, index)}
+        <span className="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">
+          {text.substring(index, index + searchQuery.length)}
+        </span>
+        {text.substring(index + searchQuery.length)}
+      </>
+    );
   };
 
   const renderDetailDialog = () => {
@@ -525,6 +657,57 @@ export const AdminOrgChart = () => {
           </p>
         </CardHeader>
         <CardContent>
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search universities, colleges, coordinators, or students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                  onClick={clearSearch}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <Select value={filterType} onValueChange={(v) => setFilterType(v as FilterType)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="university">Universities</SelectItem>
+                <SelectItem value="college">Colleges</SelectItem>
+                <SelectItem value="coordinator">Coordinators</SelectItem>
+                <SelectItem value="student">Students</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Search Results Summary */}
+          {(searchQuery || filterType !== 'all') && (
+            <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg">
+              <div className="text-sm">
+                <span className="font-medium">
+                  {filteredData.universities.length} universities, {filteredData.colleges.length} colleges, {filteredData.coordinators.length} coordinators, {filteredData.students.length} students
+                </span>
+                <span className="text-muted-foreground"> found</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={clearSearch}>
+                Clear filters
+              </Button>
+            </div>
+          )}
+
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-primary/10 rounded-lg p-4 text-center">
@@ -552,14 +735,14 @@ export const AdminOrgChart = () => {
           {/* Organization Tree */}
           <ScrollArea className="h-[600px] pr-4">
             <div className="space-y-3">
-              {data.universities.length === 0 ? (
+              {filteredData.universities.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No universities registered yet.</p>
+                  <p>{searchQuery ? 'No matching results found.' : 'No universities registered yet.'}</p>
                 </div>
               ) : (
-                data.universities.map((university) => {
-                  const uniColleges = getCollegesForUniversity(university.id);
+                filteredData.universities.map((university) => {
+                  const uniColleges = getFilteredCollegesForUniversity(university.id);
                   
                   return (
                     <Collapsible
@@ -580,7 +763,7 @@ export const AdminOrgChart = () => {
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                   )}
                                   <Building2 className="h-5 w-5 text-primary" />
-                                  <span className="font-semibold">{university.name}</span>
+                                  <span className="font-semibold">{highlightMatch(university.name)}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">
@@ -616,8 +799,8 @@ export const AdminOrgChart = () => {
                             ) : (
                               <div className="p-2 space-y-2">
                                 {uniColleges.map((college) => {
-                                  const collegeCoordinators = getCoordinatorsForCollege(college.id);
-                                  const collegeStudents = getStudentsForCollege(college.id);
+                                  const collegeCoordinators = getFilteredCoordinatorsForCollege(college.id);
+                                  const collegeStudents = getFilteredStudentsForCollege(college.id);
 
                                   return (
                                     <Collapsible
@@ -638,7 +821,7 @@ export const AdminOrgChart = () => {
                                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                                   )}
                                                   <School className="h-4 w-4 text-primary" />
-                                                  <span className="font-medium">{college.name}</span>
+                                                  <span className="font-medium">{highlightMatch(college.name)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                   <Badge variant="outline" className="text-xs">
@@ -683,7 +866,7 @@ export const AdminOrgChart = () => {
                                                         className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
                                                         onClick={() => handleItemClick('coordinator', coord)}
                                                       >
-                                                        <span className="text-sm">{coord.name}</span>
+                                                        <span className="text-sm">{highlightMatch(coord.name)}</span>
                                                         <Badge 
                                                           variant={coord.is_approved ? 'default' : 'secondary'} 
                                                           className="text-xs"
@@ -712,7 +895,7 @@ export const AdminOrgChart = () => {
                                                         className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
                                                         onClick={() => handleItemClick('student', student)}
                                                       >
-                                                        <span className="text-sm">{student.name}</span>
+                                                        <span className="text-sm">{highlightMatch(student.name)}</span>
                                                         {student.department && (
                                                           <Badge variant="outline" className="text-xs">
                                                             {student.department}
