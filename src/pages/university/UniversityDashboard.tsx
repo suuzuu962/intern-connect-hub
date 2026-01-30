@@ -11,6 +11,7 @@ import { UniversityUsers } from '@/components/university/UniversityUsers';
 import { UniversityCoordinators } from '@/components/university/UniversityCoordinators';
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
+import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -87,8 +88,9 @@ const UniversityDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-6 mb-8">
+          <TabsList className="grid w-full grid-cols-7 mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="org-chart">Org Chart</TabsTrigger>
             <TabsTrigger value="colleges">Colleges</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
@@ -98,6 +100,10 @@ const UniversityDashboard = () => {
 
           <TabsContent value="dashboard">
             <UniversityStudents universityId={university.id} viewMode="summary" />
+          </TabsContent>
+
+          <TabsContent value="org-chart">
+            <UniversityOrgChart universityId={university.id} />
           </TabsContent>
 
           <TabsContent value="colleges">
