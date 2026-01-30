@@ -12,7 +12,8 @@ import { CollegeManagement } from '@/components/admin/CollegeManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
 import { AdminManagement } from '@/components/admin/AdminManagement';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck } from 'lucide-react';
+import { AdminOrgChart } from '@/components/admin/AdminOrgChart';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,10 +49,14 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
+          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-11 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="org-chart" className="flex items-center gap-2">
+              <Network className="h-4 w-4" />
+              <span className="hidden sm:inline">Org Chart</span>
             </TabsTrigger>
             <TabsTrigger value="admins" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
@@ -93,6 +98,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="overview">
             <AdminOverview onNavigate={handleTabChange} />
+          </TabsContent>
+
+          <TabsContent value="org-chart">
+            <AdminOrgChart />
           </TabsContent>
 
           <TabsContent value="admins">
