@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/tooltip';
 
 export const ZoomControls = () => {
-  const { zoomLevel, zoomIn, zoomOut, resetZoom, setZoomLevel } = useZoom();
   const isMobile = useIsMobile();
+  const { zoomLevel, zoomIn, zoomOut, resetZoom, setZoomLevel } = useZoom();
 
   // Hide on mobile devices - users can pinch-to-zoom natively
   if (isMobile) {
