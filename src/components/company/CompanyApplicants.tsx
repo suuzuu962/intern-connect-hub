@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { User, Mail, Calendar, FileText, Check, X, Clock, ExternalLink, MapPin, GraduationCap, Briefcase, Link as LinkIcon, FileSearch, ThumbsUp, Send, CheckSquare, Loader2, Download, Search, Filter, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProfileSkeleton } from '@/components/ui/dialog-skeleton';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
