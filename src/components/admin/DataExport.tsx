@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Download, Users, Building2, Briefcase, FileText, Loader2, CalendarIcon, X } from 'lucide-react';
+import { Download, Users, Building2, Briefcase, FileText, Loader2, CalendarIcon, X, GraduationCap, School, UserCheck, Shield, Bell, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type ExportType = 'students' | 'companies' | 'internships' | 'applications';
+type ExportType = 'students' | 'companies' | 'internships' | 'applications' | 'universities' | 'colleges' | 'coordinators' | 'login_logs' | 'notifications' | 'payments';
 
 export const DataExport = () => {
   const [exporting, setExporting] = useState<ExportType | null>(null);
@@ -71,19 +71,23 @@ export const DataExport = () => {
     return `${prefix}_export_${datePart}.csv`;
   };
 
+  const applyDateFilter = (query: any, dateField: string) => {
+    if (startDate) {
+      query = query.gte(dateField, startDate.toISOString());
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      query = query.lte(dateField, endOfDay.toISOString());
+    }
+    return query;
+  };
+
   const exportStudents = async () => {
     setExporting('students');
     try {
       let query = supabase.from('students').select('*').order('created_at', { ascending: false });
-      
-      if (startDate) {
-        query = query.gte('created_at', startDate.toISOString());
-      }
-      if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endOfDay.toISOString());
-      }
+      query = applyDateFilter(query, 'created_at');
 
       const { data: students, error: studentsError } = await query;
       if (studentsError) throw studentsError;
@@ -129,15 +133,7 @@ export const DataExport = () => {
     setExporting('companies');
     try {
       let query = supabase.from('companies').select('*').order('created_at', { ascending: false });
-      
-      if (startDate) {
-        query = query.gte('created_at', startDate.toISOString());
-      }
-      if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endOfDay.toISOString());
-      }
+      query = applyDateFilter(query, 'created_at');
 
       const { data: companies, error } = await query;
       if (error) throw error;
@@ -176,15 +172,7 @@ export const DataExport = () => {
     setExporting('internships');
     try {
       let query = supabase.from('internships').select('*, company:companies(name)').order('created_at', { ascending: false });
-      
-      if (startDate) {
-        query = query.gte('created_at', startDate.toISOString());
-      }
-      if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endOfDay.toISOString());
-      }
+      query = applyDateFilter(query, 'created_at');
 
       const { data: internships, error } = await query;
       if (error) throw error;
@@ -224,20 +212,11 @@ export const DataExport = () => {
     setExporting('applications');
     try {
       let query = supabase.from('applications').select('*').order('applied_at', { ascending: false });
-      
-      if (startDate) {
-        query = query.gte('applied_at', startDate.toISOString());
-      }
-      if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('applied_at', endOfDay.toISOString());
-      }
+      query = applyDateFilter(query, 'applied_at');
 
       const { data: applications, error } = await query;
       if (error) throw error;
 
-      // Fetch related data
       const studentIds = [...new Set(applications?.map(a => a.student_id) || [])];
       const internshipIds = [...new Set(applications?.map(a => a.internship_id) || [])];
 
@@ -290,11 +269,220 @@ export const DataExport = () => {
     }
   };
 
+  const exportUniversities = async () => {
+    setExporting('universities');
+    try {
+      let query = supabase.from('universities').select('*').order('created_at', { ascending: false });
+      query = applyDateFilter(query, 'created_at');
+
+      const { data: universities, error } = await query;
+      if (error) throw error;
+
+      const exportData = universities?.map(u => ({
+        name: u.name,
+        email: u.email,
+        address: u.address || '',
+        contact_person_name: u.contact_person_name || '',
+        contact_person_email: u.contact_person_email || '',
+        contact_person_phone: u.contact_person_phone || '',
+        contact_person_designation: u.contact_person_designation || '',
+        is_verified: u.is_verified ? 'Yes' : 'No',
+        is_active: u.is_active ? 'Yes' : 'No',
+        created_at: u.created_at,
+      })) || [];
+
+      const headers = ['name', 'email', 'address', 'contact_person_name', 'contact_person_email', 'contact_person_phone', 'contact_person_designation', 'is_verified', 'is_active', 'created_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('universities'));
+      toast.success(`Exported ${exportData.length} universities`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export universities');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportColleges = async () => {
+    setExporting('colleges');
+    try {
+      let query = supabase.from('colleges').select('*, university:universities(name)').order('created_at', { ascending: false });
+      query = applyDateFilter(query, 'created_at');
+
+      const { data: colleges, error } = await query;
+      if (error) throw error;
+
+      const exportData = colleges?.map(c => ({
+        name: c.name,
+        university_name: (c.university as any)?.name || '',
+        email: c.email || '',
+        address: c.address || '',
+        contact_person_name: c.contact_person_name || '',
+        contact_person_email: c.contact_person_email || '',
+        contact_person_phone: c.contact_person_phone || '',
+        contact_person_designation: c.contact_person_designation || '',
+        is_active: c.is_active ? 'Yes' : 'No',
+        created_at: c.created_at,
+      })) || [];
+
+      const headers = ['name', 'university_name', 'email', 'address', 'contact_person_name', 'contact_person_email', 'contact_person_phone', 'contact_person_designation', 'is_active', 'created_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('colleges'));
+      toast.success(`Exported ${exportData.length} colleges`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export colleges');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportCoordinators = async () => {
+    setExporting('coordinators');
+    try {
+      let query = supabase.from('college_coordinators').select('*, college:colleges(name), university:universities(name)').order('created_at', { ascending: false });
+      query = applyDateFilter(query, 'created_at');
+
+      const { data: coordinators, error } = await query;
+      if (error) throw error;
+
+      const exportData = coordinators?.map(c => ({
+        name: c.name,
+        email: c.email,
+        phone: c.phone || '',
+        designation: c.designation || '',
+        college_name: (c.college as any)?.name || '',
+        university_name: (c.university as any)?.name || '',
+        address: c.address || '',
+        is_approved: c.is_approved ? 'Yes' : 'No',
+        is_active: c.is_active ? 'Yes' : 'No',
+        created_at: c.created_at,
+      })) || [];
+
+      const headers = ['name', 'email', 'phone', 'designation', 'college_name', 'university_name', 'address', 'is_approved', 'is_active', 'created_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('coordinators'));
+      toast.success(`Exported ${exportData.length} coordinators`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export coordinators');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportLoginLogs = async () => {
+    setExporting('login_logs');
+    try {
+      let query = supabase.from('login_logs').select('*').order('login_at', { ascending: false });
+      query = applyDateFilter(query, 'login_at');
+
+      const { data: logs, error } = await query;
+      if (error) throw error;
+
+      const exportData = logs?.map(l => ({
+        user_email: l.user_email,
+        role: l.role,
+        ip_address: l.ip_address || '',
+        user_agent: l.user_agent || '',
+        login_at: l.login_at,
+      })) || [];
+
+      const headers = ['user_email', 'role', 'ip_address', 'user_agent', 'login_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('login_logs'));
+      toast.success(`Exported ${exportData.length} login logs`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export login logs');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportNotifications = async () => {
+    setExporting('notifications');
+    try {
+      let query = supabase.from('notifications').select('*').order('created_at', { ascending: false });
+      query = applyDateFilter(query, 'created_at');
+
+      const { data: notifications, error } = await query;
+      if (error) throw error;
+
+      const exportData = notifications?.map(n => ({
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        target_role: n.target_role || '',
+        is_read: n.is_read ? 'Yes' : 'No',
+        link: n.link || '',
+        created_at: n.created_at,
+      })) || [];
+
+      const headers = ['title', 'message', 'type', 'target_role', 'is_read', 'link', 'created_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('notifications'));
+      toast.success(`Exported ${exportData.length} notifications`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export notifications');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportPayments = async () => {
+    setExporting('payments');
+    try {
+      let query = supabase.from('payment_transactions').select('*, company:companies(name), student:students(user_id)').order('created_at', { ascending: false });
+      query = applyDateFilter(query, 'created_at');
+
+      const { data: payments, error } = await query;
+      if (error) throw error;
+
+      const studentUserIds = payments?.map(p => (p.student as any)?.user_id).filter(Boolean) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', studentUserIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+
+      const exportData = payments?.map(p => {
+        const studentUserId = (p.student as any)?.user_id;
+        const profile = studentUserId ? profileMap.get(studentUserId) : null;
+        return {
+          transaction_type: p.transaction_type,
+          amount: p.amount,
+          currency: p.currency,
+          status: p.status,
+          payment_method: p.payment_method || '',
+          company_name: (p.company as any)?.name || '',
+          student_name: profile?.full_name || '',
+          student_email: profile?.email || '',
+          reference_id: p.reference_id || '',
+          notes: p.notes || '',
+          created_at: p.created_at,
+        };
+      }) || [];
+
+      const headers = ['transaction_type', 'amount', 'currency', 'status', 'payment_method', 'company_name', 'student_name', 'student_email', 'reference_id', 'notes', 'created_at'];
+      const csv = convertToCSV(exportData, headers);
+      downloadCSV(csv, getFilenameWithDateRange('payment_transactions'));
+      toast.success(`Exported ${exportData.length} payment transactions`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export payments');
+    } finally {
+      setExporting(null);
+    }
+  };
+
   const exportOptions = [
     {
       type: 'students' as ExportType,
       title: 'Students',
-      description: 'Export registered students with their profile information, education details, and skills.',
+      description: 'Export registered students with profile, education details, and skills.',
       icon: Users,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/20',
@@ -303,7 +491,7 @@ export const DataExport = () => {
     {
       type: 'companies' as ExportType,
       title: 'Companies',
-      description: 'Export companies with their profile, contact information, and verification status.',
+      description: 'Export companies with profile, contact info, and verification status.',
       icon: Building2,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
@@ -312,7 +500,7 @@ export const DataExport = () => {
     {
       type: 'internships' as ExportType,
       title: 'Internships',
-      description: 'Export internship listings with details like duration, stipend, and requirements.',
+      description: 'Export internship listings with duration, stipend, and requirements.',
       icon: Briefcase,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
@@ -321,11 +509,65 @@ export const DataExport = () => {
     {
       type: 'applications' as ExportType,
       title: 'Applications',
-      description: 'Export student applications with status, student details, and internship information.',
+      description: 'Export student applications with status and internship details.',
       icon: FileText,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100 dark:bg-orange-900/20',
       onClick: exportApplications,
+    },
+    {
+      type: 'universities' as ExportType,
+      title: 'Universities',
+      description: 'Export universities with contact info and verification status.',
+      icon: GraduationCap,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
+      onClick: exportUniversities,
+    },
+    {
+      type: 'colleges' as ExportType,
+      title: 'Colleges',
+      description: 'Export colleges with university mapping and contact details.',
+      icon: School,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
+      onClick: exportColleges,
+    },
+    {
+      type: 'coordinators' as ExportType,
+      title: 'Coordinators',
+      description: 'Export college coordinators with approval status and details.',
+      icon: UserCheck,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      onClick: exportCoordinators,
+    },
+    {
+      type: 'login_logs' as ExportType,
+      title: 'Login Logs',
+      description: 'Export security audit trail with user logins and IP addresses.',
+      icon: Shield,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100 dark:bg-red-900/20',
+      onClick: exportLoginLogs,
+    },
+    {
+      type: 'notifications' as ExportType,
+      title: 'Notifications',
+      description: 'Export all platform notifications with read status and targets.',
+      icon: Bell,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/20',
+      onClick: exportNotifications,
+    },
+    {
+      type: 'payments' as ExportType,
+      title: 'Payments',
+      description: 'Export payment transactions with amounts and status.',
+      icon: CreditCard,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/20',
+      onClick: exportPayments,
     },
   ];
 
@@ -424,30 +666,31 @@ export const DataExport = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {exportOptions.map((option) => (
           <Card key={option.type} className="hover:border-primary/50 transition-colors">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg ${option.bgColor}`}>
-                    <option.icon className={`h-6 w-6 ${option.color}`} />
+                  <div className={`p-2 rounded-lg ${option.bgColor}`}>
+                    <option.icon className={`h-5 w-5 ${option.color}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{option.title}</CardTitle>
-                    <Badge variant="secondary" className="mt-1">CSV</Badge>
+                    <CardTitle className="text-base">{option.title}</CardTitle>
+                    <Badge variant="secondary" className="mt-1 text-xs">CSV</Badge>
                   </div>
                 </div>
               </div>
-              <CardDescription className="mt-3">
+              <CardDescription className="mt-2 text-sm">
                 {option.description}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <Button 
                 onClick={option.onClick} 
                 disabled={exporting !== null}
-                className="w-full gradient-primary border-0"
+                className="w-full"
+                size="sm"
               >
                 {exporting === option.type ? (
                   <>
@@ -457,7 +700,7 @@ export const DataExport = () => {
                 ) : (
                   <>
                     <Download className="h-4 w-4 mr-2" />
-                    Export {option.title}
+                    Export
                   </>
                 )}
               </Button>
