@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock, Filter, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -72,6 +73,14 @@ interface Transaction {
   };
 }
 
+interface FilterState {
+  company: string;
+  type: string;
+  status: string;
+  minFees: string;
+  maxFees: string;
+}
+
 export const PaymentsManagement = () => {
   const [paidInternships, setPaidInternships] = useState<PaidInternship[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -82,6 +91,17 @@ export const PaymentsManagement = () => {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [activeTab, setActiveTab] = useState('internships');
+  
+  // Filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    company: 'all',
+    type: 'all',
+    status: 'all',
+    minFees: '',
+    maxFees: '',
+  });
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   
   // Refund/Cancel states
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
@@ -98,7 +118,7 @@ export const PaymentsManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch paid/stipended internships with company info
+      // Fetch paid internships with company info (only fees > 0, exclude stipended)
       const { data: internshipsData, error: internshipsError } = await supabase
         .from('internships')
         .select(`
@@ -106,7 +126,7 @@ export const PaymentsManagement = () => {
           location, duration, is_active, created_at,
           company:companies(id, name, logo_url, industry)
         `)
-        .or('is_paid.eq.true,internship_type.eq.paid,internship_type.eq.stipended,fees.gt.0,stipend.gt.0')
+        .or('is_paid.eq.true,internship_type.eq.paid,fees.gt.0')
         .order('created_at', { ascending: false });
 
       if (internshipsError) throw internshipsError;
@@ -157,6 +177,15 @@ export const PaymentsManagement = () => {
       }));
 
       setPaidInternships(transformedInternships);
+      
+      // Extract unique companies for filter
+      const uniqueCompanies = new Map<string, { id: string; name: string }>();
+      transformedInternships.forEach((i: PaidInternship) => {
+        if (i.company?.id && i.company?.name) {
+          uniqueCompanies.set(i.company.id, { id: i.company.id, name: i.company.name });
+        }
+      });
+      setCompanies(Array.from(uniqueCompanies.values()));
     } catch (error) {
       console.error('Error fetching payment data:', error);
       toast.error('Failed to fetch payment data');
@@ -224,7 +253,6 @@ export const PaymentsManagement = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Record cancellation transaction
       await supabase
         .from('payment_transactions')
         .insert({
@@ -236,7 +264,6 @@ export const PaymentsManagement = () => {
           processed_by: user?.id
         });
       
-      // Delete the subscription
       const { error } = await supabase
         .from('subscriptions')
         .delete()
@@ -281,10 +308,33 @@ export const PaymentsManagement = () => {
     }
   };
 
-  const filteredInternships = paidInternships.filter(internship =>
-    internship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    internship.company?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const clearFilters = () => {
+    setFilters({
+      company: 'all',
+      type: 'all',
+      status: 'all',
+      minFees: '',
+      maxFees: '',
+    });
+  };
+
+  const hasActiveFilters = filters.company !== 'all' || filters.type !== 'all' || filters.status !== 'all' || filters.minFees || filters.maxFees;
+
+  const filteredInternships = paidInternships.filter(internship => {
+    const matchesSearch = 
+      internship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      internship.company?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCompany = filters.company === 'all' || internship.company?.id === filters.company;
+    const matchesType = filters.type === 'all' || internship.internship_type === filters.type;
+    const matchesStatus = filters.status === 'all' || 
+      (filters.status === 'active' && internship.is_active) ||
+      (filters.status === 'inactive' && !internship.is_active);
+    const matchesMinFees = !filters.minFees || (internship.fees || 0) >= parseFloat(filters.minFees);
+    const matchesMaxFees = !filters.maxFees || (internship.fees || 0) <= parseFloat(filters.maxFees);
+    
+    return matchesSearch && matchesCompany && matchesType && matchesStatus && matchesMinFees && matchesMaxFees;
+  });
 
   const filteredSubscriptions = subscriptions.filter(sub =>
     sub.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -300,7 +350,6 @@ export const PaymentsManagement = () => {
 
   // Stats calculations
   const totalFees = paidInternships.reduce((sum, i) => sum + (i.fees || 0), 0);
-  const totalStipend = paidInternships.reduce((sum, i) => sum + (i.stipend || 0), 0);
   const activePayments = paidInternships.filter(i => i.is_active).length;
   const totalRefunds = transactions.filter(t => t.transaction_type === 'refund').reduce((sum, t) => sum + t.amount, 0);
 
@@ -308,8 +357,6 @@ export const PaymentsManagement = () => {
     switch (type) {
       case 'paid':
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Paid</Badge>;
-      case 'stipended':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">Stipended</Badge>;
       case 'free':
         return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">Free</Badge>;
       default:
@@ -367,7 +414,7 @@ export const PaymentsManagement = () => {
             <CreditCard className="h-6 w-6" />
             Payments Management
           </h2>
-          <p className="text-muted-foreground">Track paid internships, stipends, subscriptions, and transactions</p>
+          <p className="text-muted-foreground">Track paid internships, subscriptions, and transactions</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={fetchData} className="flex items-center gap-2">
@@ -382,7 +429,7 @@ export const PaymentsManagement = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('internships')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Fees Collected</CardTitle>
@@ -391,17 +438,6 @@ export const PaymentsManagement = () => {
           <CardContent>
             <div className="text-3xl font-bold">₹{totalFees.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">From paid internships</p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('internships')}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Stipend Offered</CardTitle>
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">₹{totalStipend.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Monthly stipend pool</p>
           </CardContent>
         </Card>
 
@@ -453,20 +489,111 @@ export const PaymentsManagement = () => {
         <TabsContent value="internships">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Paid & Stipended Internships</CardTitle>
-                  <CardDescription>View internships with fees or stipends - click to view details and manage payments</CardDescription>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Paid Internships</CardTitle>
+                    <CardDescription>View internships with fees - click to view details and manage payments</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search internships..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 w-[250px]"
+                      />
+                    </div>
+                    <Button
+                      variant={showFilters ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex items-center gap-2"
+                    >
+                      <Filter className="h-4 w-4" />
+                      Filters
+                      {hasActiveFilters && <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">Active</Badge>}
+                    </Button>
+                  </div>
                 </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search internships..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 w-[250px]"
-                  />
-                </div>
+                
+                {/* Filter Row */}
+                {showFilters && (
+                  <div className="flex flex-wrap items-end gap-3 p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Company</label>
+                      <Select value={filters.company} onValueChange={(v) => setFilters({ ...filters, company: v })}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="All Companies" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Companies</SelectItem>
+                          {companies.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Type</label>
+                      <Select value={filters.type} onValueChange={(v) => setFilters({ ...filters, type: v })}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="free">Free</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Status</label>
+                      <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="All Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Min Fees (₹)</label>
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        value={filters.minFees}
+                        onChange={(e) => setFilters({ ...filters, minFees: e.target.value })}
+                        className="w-[100px]"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Max Fees (₹)</label>
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        value={filters.maxFees}
+                        onChange={(e) => setFilters({ ...filters, maxFees: e.target.value })}
+                        className="w-[100px]"
+                      />
+                    </div>
+                    
+                    {hasActiveFilters && (
+                      <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                        <X className="h-4 w-4 mr-1" />
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -477,7 +604,6 @@ export const PaymentsManagement = () => {
                     <TableHead>Company</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Fees</TableHead>
-                    <TableHead>Stipend</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -486,7 +612,7 @@ export const PaymentsManagement = () => {
                 <TableBody>
                   {filteredInternships.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No paid internships found
                       </TableCell>
                     </TableRow>
@@ -515,9 +641,6 @@ export const PaymentsManagement = () => {
                         <TableCell>{getTypeBadge(internship.internship_type)}</TableCell>
                         <TableCell>
                           {internship.fees ? `₹${internship.fees.toLocaleString()}` : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {internship.stipend ? `₹${internship.stipend.toLocaleString()}/mo` : '-'}
                         </TableCell>
                         <TableCell>
                           <Badge variant={internship.is_active ? "default" : "secondary"}>
@@ -796,13 +919,13 @@ export const PaymentsManagement = () => {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Monthly Stipend
+                      <Calendar className="h-4 w-4" />
+                      Created
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <span className="text-2xl font-bold">
-                      {selectedInternship.stipend ? `₹${selectedInternship.stipend.toLocaleString()}` : 'N/A'}
+                    <span className="font-medium">
+                      {format(new Date(selectedInternship.created_at), 'MMM d, yyyy')}
                     </span>
                   </CardContent>
                 </Card>
@@ -821,10 +944,6 @@ export const PaymentsManagement = () => {
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-4 w-4 text-muted-foreground" />
                   <span className="capitalize">{selectedInternship.work_mode}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Created: {format(new Date(selectedInternship.created_at), 'MMM d, yyyy')}</span>
                 </div>
               </div>
 
@@ -892,9 +1011,7 @@ export const PaymentsManagement = () => {
               <Users className="h-5 w-5" />
               Subscription Details
             </DialogTitle>
-            <DialogDescription>
-              User subscription information
-            </DialogDescription>
+            <DialogDescription>User subscription information</DialogDescription>
           </DialogHeader>
           
           {selectedSubscription && (
@@ -917,15 +1034,8 @@ export const PaymentsManagement = () => {
                   <p className="font-medium">{format(new Date(selectedSubscription.created_at), 'MMM d, yyyy')}</p>
                 </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">User ID</p>
-                <p className="font-mono text-xs text-muted-foreground">{selectedSubscription.user_id}</p>
-              </div>
               <DialogFooter>
-                <Button
-                  variant="destructive"
-                  onClick={() => setCancelDialogOpen(true)}
-                >
+                <Button variant="destructive" onClick={() => setCancelDialogOpen(true)}>
                   <XCircle className="h-4 w-4 mr-1" />
                   Cancel Subscription
                 </Button>
@@ -943,9 +1053,7 @@ export const PaymentsManagement = () => {
               <History className="h-5 w-5" />
               Transaction Details
             </DialogTitle>
-            <DialogDescription>
-              Complete transaction information
-            </DialogDescription>
+            <DialogDescription>Complete transaction information</DialogDescription>
           </DialogHeader>
           
           {selectedTransaction && (
@@ -966,16 +1074,8 @@ export const PaymentsManagement = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Currency</p>
-                  <p className="font-medium">{selectedTransaction.currency}</p>
-                </div>
-                <div>
                   <p className="text-sm text-muted-foreground">Date</p>
                   <p className="font-medium">{format(new Date(selectedTransaction.created_at), 'MMM d, yyyy HH:mm:ss')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Payment Method</p>
-                  <p className="font-medium">{selectedTransaction.payment_method || 'N/A'}</p>
                 </div>
               </div>
               {selectedTransaction.internship && (
@@ -1002,10 +1102,6 @@ export const PaymentsManagement = () => {
                   <p className="text-sm">{selectedTransaction.notes}</p>
                 </div>
               )}
-              <div>
-                <p className="text-sm text-muted-foreground">Transaction ID</p>
-                <p className="font-mono text-xs text-muted-foreground">{selectedTransaction.id}</p>
-              </div>
             </div>
           )}
         </DialogContent>
@@ -1020,35 +1116,22 @@ export const PaymentsManagement = () => {
               Issue Refund
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will record a refund transaction for this internship. Make sure to process the actual refund through your payment gateway.
+              This will record a refund transaction for this internship.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium">Refund Amount (₹)</label>
-              <Input
-                type="number"
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
-                placeholder="Enter refund amount"
-              />
+              <Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} placeholder="Enter refund amount" />
             </div>
             <div>
               <label className="text-sm font-medium">Notes (Optional)</label>
-              <Textarea
-                value={refundNotes}
-                onChange={(e) => setRefundNotes(e.target.value)}
-                placeholder="Enter reason for refund..."
-              />
+              <Textarea value={refundNotes} onChange={(e) => setRefundNotes(e.target.value)} placeholder="Enter reason for refund..." />
             </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleRefund}
-              disabled={processing || !refundAmount}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
+            <AlertDialogAction onClick={handleRefund} disabled={processing || !refundAmount} className="bg-orange-600 hover:bg-orange-700">
               {processing ? 'Processing...' : 'Process Refund'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1064,31 +1147,22 @@ export const PaymentsManagement = () => {
               Cancel Subscription
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this subscription? This action cannot be undone.
+              Are you sure you want to cancel this subscription?
               {selectedSubscription && (
                 <div className="mt-2 p-2 bg-muted rounded">
                   <p className="font-medium">{selectedSubscription.profile?.full_name || 'Unknown User'}</p>
                   <p className="text-sm">{selectedSubscription.profile?.email}</p>
-                  <p className="text-sm">Type: {selectedSubscription.type}</p>
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
             <label className="text-sm font-medium">Cancellation Reason (Optional)</label>
-            <Textarea
-              value={refundNotes}
-              onChange={(e) => setRefundNotes(e.target.value)}
-              placeholder="Enter reason for cancellation..."
-            />
+            <Textarea value={refundNotes} onChange={(e) => setRefundNotes(e.target.value)} placeholder="Enter reason for cancellation..." />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={processing}>Keep Subscription</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleCancelSubscription}
-              disabled={processing}
-              className="bg-destructive hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleCancelSubscription} disabled={processing} className="bg-destructive hover:bg-destructive/90">
               {processing ? 'Cancelling...' : 'Confirm Cancellation'}
             </AlertDialogAction>
           </AlertDialogFooter>
