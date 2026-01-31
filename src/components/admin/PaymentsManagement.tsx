@@ -10,10 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock, Filter, X } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock, Filter, X, FileText, FileSpreadsheet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { exportToCSV, exportToPDF } from '@/lib/export-utils';
 
 interface PaidInternship {
   id: string;
@@ -320,6 +322,75 @@ export const PaymentsManagement = () => {
 
   const hasActiveFilters = filters.company !== 'all' || filters.type !== 'all' || filters.status !== 'all' || filters.minFees || filters.maxFees;
 
+  const handleExportCSV = (type: 'internships' | 'transactions') => {
+    if (type === 'internships') {
+      const data = filteredInternships.map(i => ({
+        title: i.title,
+        company: i.company?.name || 'N/A',
+        type: i.internship_type,
+        fees: i.fees || 0,
+        status: i.is_active ? 'Active' : 'Inactive',
+        location: i.location || 'N/A',
+        duration: i.duration || 'N/A',
+        created: format(new Date(i.created_at), 'yyyy-MM-dd'),
+      }));
+      exportToCSV(data, 'paid_internships', ['Title', 'Company', 'Type', 'Fees', 'Status', 'Location', 'Duration', 'Created']);
+      toast.success('Internships exported to CSV');
+    } else {
+      const data = transactions.map(t => ({
+        reference_id: t.reference_id || t.id.slice(0, 8),
+        type: t.transaction_type,
+        amount: t.amount,
+        currency: t.currency,
+        status: t.status,
+        internship: t.internship?.title || 'N/A',
+        company: t.company?.name || 'N/A',
+        date: format(new Date(t.created_at), 'yyyy-MM-dd'),
+        notes: t.notes || '',
+      }));
+      exportToCSV(data, 'payment_transactions', ['Reference_ID', 'Type', 'Amount', 'Currency', 'Status', 'Internship', 'Company', 'Date', 'Notes']);
+      toast.success('Transactions exported to CSV');
+    }
+  };
+
+  const handleExportPDF = async (type: 'internships' | 'transactions') => {
+    try {
+      if (type === 'internships') {
+        await exportToPDF(
+          'Paid Internships Report',
+          filteredInternships,
+          [
+            { header: 'Title', accessor: 'title' },
+            { header: 'Company', accessor: 'company', format: (v) => v?.name || 'N/A' },
+            { header: 'Type', accessor: 'internship_type' },
+            { header: 'Fees', accessor: 'fees', format: (v) => v ? `₹${v.toLocaleString()}` : '-' },
+            { header: 'Status', accessor: 'is_active', format: (v) => v ? 'Active' : 'Inactive' },
+            { header: 'Created', accessor: 'created_at', format: (v) => format(new Date(v), 'MMM d, yyyy') },
+          ],
+          'paid_internships'
+        );
+        toast.success('PDF report generated - use Print to save');
+      } else {
+        await exportToPDF(
+          'Payment Transactions Report',
+          transactions,
+          [
+            { header: 'Reference', accessor: 'reference_id', format: (v) => v || 'N/A' },
+            { header: 'Type', accessor: 'transaction_type' },
+            { header: 'Amount', accessor: 'amount', format: (v) => `₹${v.toLocaleString()}` },
+            { header: 'Status', accessor: 'status' },
+            { header: 'Internship', accessor: 'internship', format: (v) => v?.title || 'N/A' },
+            { header: 'Date', accessor: 'created_at', format: (v) => format(new Date(v), 'MMM d, yyyy') },
+          ],
+          'payment_transactions'
+        );
+        toast.success('PDF report generated - use Print to save');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to generate PDF');
+    }
+  };
+
   const filteredInternships = paidInternships.filter(internship => {
     const matchesSearch = 
       internship.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -421,10 +492,32 @@ export const PaymentsManagement = () => {
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export Report
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Export Report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportCSV('internships')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export Internships (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportCSV('transactions')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export Transactions (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPDF('internships')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export Internships (PDF)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPDF('transactions')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export Transactions (PDF)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
