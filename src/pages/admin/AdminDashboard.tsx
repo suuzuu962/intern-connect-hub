@@ -13,7 +13,10 @@ import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
 import { AdminManagement } from '@/components/admin/AdminManagement';
 import { AdminOrgChart } from '@/components/admin/AdminOrgChart';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network } from 'lucide-react';
+import { PlatformSettings } from '@/components/admin/PlatformSettings';
+import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
+import { SecurityLogs } from '@/components/admin/SecurityLogs';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,7 +52,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-11 mb-8">
+          <TabsList className="grid w-full grid-cols-7 lg:grid-cols-14 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -85,6 +88,18 @@ const AdminDashboard = () => {
             <TabsTrigger value="coordinators" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Coordinators</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Payments</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
@@ -130,6 +145,18 @@ const AdminDashboard = () => {
 
           <TabsContent value="coordinators">
             <CoordinatorManagement />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <PlatformSettings />
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <PaymentsManagement />
+          </TabsContent>
+
+          <TabsContent value="security">
+            <SecurityLogs />
           </TabsContent>
 
           <TabsContent value="notifications">
