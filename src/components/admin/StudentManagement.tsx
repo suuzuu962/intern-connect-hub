@@ -106,6 +106,14 @@ interface NewStudentForm {
   graduationYear: string;
 }
 
+interface StudentFilters {
+  college: string;
+  department: string;
+  location: string;
+  graduationYear: string;
+  skill: string;
+}
+
 export const StudentManagement = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
@@ -115,6 +123,14 @@ export const StudentManagement = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<StudentFilters>({
+    college: 'all',
+    department: 'all',
+    location: 'all',
+    graduationYear: 'all',
+    skill: 'all',
+  });
   const [newStudent, setNewStudent] = useState<NewStudentForm>({
     email: '',
     password: '',
@@ -126,6 +142,26 @@ export const StudentManagement = () => {
     state: '',
     graduationYear: '',
   });
+
+  // Extract unique values for filters
+  const departments = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+  const locations = [...new Set(students.map(s => s.city || s.state).filter(Boolean))].sort();
+  const graduationYears = [...new Set(students.map(s => s.graduation_year).filter(Boolean))].sort((a, b) => (b || 0) - (a || 0));
+  const allSkills = [...new Set(students.flatMap(s => s.skills || []))].sort();
+
+  const clearFilters = () => {
+    setFilters({
+      college: 'all',
+      department: 'all',
+      location: 'all',
+      graduationYear: 'all',
+      skill: 'all',
+    });
+    setFilterCollegeId('all');
+  };
+
+  const hasActiveFilters = filters.college !== 'all' || filters.department !== 'all' || 
+    filters.location !== 'all' || filters.graduationYear !== 'all' || filters.skill !== 'all';
 
   const fetchData = async () => {
     try {
@@ -275,8 +311,13 @@ export const StudentManagement = () => {
       student.college_data?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.usn?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCollege = filterCollegeId === 'all' || student.college_id === filterCollegeId;
-    return matchesSearch && matchesCollege;
+    const matchesCollege = filters.college === 'all' || student.college_id === filters.college;
+    const matchesDepartment = filters.department === 'all' || student.department === filters.department;
+    const matchesLocation = filters.location === 'all' || student.city === filters.location || student.state === filters.location;
+    const matchesGradYear = filters.graduationYear === 'all' || student.graduation_year?.toString() === filters.graduationYear;
+    const matchesSkill = filters.skill === 'all' || student.skills?.includes(filters.skill);
+    
+    return matchesSearch && matchesCollege && matchesDepartment && matchesLocation && matchesGradYear && matchesSkill;
   });
 
   if (loading) {
@@ -528,40 +569,40 @@ export const StudentManagement = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              All Students ({students.length})
-            </CardTitle>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={filterCollegeId} onValueChange={setFilterCollegeId}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by college" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Colleges</SelectItem>
-                  {colleges.map(college => (
-                    <SelectItem key={college.id} value={college.id}>{college.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gradient-primary border-0">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Student
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                All Students ({students.length})
+              </CardTitle>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant={showFilters ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  Filters
+                  {hasActiveFilters && <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">Active</Badge>}
+                </Button>
+                <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gradient-primary border-0">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Student
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Add New Student</DialogTitle>
                     <DialogDescription>Create a new student account.</DialogDescription>
@@ -618,6 +659,93 @@ export const StudentManagement = () => {
               </Dialog>
             </div>
           </div>
+          
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="flex flex-wrap items-end gap-3 p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-muted-foreground">College</Label>
+                <Select value={filters.college} onValueChange={(v) => setFilters({ ...filters, college: v })}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Colleges" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Colleges</SelectItem>
+                    {colleges.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-muted-foreground">Department</Label>
+                <Select value={filters.department} onValueChange={(v) => setFilters({ ...filters, department: v })}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Depts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {departments.map(d => (
+                      <SelectItem key={d} value={d!}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-muted-foreground">Location</Label>
+                <Select value={filters.location} onValueChange={(v) => setFilters({ ...filters, location: v })}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map(l => (
+                      <SelectItem key={l} value={l!}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-muted-foreground">Graduation Year</Label>
+                <Select value={filters.graduationYear} onValueChange={(v) => setFilters({ ...filters, graduationYear: v })}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="All Years" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {graduationYears.map(y => (
+                      <SelectItem key={y} value={y!.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-muted-foreground">Skill</Label>
+                <Select value={filters.skill} onValueChange={(v) => setFilters({ ...filters, skill: v })}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Skills" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Skills</SelectItem>
+                    {allSkills.slice(0, 50).map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
         </CardHeader>
         <CardContent>
           {filteredStudents.length === 0 ? (

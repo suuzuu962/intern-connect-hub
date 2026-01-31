@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Settings, Globe, Mail, Bell, Shield, Save, Users, Building2, 
   GraduationCap, Briefcase, CreditCard, FileText, Lock, Eye,
-  UserCheck, School, Network, Database, AlertTriangle, Wrench
+  UserCheck, School, Network, Database, AlertTriangle, Wrench, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,106 +31,156 @@ interface SettingItem {
   value: boolean | string | number;
 }
 
+const defaultSettings: Record<string, any> = {
+  // General Settings
+  platformName: 'Internship Portal',
+  supportEmail: 'support@example.com',
+  maintenanceMode: false,
+  debugMode: false,
+  
+  // Registration Settings
+  allowNewRegistrations: true,
+  requireEmailVerification: true,
+  allowStudentRegistration: true,
+  allowCompanyRegistration: true,
+  allowUniversityRegistration: true,
+  allowCoordinatorRegistration: true,
+  
+  // User Management
+  maxApplicationsPerStudent: 10,
+  maxInternshipsPerCompany: 50,
+  maxCollegesPerUniversity: 100,
+  maxCoordinatorsPerCollege: 5,
+  sessionTimeout: 30,
+  
+  // Company Settings
+  autoApproveCompanies: false,
+  requireCompanyDocuments: true,
+  allowCompanyEditing: true,
+  enableCompanyRating: false,
+  
+  // Internship Settings
+  allowInternshipPosting: true,
+  requireInternshipApproval: false,
+  enableApplicationDeadlines: true,
+  allowRemoteInternships: true,
+  allowPaidInternships: true,
+  allowFreeInternships: true,
+  enableStipendTracking: true,
+  
+  // Student Features
+  enableStudentDiary: true,
+  enableResumeUpload: true,
+  enableProfileCustomization: true,
+  enableSkillsMatching: true,
+  enableInternshipRecommendations: true,
+  
+  // University Features
+  enableUniversityDashboard: true,
+  enableCollegeManagement: true,
+  enableCoordinatorAssignment: true,
+  enableStudentTracking: true,
+  enableLoginLogs: true,
+  
+  // Coordinator Features
+  enableDiaryApproval: true,
+  enableStudentMonitoring: true,
+  enableBulkOperations: false,
+  
+  // Payment Features
+  enablePayments: true,
+  enableRefunds: true,
+  enableSubscriptions: true,
+  paymentGateway: 'stripe',
+  
+  // Notification Settings
+  notifyAdminOnNewCompany: true,
+  notifyAdminOnNewUniversity: true,
+  notifyAdminOnNewStudent: false,
+  notifyOnApplicationSubmission: true,
+  notifyOnApplicationStatusChange: true,
+  notifyOnInternshipExpiry: true,
+  enableEmailNotifications: true,
+  enablePushNotifications: false,
+  
+  // Security Settings
+  enableTwoFactorAuth: false,
+  enforceStrongPasswords: true,
+  enableSessionTracking: true,
+  enableIPTracking: true,
+  maxLoginAttempts: 5,
+  lockoutDuration: 15,
+  enableAuditLogs: true,
+  
+  // Data & Privacy
+  enableDataExport: true,
+  enableAccountDeletion: true,
+  dataRetentionDays: 365,
+  enableAnalytics: true,
+  
+  // API & Integration
+  enableAPI: false,
+  apiRateLimit: 100,
+  enableWebhooks: false,
+};
+
 export const PlatformSettings = () => {
-  const [settings, setSettings] = useState<Record<string, any>>({
-    // General Settings
-    platformName: 'Internship Portal',
-    supportEmail: 'support@example.com',
-    maintenanceMode: false,
-    debugMode: false,
-    
-    // Registration Settings
-    allowNewRegistrations: true,
-    requireEmailVerification: true,
-    allowStudentRegistration: true,
-    allowCompanyRegistration: true,
-    allowUniversityRegistration: true,
-    allowCoordinatorRegistration: true,
-    
-    // User Management
-    maxApplicationsPerStudent: 10,
-    maxInternshipsPerCompany: 50,
-    maxCollegesPerUniversity: 100,
-    maxCoordinatorsPerCollege: 5,
-    sessionTimeout: 30,
-    
-    // Company Settings
-    autoApproveCompanies: false,
-    requireCompanyDocuments: true,
-    allowCompanyEditing: true,
-    enableCompanyRating: false,
-    
-    // Internship Settings
-    allowInternshipPosting: true,
-    requireInternshipApproval: false,
-    enableApplicationDeadlines: true,
-    allowRemoteInternships: true,
-    allowPaidInternships: true,
-    allowFreeInternships: true,
-    enableStipendTracking: true,
-    
-    // Student Features
-    enableStudentDiary: true,
-    enableResumeUpload: true,
-    enableProfileCustomization: true,
-    enableSkillsMatching: true,
-    enableInternshipRecommendations: true,
-    
-    // University Features
-    enableUniversityDashboard: true,
-    enableCollegeManagement: true,
-    enableCoordinatorAssignment: true,
-    enableStudentTracking: true,
-    enableLoginLogs: true,
-    
-    // Coordinator Features
-    enableDiaryApproval: true,
-    enableStudentMonitoring: true,
-    enableBulkOperations: false,
-    
-    // Payment Features
-    enablePayments: true,
-    enableRefunds: true,
-    enableSubscriptions: true,
-    paymentGateway: 'stripe',
-    
-    // Notification Settings
-    notifyAdminOnNewCompany: true,
-    notifyAdminOnNewUniversity: true,
-    notifyAdminOnNewStudent: false,
-    notifyOnApplicationSubmission: true,
-    notifyOnApplicationStatusChange: true,
-    notifyOnInternshipExpiry: true,
-    enableEmailNotifications: true,
-    enablePushNotifications: false,
-    
-    // Security Settings
-    enableTwoFactorAuth: false,
-    enforceStrongPasswords: true,
-    enableSessionTracking: true,
-    enableIPTracking: true,
-    maxLoginAttempts: 5,
-    lockoutDuration: 15,
-    enableAuditLogs: true,
-    
-    // Data & Privacy
-    enableDataExport: true,
-    enableAccountDeletion: true,
-    dataRetentionDays: 365,
-    enableAnalytics: true,
-    
-    // API & Integration
-    enableAPI: false,
-    apiRateLimit: 100,
-    enableWebhooks: false,
-  });
+  const [settings, setSettings] = useState<Record<string, any>>(defaultSettings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'all_settings')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      if (data?.value) {
+        setSettings({ ...defaultSettings, ...(data.value as Record<string, any>) });
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateSetting = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    toast.success('Platform settings saved successfully');
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('platform_settings')
+        .upsert({
+          key: 'all_settings',
+          value: settings,
+          updated_at: new Date().toISOString(),
+          updated_by: user?.id
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      toast.success('Platform settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const categories: SettingCategory[] = [
@@ -334,6 +386,19 @@ export const PlatformSettings = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-full" />
+        <div className="grid gap-6 md:grid-cols-2">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -344,10 +409,16 @@ export const PlatformSettings = () => {
           </h2>
           <p className="text-muted-foreground">Configure global platform settings and preferences</p>
         </div>
-        <Button onClick={handleSave} className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          Save Changes
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={fetchSettings} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save Changes
+          </Button>
+        </div>
       </div>
 
       {/* Maintenance Mode Warning */}
