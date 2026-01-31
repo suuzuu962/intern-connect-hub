@@ -518,7 +518,7 @@ export const CompanyApprovalManagement = () => {
         {/* Expanded details */}
         {isExpanded && (
           <CardContent className="pt-4">
-            <ScrollArea className="max-h-[700px]">
+            <ScrollArea className="h-[600px] pr-4">
               <div className="grid gap-6">
                 {/* Cover Image & Logo */}
                 <div className="grid md:grid-cols-2 gap-4">
