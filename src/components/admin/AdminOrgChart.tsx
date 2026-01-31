@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { InstitutionalWorkflowDiagram } from './InstitutionalWorkflowDiagram';
 import { 
   Loader2, 
   Building2, 
@@ -27,7 +28,8 @@ import {
   XCircle,
   Search,
   X,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
 
 interface University {
@@ -104,6 +106,7 @@ export const AdminOrgChart = () => {
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [showWorkflowDiagram, setShowWorkflowDiagram] = useState(false);
 
   useEffect(() => {
     fetchOrgData();
@@ -636,6 +639,21 @@ export const AdminOrgChart = () => {
 
   return (
     <>
+      {/* Workflow Diagram Toggle */}
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant={showWorkflowDiagram ? "default" : "outline"}
+          onClick={() => setShowWorkflowDiagram(!showWorkflowDiagram)}
+          className="gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          {showWorkflowDiagram ? 'Hide Workflow Diagram' : 'Show Workflow Diagram'}
+        </Button>
+      </div>
+
+      {/* Workflow Diagram */}
+      {showWorkflowDiagram && <InstitutionalWorkflowDiagram />}
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
