@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      advertisement_banners: {
+        Row: {
+          click_count: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_hours_end: number | null
+          display_hours_start: number | null
+          end_date: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          link_url: string | null
+          position: string
+          priority: number | null
+          start_date: string
+          target_cities: string[] | null
+          target_regions: string[] | null
+          target_roles: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          click_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_hours_end?: number | null
+          display_hours_start?: number | null
+          end_date?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          link_url?: string | null
+          position?: string
+          priority?: number | null
+          start_date?: string
+          target_cities?: string[] | null
+          target_regions?: string[] | null
+          target_roles?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          click_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_hours_end?: number | null
+          display_hours_start?: number | null
+          end_date?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          link_url?: string | null
+          position?: string
+          priority?: number | null
+          start_date?: string
+          target_cities?: string[] | null
+          target_regions?: string[] | null
+          target_roles?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           applied_at: string
@@ -689,6 +758,45 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          feature_key: string
+          hidden_fields: string[] | null
+          id: string
+          is_enabled: boolean | null
+          role: string
+          settings: Json | null
+          updated_at: string
+          updated_by: string | null
+          visible_fields: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          hidden_fields?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          role: string
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+          visible_fields?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          hidden_fields?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          role?: string
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+          visible_fields?: string[] | null
         }
         Relationships: []
       }

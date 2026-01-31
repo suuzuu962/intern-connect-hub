@@ -3,6 +3,7 @@ import { ArrowRight, Briefcase, Building2, Users, CheckCircle, Rocket, Target, A
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
+import { HomeBanners } from '@/components/home/HomeBanners';
 
 const Index = () => {
   const steps = [
@@ -21,6 +22,11 @@ const Index = () => {
 
   return (
     <Layout>
+      {/* Hero Banners */}
+      <div className="container mx-auto px-4 pt-6">
+        <HomeBanners position="hero" />
+      </div>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="absolute inset-0 gradient-hero opacity-10" />
@@ -61,20 +67,29 @@ const Index = () => {
       {/* How It Works */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-center mb-4">How It Works</h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">Get started in 4 simple steps</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {steps.map((step, i) => (
-              <Card key={i} className="hover-lift text-center">
-                <CardContent className="pt-8 pb-6">
-                  <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
-                    <step.icon className="h-8 w-8 text-primary-foreground" />
-                  </div>
-                  <h3 className="font-heading font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex gap-8">
+            <div className="flex-1">
+              <h2 className="text-3xl md:text-4xl font-heading font-bold text-center mb-4">How It Works</h2>
+              <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">Get started in 4 simple steps</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {steps.map((step, i) => (
+                  <Card key={i} className="hover-lift text-center">
+                    <CardContent className="pt-8 pb-6">
+                      <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
+                        <step.icon className="h-8 w-8 text-primary-foreground" />
+                      </div>
+                      <h3 className="font-heading font-semibold text-lg mb-2">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+            
+            {/* Sidebar Banners */}
+            <div className="hidden lg:block w-72 flex-shrink-0">
+              <HomeBanners position="sidebar" />
+            </div>
           </div>
         </div>
       </section>
