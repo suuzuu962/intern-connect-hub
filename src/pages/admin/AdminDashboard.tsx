@@ -16,7 +16,9 @@ import { AdminOrgChart } from '@/components/admin/AdminOrgChart';
 import { PlatformSettings } from '@/components/admin/PlatformSettings';
 import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText } from 'lucide-react';
+import { BannerManagement } from '@/components/admin/BannerManagement';
+import { RolePermissions } from '@/components/admin/RolePermissions';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,7 +54,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-7 lg:grid-cols-14 mb-8">
+          <TabsList className="grid w-full grid-cols-8 lg:grid-cols-16 mb-8">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -88,6 +90,14 @@ const AdminDashboard = () => {
             <TabsTrigger value="coordinators" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Coordinators</span>
+            </TabsTrigger>
+            <TabsTrigger value="banners" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              <span className="hidden sm:inline">Banners</span>
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              <span className="hidden sm:inline">Permissions</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -145,6 +155,14 @@ const AdminDashboard = () => {
 
           <TabsContent value="coordinators">
             <CoordinatorManagement />
+          </TabsContent>
+
+          <TabsContent value="banners">
+            <BannerManagement />
+          </TabsContent>
+
+          <TabsContent value="permissions">
+            <RolePermissions />
           </TabsContent>
 
           <TabsContent value="settings">
