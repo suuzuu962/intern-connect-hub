@@ -5,11 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface PaidInternship {
   id: string;
@@ -42,14 +45,51 @@ interface Subscription {
   };
 }
 
+interface Transaction {
+  id: string;
+  internship_id: string | null;
+  subscription_id: string | null;
+  student_id: string | null;
+  company_id: string | null;
+  amount: number;
+  currency: string;
+  transaction_type: string;
+  status: string;
+  payment_method: string | null;
+  reference_id: string | null;
+  notes: string | null;
+  processed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  internship?: {
+    title: string;
+  };
+  company?: {
+    name: string;
+  };
+  student?: {
+    user_id: string;
+  };
+}
+
 export const PaymentsManagement = () => {
   const [paidInternships, setPaidInternships] = useState<PaidInternship[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInternship, setSelectedInternship] = useState<PaidInternship | null>(null);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [activeTab, setActiveTab] = useState('internships');
+  
+  // Refund/Cancel states
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [refundNotes, setRefundNotes] = useState('');
+  const [refundAmount, setRefundAmount] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [internshipTransactions, setInternshipTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -79,6 +119,20 @@ export const PaymentsManagement = () => {
 
       if (subscriptionsError) throw subscriptionsError;
 
+      // Fetch transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('payment_transactions')
+        .select(`
+          *,
+          internship:internships(title),
+          company:companies(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (transactionsError) throw transactionsError;
+      setTransactions(transactionsData || []);
+
       // Fetch profiles for subscriptions
       if (subscriptionsData && subscriptionsData.length > 0) {
         const userIds = subscriptionsData.map(s => s.user_id);
@@ -105,8 +159,125 @@ export const PaymentsManagement = () => {
       setPaidInternships(transformedInternships);
     } catch (error) {
       console.error('Error fetching payment data:', error);
+      toast.error('Failed to fetch payment data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInternshipTransactions = async (internshipId: string) => {
+    const { data, error } = await supabase
+      .from('payment_transactions')
+      .select('*')
+      .eq('internship_id', internshipId)
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      setInternshipTransactions(data);
+    }
+  };
+
+  const handleSelectInternship = async (internship: PaidInternship) => {
+    setSelectedInternship(internship);
+    await fetchInternshipTransactions(internship.id);
+  };
+
+  const handleRefund = async () => {
+    if (!selectedInternship || !refundAmount) return;
+    
+    setProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('payment_transactions')
+        .insert({
+          internship_id: selectedInternship.id,
+          company_id: selectedInternship.company?.id,
+          amount: parseFloat(refundAmount),
+          transaction_type: 'refund',
+          status: 'completed',
+          notes: refundNotes || 'Admin initiated refund',
+          processed_by: user?.id
+        });
+
+      if (error) throw error;
+      
+      toast.success('Refund processed successfully');
+      setRefundDialogOpen(false);
+      setRefundNotes('');
+      setRefundAmount('');
+      await fetchInternshipTransactions(selectedInternship.id);
+      await fetchData();
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      toast.error('Failed to process refund');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!selectedSubscription) return;
+    
+    setProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Record cancellation transaction
+      await supabase
+        .from('payment_transactions')
+        .insert({
+          subscription_id: selectedSubscription.id,
+          amount: 0,
+          transaction_type: 'cancellation',
+          status: 'completed',
+          notes: refundNotes || 'Admin cancelled subscription',
+          processed_by: user?.id
+        });
+      
+      // Delete the subscription
+      const { error } = await supabase
+        .from('subscriptions')
+        .delete()
+        .eq('id', selectedSubscription.id);
+
+      if (error) throw error;
+      
+      toast.success('Subscription cancelled successfully');
+      setCancelDialogOpen(false);
+      setSelectedSubscription(null);
+      setRefundNotes('');
+      await fetchData();
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast.error('Failed to cancel subscription');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const recordPayment = async (internship: PaidInternship, amount: number) => {
+    try {
+      const { error } = await supabase
+        .from('payment_transactions')
+        .insert({
+          internship_id: internship.id,
+          company_id: internship.company?.id,
+          amount: amount,
+          transaction_type: 'payment',
+          status: 'completed',
+          notes: 'Manual payment record'
+        });
+
+      if (error) throw error;
+      
+      toast.success('Payment recorded successfully');
+      await fetchInternshipTransactions(internship.id);
+      await fetchData();
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      toast.error('Failed to record payment');
     }
   };
 
@@ -120,10 +291,18 @@ export const PaymentsManagement = () => {
     sub.profile?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredTransactions = transactions.filter(t =>
+    t.transaction_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.internship?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.reference_id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Stats calculations
   const totalFees = paidInternships.reduce((sum, i) => sum + (i.fees || 0), 0);
   const totalStipend = paidInternships.reduce((sum, i) => sum + (i.stipend || 0), 0);
   const activePayments = paidInternships.filter(i => i.is_active).length;
+  const totalRefunds = transactions.filter(t => t.transaction_type === 'refund').reduce((sum, t) => sum + t.amount, 0);
 
   const getTypeBadge = (type: string) => {
     switch (type) {
@@ -135,6 +314,34 @@ export const PaymentsManagement = () => {
         return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">Free</Badge>;
       default:
         return <Badge variant="secondary">{type}</Badge>;
+    }
+  };
+
+  const getTransactionTypeBadge = (type: string) => {
+    switch (type) {
+      case 'payment':
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"><ArrowDownLeft className="h-3 w-3 mr-1" />Payment</Badge>;
+      case 'refund':
+        return <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"><ArrowUpRight className="h-3 w-3 mr-1" />Refund</Badge>;
+      case 'cancellation':
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"><XCircle className="h-3 w-3 mr-1" />Cancellation</Badge>;
+      default:
+        return <Badge variant="secondary">{type}</Badge>;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="default" className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />Completed</Badge>;
+      case 'pending':
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+      case 'failed':
+        return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Failed</Badge>;
+      case 'refunded':
+        return <Badge className="bg-orange-600"><RotateCcw className="h-3 w-3 mr-1" />Refunded</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -160,7 +367,7 @@ export const PaymentsManagement = () => {
             <CreditCard className="h-6 w-6" />
             Payments Management
           </h2>
-          <p className="text-muted-foreground">Track paid internships, stipends, and subscriptions</p>
+          <p className="text-muted-foreground">Track paid internships, stipends, subscriptions, and transactions</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={fetchData} className="flex items-center gap-2">
@@ -175,7 +382,7 @@ export const PaymentsManagement = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('internships')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Fees Collected</CardTitle>
@@ -209,10 +416,21 @@ export const PaymentsManagement = () => {
           </CardContent>
         </Card>
 
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('transactions')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Refunds</CardTitle>
+            <RotateCcw className="h-5 w-5 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">₹{totalRefunds.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">Refunds processed</p>
+          </CardContent>
+        </Card>
+
         <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('subscriptions')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Subscriptions</CardTitle>
-            <Users className="h-5 w-5 text-orange-600" />
+            <Users className="h-5 w-5 text-indigo-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{subscriptions.length}</div>
@@ -226,6 +444,10 @@ export const PaymentsManagement = () => {
         <TabsList>
           <TabsTrigger value="internships">Paid Internships ({paidInternships.length})</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions ({subscriptions.length})</TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Transaction History ({transactions.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="internships">
@@ -234,7 +456,7 @@ export const PaymentsManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Paid & Stipended Internships</CardTitle>
-                  <CardDescription>View internships with fees or stipends</CardDescription>
+                  <CardDescription>View internships with fees or stipends - click to view details and manage payments</CardDescription>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -273,7 +495,7 @@ export const PaymentsManagement = () => {
                       <TableRow 
                         key={internship.id} 
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedInternship(internship)}
+                        onClick={() => handleSelectInternship(internship)}
                       >
                         <TableCell className="font-medium">{internship.title}</TableCell>
                         <TableCell>
@@ -309,7 +531,7 @@ export const PaymentsManagement = () => {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedInternship(internship);
+                              handleSelectInternship(internship);
                             }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -331,7 +553,7 @@ export const PaymentsManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>User Subscriptions</CardTitle>
-                  <CardDescription>View all platform subscriptions</CardDescription>
+                  <CardDescription>View and manage platform subscriptions</CardDescription>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -378,12 +600,110 @@ export const PaymentsManagement = () => {
                         </TableCell>
                         <TableCell>{format(new Date(subscription.created_at), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSubscription(subscription);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSubscription(subscription);
+                                setCancelDialogOpen(true);
+                              }}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Transaction History
+                  </CardTitle>
+                  <CardDescription>Complete log of all payment transactions, refunds, and cancellations</CardDescription>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 w-[250px]"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Internship/Item</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        No transactions found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTransactions.map((transaction) => (
+                      <TableRow 
+                        key={transaction.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedTransaction(transaction)}
+                      >
+                        <TableCell>{format(new Date(transaction.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
+                        <TableCell>{getTransactionTypeBadge(transaction.transaction_type)}</TableCell>
+                        <TableCell className={transaction.transaction_type === 'refund' ? 'text-orange-600 font-medium' : 'font-medium'}>
+                          {transaction.transaction_type === 'refund' ? '-' : ''}₹{transaction.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                        <TableCell>{transaction.internship?.title || 'N/A'}</TableCell>
+                        <TableCell>{transaction.company?.name || 'N/A'}</TableCell>
+                        <TableCell>
+                          <span className="font-mono text-xs">{transaction.reference_id || '-'}</span>
+                        </TableCell>
+                        <TableCell className="text-right">
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedSubscription(subscription);
+                              setSelectedTransaction(transaction);
                             }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -400,16 +720,16 @@ export const PaymentsManagement = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Internship Detail Dialog */}
-      <Dialog open={!!selectedInternship} onOpenChange={() => setSelectedInternship(null)}>
-        <DialogContent className="max-w-2xl">
+      {/* Internship Detail Dialog with Transaction History */}
+      <Dialog open={!!selectedInternship} onOpenChange={() => { setSelectedInternship(null); setInternshipTransactions([]); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
               Internship Payment Details
             </DialogTitle>
             <DialogDescription>
-              Complete payment and internship information
+              Complete payment information and transaction history
             </DialogDescription>
           </DialogHeader>
           
@@ -507,13 +827,65 @@ export const PaymentsManagement = () => {
                   <span>Created: {format(new Date(selectedInternship.created_at), 'MMM d, yyyy')}</span>
                 </div>
               </div>
+
+              {/* Transaction History for this Internship */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Transaction History
+                </h4>
+                {internshipTransactions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No transactions recorded for this internship</p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {internshipTransactions.map((t) => (
+                      <div key={t.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <div className="flex items-center gap-3">
+                          {getTransactionTypeBadge(t.transaction_type)}
+                          <span className="text-sm">{format(new Date(t.created_at), 'MMM d, yyyy HH:mm')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${t.transaction_type === 'refund' ? 'text-orange-600' : ''}`}>
+                            {t.transaction_type === 'refund' ? '-' : ''}₹{t.amount.toLocaleString()}
+                          </span>
+                          {getStatusBadge(t.status)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <DialogFooter className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => selectedInternship.fees && recordPayment(selectedInternship, selectedInternship.fees)}
+                  disabled={!selectedInternship.fees}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Record Payment
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-orange-600 hover:text-orange-700"
+                  onClick={() => {
+                    setRefundAmount(selectedInternship.fees?.toString() || '');
+                    setRefundDialogOpen(true);
+                  }}
+                  disabled={!selectedInternship.fees}
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Issue Refund
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
       {/* Subscription Detail Dialog */}
-      <Dialog open={!!selectedSubscription} onOpenChange={() => setSelectedSubscription(null)}>
+      <Dialog open={!!selectedSubscription && !cancelDialogOpen} onOpenChange={() => setSelectedSubscription(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -549,10 +921,179 @@ export const PaymentsManagement = () => {
                 <p className="text-sm text-muted-foreground">User ID</p>
                 <p className="font-mono text-xs text-muted-foreground">{selectedSubscription.user_id}</p>
               </div>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Cancel Subscription
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Transaction Detail Dialog */}
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Transaction Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete transaction information
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Transaction Type</p>
+                  {getTransactionTypeBadge(selectedTransaction.transaction_type)}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  {getStatusBadge(selectedTransaction.status)}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Amount</p>
+                  <p className={`font-bold text-xl ${selectedTransaction.transaction_type === 'refund' ? 'text-orange-600' : ''}`}>
+                    {selectedTransaction.transaction_type === 'refund' ? '-' : ''}₹{selectedTransaction.amount.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Currency</p>
+                  <p className="font-medium">{selectedTransaction.currency}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium">{format(new Date(selectedTransaction.created_at), 'MMM d, yyyy HH:mm:ss')}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Method</p>
+                  <p className="font-medium">{selectedTransaction.payment_method || 'N/A'}</p>
+                </div>
+              </div>
+              {selectedTransaction.internship && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Internship</p>
+                  <p className="font-medium">{selectedTransaction.internship.title}</p>
+                </div>
+              )}
+              {selectedTransaction.company && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Company</p>
+                  <p className="font-medium">{selectedTransaction.company.name}</p>
+                </div>
+              )}
+              {selectedTransaction.reference_id && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Reference ID</p>
+                  <p className="font-mono text-sm">{selectedTransaction.reference_id}</p>
+                </div>
+              )}
+              {selectedTransaction.notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Notes</p>
+                  <p className="text-sm">{selectedTransaction.notes}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground">Transaction ID</p>
+                <p className="font-mono text-xs text-muted-foreground">{selectedTransaction.id}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Dialog */}
+      <AlertDialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-orange-600" />
+              Issue Refund
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will record a refund transaction for this internship. Make sure to process the actual refund through your payment gateway.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium">Refund Amount (₹)</label>
+              <Input
+                type="number"
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(e.target.value)}
+                placeholder="Enter refund amount"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Notes (Optional)</label>
+              <Textarea
+                value={refundNotes}
+                onChange={(e) => setRefundNotes(e.target.value)}
+                placeholder="Enter reason for refund..."
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRefund}
+              disabled={processing || !refundAmount}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {processing ? 'Processing...' : 'Process Refund'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Cancel Subscription
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this subscription? This action cannot be undone.
+              {selectedSubscription && (
+                <div className="mt-2 p-2 bg-muted rounded">
+                  <p className="font-medium">{selectedSubscription.profile?.full_name || 'Unknown User'}</p>
+                  <p className="text-sm">{selectedSubscription.profile?.email}</p>
+                  <p className="text-sm">Type: {selectedSubscription.type}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium">Cancellation Reason (Optional)</label>
+            <Textarea
+              value={refundNotes}
+              onChange={(e) => setRefundNotes(e.target.value)}
+              placeholder="Enter reason for cancellation..."
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelSubscription}
+              disabled={processing}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {processing ? 'Cancelling...' : 'Confirm Cancellation'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
