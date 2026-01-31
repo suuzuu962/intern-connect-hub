@@ -552,6 +552,89 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          internship_id: string | null
+          notes: string | null
+          payment_method: string | null
+          processed_by: string | null
+          reference_id: string | null
+          status: string
+          student_id: string | null
+          subscription_id: string | null
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          internship_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          reference_id?: string | null
+          status?: string
+          student_id?: string | null
+          subscription_id?: string | null
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          internship_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          reference_id?: string | null
+          status?: string
+          student_id?: string | null
+          subscription_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_internship_id_fkey"
+            columns: ["internship_id"]
+            isOneToOne: false
+            referencedRelation: "internships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
