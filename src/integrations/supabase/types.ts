@@ -1062,6 +1062,45 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          created_at: string
+          feature_key: string
+          hidden_fields: string[] | null
+          id: string
+          is_enabled: boolean | null
+          settings: Json | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+          visible_fields: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          hidden_fields?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+          visible_fields?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          hidden_fields?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+          visible_fields?: string[] | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Shield, Users, Building2, GraduationCap, UserCheck, Save, RefreshCw } from 'lucide-react';
+import { UserPermissions } from './UserPermissions';
 
 interface Permission {
   id: string;
@@ -343,6 +343,14 @@ export const RolePermissions = () => {
                 );
               })}
             </div>
+
+            {/* Individual User Permissions for Company, University, and Coordinator */}
+            {(role.value === 'company' || role.value === 'university' || role.value === 'college_coordinator') && (
+              <UserPermissions
+                roleType={role.value}
+                features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
+              />
+            )}
           </TabsContent>
         ))}
       </Tabs>
