@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Shield, Users, Building2, GraduationCap, UserCheck, Save, RefreshCw } from 'lucide-react';
 import { UserPermissions } from './UserPermissions';
+import { BulkUserPermissions } from './BulkUserPermissions';
 
 interface Permission {
   id: string;
@@ -346,10 +347,16 @@ export const RolePermissions = () => {
 
             {/* Individual User Permissions for Company, University, and Coordinator */}
             {(role.value === 'company' || role.value === 'university' || role.value === 'college_coordinator') && (
-              <UserPermissions
-                roleType={role.value}
-                features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
-              />
+              <>
+                <UserPermissions
+                  roleType={role.value}
+                  features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
+                />
+                <BulkUserPermissions
+                  roleType={role.value}
+                  features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
+                />
+              </>
             )}
           </TabsContent>
         ))}
