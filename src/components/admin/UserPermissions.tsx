@@ -8,8 +8,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { Search, UserCog, Save, X, Check } from 'lucide-react';
+import { Search, UserCog, Save, X, Check, RotateCcw, Settings2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface UserPermission {
   id: string;
@@ -48,9 +59,12 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
   const [changes, setChanges] = useState<Map<string, Partial<UserPermission>>>(new Map());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [usersWithOverrides, setUsersWithOverrides] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchUsers();
+    fetchUsersWithOverrides();
   }, [roleType]);
 
   useEffect(() => {
@@ -73,6 +87,16 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
     }
   }, [searchTerm, users]);
 
+  const fetchUsersWithOverrides = async () => {
+    const { data, error } = await supabase
+      .from('user_permissions')
+      .select('user_id');
+
+    if (!error && data) {
+      setUsersWithOverrides(new Set(data.map((d) => d.user_id)));
+    }
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     let data: User[] = [];
@@ -82,18 +106,17 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
         .from('companies')
         .select('id, user_id, name')
         .order('name');
-      
+
       if (!error && companies) {
-        // Get profiles for emails
-        const userIds = companies.map(c => c.user_id);
+        const userIds = companies.map((c) => c.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, email, avatar_url')
           .in('user_id', userIds);
-        
-        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-        
-        data = companies.map(c => ({
+
+        const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+
+        data = companies.map((c) => ({
           id: c.id,
           user_id: c.user_id,
           name: c.name,
@@ -106,9 +129,9 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
         .from('universities')
         .select('id, user_id, name, email, logo_url')
         .order('name');
-      
+
       if (!error && universities) {
-        data = universities.map(u => ({
+        data = universities.map((u) => ({
           id: u.id,
           user_id: u.user_id,
           name: u.name,
@@ -121,18 +144,17 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
         .from('college_coordinators')
         .select('id, user_id, name, email')
         .order('name');
-      
+
       if (!error && coordinators) {
-        // Get profiles for avatars
-        const userIds = coordinators.map(c => c.user_id);
+        const userIds = coordinators.map((c) => c.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, avatar_url')
           .in('user_id', userIds);
-        
-        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-        
-        data = coordinators.map(c => ({
+
+        const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+
+        data = coordinators.map((c) => ({
           id: c.id,
           user_id: c.user_id,
           name: c.name,
@@ -162,55 +184,63 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
   };
 
   const getPermission = (featureKey: string): UserPermission | undefined => {
-    return userPermissions.find(p => p.feature_key === featureKey);
+    return userPermissions.find((p) => p.feature_key === featureKey);
   };
 
   const getSettingValue = (featureKey: string, settingKey: string): boolean => {
     const perm = getPermission(featureKey);
     const change = changes.get(featureKey);
-    
+
     if (change?.settings && settingKey in change.settings) {
       return change.settings[settingKey] as boolean;
     }
-    
+
     return (perm?.settings?.[settingKey] as boolean) ?? false;
   };
 
   const isFeatureEnabled = (featureKey: string): boolean => {
     const perm = getPermission(featureKey);
     const change = changes.get(featureKey);
-    
+
     if (change && 'is_enabled' in change) {
       return change.is_enabled!;
     }
-    
+
     return perm?.is_enabled ?? true;
   };
 
   const updateFeatureToggle = (featureKey: string, enabled: boolean) => {
     const existing = changes.get(featureKey) || {};
-    setChanges(new Map(changes.set(featureKey, { ...existing, is_enabled: enabled, feature_key: featureKey })));
+    setChanges(
+      new Map(changes.set(featureKey, { ...existing, is_enabled: enabled, feature_key: featureKey }))
+    );
   };
 
   const updateSetting = (featureKey: string, settingKey: string, value: boolean) => {
     const existing = changes.get(featureKey) || {};
     const existingSettings = existing.settings || getPermission(featureKey)?.settings || {};
-    setChanges(new Map(changes.set(featureKey, {
-      ...existing,
-      settings: { ...existingSettings, [settingKey]: value },
-      feature_key: featureKey,
-    })));
+    setChanges(
+      new Map(
+        changes.set(featureKey, {
+          ...existing,
+          settings: { ...existingSettings, [settingKey]: value },
+          feature_key: featureKey,
+        })
+      )
+    );
   };
 
   const handleSave = async () => {
     if (!selectedUser) return;
-    
+
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const updates = Array.from(changes.entries()).map(([featureKey, change]) => {
       const existing = getPermission(featureKey);
-      
+
       return {
         id: existing?.id,
         user_id: selectedUser.user_id,
@@ -232,30 +262,61 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
           })
           .eq('id', update.id);
       } else {
-        await supabase
-          .from('user_permissions')
-          .insert([{
+        await supabase.from('user_permissions').insert([
+          {
             user_id: update.user_id,
             feature_key: update.feature_key,
             is_enabled: update.is_enabled,
             settings: update.settings as unknown as Record<string, never>,
-          }]);
+          },
+        ]);
       }
     }
 
     toast({ title: 'Success', description: 'User permissions saved successfully' });
     setChanges(new Map());
     fetchUserPermissions(selectedUser.user_id);
+    fetchUsersWithOverrides();
     setSaving(false);
   };
 
+  const handleResetToDefaults = async () => {
+    if (!selectedUser) return;
+
+    setResetting(true);
+
+    const { error } = await supabase
+      .from('user_permissions')
+      .delete()
+      .eq('user_id', selectedUser.user_id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to reset permissions', variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `Permissions for ${selectedUser.name} reset to role defaults` });
+      setUserPermissions([]);
+      setChanges(new Map());
+      setUsersWithOverrides((prev) => {
+        const next = new Set(prev);
+        next.delete(selectedUser.user_id);
+        return next;
+      });
+    }
+
+    setResetting(false);
+  };
+
   const hasChanges = changes.size > 0;
+  const selectedUserHasOverrides = selectedUser ? usersWithOverrides.has(selectedUser.user_id) : false;
 
   const getRoleLabel = () => {
     switch (roleType) {
-      case 'company': return 'Companies';
-      case 'university': return 'Universities';
-      case 'college_coordinator': return 'Coordinators';
+      case 'company':
+        return 'Companies';
+      case 'university':
+        return 'Universities';
+      case 'college_coordinator':
+        return 'Coordinators';
     }
   };
 
@@ -267,7 +328,8 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
           Individual User Permissions - {getRoleLabel()}
         </CardTitle>
         <CardDescription>
-          Override role-level permissions for specific users
+          Override role-level permissions for specific users. Users with custom overrides are marked with a{' '}
+          <Settings2 className="inline h-3.5 w-3.5 text-primary" /> icon.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -290,29 +352,44 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
                 <div className="text-center py-4 text-muted-foreground">No users found</div>
               ) : (
                 <div className="space-y-2">
-                  {filteredUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      onClick={() => setSelectedUser(user)}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedUser?.id === user.id
-                          ? 'bg-primary/10 border border-primary'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar_url || undefined} />
-                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  {filteredUsers.map((user) => {
+                    const hasOverrides = usersWithOverrides.has(user.user_id);
+                    return (
+                      <div
+                        key={user.id}
+                        onClick={() => setSelectedUser(user)}
+                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedUser?.id === user.id
+                            ? 'bg-primary/10 border border-primary'
+                            : 'hover:bg-muted'
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          {hasOverrides && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Settings2 className="h-2.5 w-2.5" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium truncate">{user.name}</p>
+                            {hasOverrides && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                                Custom
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                        {selectedUser?.id === user.id && <Check className="h-4 w-4 text-primary shrink-0" />}
                       </div>
-                      {selectedUser?.id === user.id && (
-                        <Check className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>
@@ -328,16 +405,61 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={selectedUser.avatar_url || undefined} />
-                      <AvatarFallback>{selectedUser.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar>
+                        <AvatarImage src={selectedUser.avatar_url || undefined} />
+                        <AvatarFallback>{selectedUser.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      {selectedUserHasOverrides && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                          <Settings2 className="h-2.5 w-2.5" />
+                        </span>
+                      )}
+                    </div>
                     <div>
-                      <p className="font-medium">{selectedUser.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{selectedUser.name}</p>
+                        {selectedUserHasOverrides && (
+                          <Badge variant="secondary" className="text-xs">
+                            Custom Overrides
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    {/* Reset to Defaults */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!selectedUserHasOverrides || resetting}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Reset
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reset to Role Defaults?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will remove all custom permission overrides for{' '}
+                            <span className="font-semibold">{selectedUser.name}</span> and revert them to
+                            the default role-level permissions. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleResetToDefaults}>
+                            Reset Permissions
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -349,15 +471,13 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
                       <X className="h-4 w-4 mr-1" />
                       Cancel
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={!hasChanges || saving}
-                    >
+                    <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
                       <Save className="h-4 w-4 mr-1" />
                       {saving ? 'Saving...' : 'Save'}
                       {hasChanges && (
-                        <Badge variant="secondary" className="ml-1">{changes.size}</Badge>
+                        <Badge variant="secondary" className="ml-1">
+                          {changes.size}
+                        </Badge>
                       )}
                     </Button>
                   </div>
