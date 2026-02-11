@@ -36,6 +36,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CompanyApprovalDialog } from './CompanyApprovalDialog';
 
 interface Company {
   id: string;
@@ -102,6 +103,8 @@ export const CompanyApprovalManagement = () => {
   const [verificationStates, setVerificationStates] = useState<Record<string, VerificationState>>({});
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addingCompany, setAddingCompany] = useState(false);
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
@@ -425,7 +428,16 @@ export const CompanyApprovalManagement = () => {
               {isPending && (
                 <Button 
                   size="sm" 
-                  onClick={() => handleApprove(company.id)}
+                  onClick={() => {
+                    const verification = getVerificationState(company.id);
+                    const allVerified = Object.values(verification).every(v => v);
+                    if (!allVerified) {
+                      toast.error('Please verify all sections before approving');
+                      return;
+                    }
+                    setApprovalCompany(company);
+                    setApprovalDialogOpen(true);
+                  }}
                   className="bg-green-600 hover:bg-green-700"
                   disabled={!allVerified}
                   title={!allVerified ? 'Verify all sections before approving' : 'Approve company'}
@@ -1019,6 +1031,25 @@ export const CompanyApprovalManagement = () => {
           )}
         </CardContent>
       </Card>
+      {/* Approval Dialog with Permissions & Limits */}
+      {approvalCompany && (
+        <CompanyApprovalDialog
+          open={approvalDialogOpen}
+          onOpenChange={(open) => {
+            setApprovalDialogOpen(open);
+            if (!open) setApprovalCompany(null);
+          }}
+          company={approvalCompany}
+          onApproved={() => {
+            setVerificationStates(prev => {
+              const newState = { ...prev };
+              delete newState[approvalCompany.id];
+              return newState;
+            });
+            fetchCompanies();
+          }}
+        />
+      )}
     </div>
   );
 };
