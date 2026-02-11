@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Eye, Calendar, MapPin, Clock, Loader2, ChevronDown, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calendar, MapPin, Clock, Loader2, ChevronDown, X, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { internshipDomains, getSuggestedSkills } from '@/lib/domain-skills';
@@ -63,6 +64,13 @@ interface Props {
   onUpdate?: () => void;
 }
 
+interface CompanyLimitsData {
+  max_internships: number;
+  max_active_internships: number;
+  can_post_paid_internships: boolean;
+  can_post_free_internships: boolean;
+}
+
 export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
   const [internships, setInternships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,21 +80,27 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
   const [formData, setFormData] = useState<InternshipFormData>(initialFormData);
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
+  const [companyLimits, setCompanyLimits] = useState<CompanyLimitsData | null>(null);
 
   useEffect(() => {
     if (companyId) fetchInternships();
   }, [companyId]);
 
   const fetchInternships = async () => {
-    const { data } = await supabase
-      .from('internships')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false });
+    const [internshipsRes, limitsRes] = await Promise.all([
+      supabase.from('internships').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+      supabase.from('company_limits').select('max_internships, max_active_internships, can_post_paid_internships, can_post_free_internships').eq('company_id', companyId!).maybeSingle(),
+    ]);
 
-    setInternships(data || []);
+    setInternships(internshipsRes.data || []);
+    if (limitsRes.data) setCompanyLimits(limitsRes.data as CompanyLimitsData);
     setLoading(false);
   };
+
+  const activeCount = internships.filter(i => i.is_active).length;
+  const totalCount = internships.length;
+  const isOverTotalLimit = companyLimits ? totalCount >= companyLimits.max_internships : false;
+  const isOverActiveLimit = companyLimits ? activeCount >= companyLimits.max_active_internships : false;
 
   const handleChange = (field: keyof InternshipFormData, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -181,6 +195,26 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
       return;
     }
 
+    // Enforce limits for new internships only
+    if (!editingId && companyLimits) {
+      if (isOverTotalLimit) {
+        toast.error(`You've reached your limit of ${companyLimits.max_internships} total internships`);
+        return;
+      }
+      if (formData.is_active && isOverActiveLimit) {
+        toast.error(`You've reached your limit of ${companyLimits.max_active_internships} active internships`);
+        return;
+      }
+      if (formData.internship_type === 'paid' && !companyLimits.can_post_paid_internships) {
+        toast.error('You are not allowed to post paid internships');
+        return;
+      }
+      if (formData.internship_type === 'free' && !companyLimits.can_post_free_internships) {
+        toast.error('You are not allowed to post free internships');
+        return;
+      }
+    }
+
     setSaving(true);
 
     const domainString = allSelectedDomains.join(', ');
@@ -225,6 +259,11 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
   };
 
   const toggleActive = async (id: string, isActive: boolean) => {
+    // Enforce active limit when activating
+    if (isActive && companyLimits && activeCount >= companyLimits.max_active_internships) {
+      toast.error(`You've reached your limit of ${companyLimits.max_active_internships} active internships`);
+      return;
+    }
     await supabase.from('internships').update({ is_active: isActive }).eq('id', id);
     fetchInternships();
     onUpdate?.();
@@ -244,11 +283,31 @@ export const CompanyInternships = ({ companyId, onUpdate }: Props) => {
 
   return (
     <div className="space-y-6">
+      {/* Limits Warning */}
+      {companyLimits && (isOverTotalLimit || isOverActiveLimit) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {isOverTotalLimit
+              ? `You've reached your limit of ${companyLimits.max_internships} total internships. Contact admin to increase your limit.`
+              : `You've reached your limit of ${companyLimits.max_active_internships} active internships. Deactivate existing ones or contact admin.`}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Your Internships ({internships.length})</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Your Internships ({internships.length})</h2>
+          {companyLimits && (
+            <div className="flex gap-2 mt-1">
+              <Badge variant="outline" className="text-xs">Total: {totalCount}/{companyLimits.max_internships}</Badge>
+              <Badge variant="outline" className="text-xs">Active: {activeCount}/{companyLimits.max_active_internships}</Badge>
+            </div>
+          )}
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="gradient-primary border-0">
+            <Button onClick={openCreateDialog} className="gradient-primary border-0" disabled={isOverTotalLimit}>
               <Plus className="h-4 w-4 mr-2" /> Create Internship
             </Button>
           </DialogTrigger>
