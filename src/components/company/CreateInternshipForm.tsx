@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2, Briefcase, Plus, ChevronDown, X } from 'lucide-react';
+import { Loader2, Briefcase, Plus, ChevronDown, X, AlertTriangle } from 'lucide-react';
 import { internshipDomains, domainSkillsMap, getSuggestedSkills } from '@/lib/domain-skills';
 
 const durationOptions = [
@@ -42,11 +43,22 @@ interface FormData {
   positions_available: number;
 }
 
+interface CompanyLimits {
+  max_internships: number;
+  max_active_internships: number;
+  can_post_paid_internships: boolean;
+  can_post_free_internships: boolean;
+}
+
 export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [limits, setLimits] = useState<CompanyLimits | null>(null);
+  const [totalInternships, setTotalInternships] = useState(0);
+  const [activeInternships, setActiveInternships] = useState(0);
+  const [limitsLoading, setLimitsLoading] = useState(true);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     short_description: '',
@@ -66,6 +78,31 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
     is_paid: false,
     positions_available: 1,
   });
+
+  useEffect(() => {
+    if (companyId) fetchLimits();
+  }, [companyId]);
+
+  const fetchLimits = async () => {
+    setLimitsLoading(true);
+    const [limitsRes, internshipsRes] = await Promise.all([
+      supabase.from('company_limits').select('max_internships, max_active_internships, can_post_paid_internships, can_post_free_internships').eq('company_id', companyId!).maybeSingle(),
+      supabase.from('internships').select('id, is_active').eq('company_id', companyId!),
+    ]);
+    if (limitsRes.data) setLimits(limitsRes.data as CompanyLimits);
+    if (internshipsRes.data) {
+      setTotalInternships(internshipsRes.data.length);
+      setActiveInternships(internshipsRes.data.filter((i: any) => i.is_active).length);
+    }
+    setLimitsLoading(false);
+  };
+
+  const isOverTotalLimit = limits ? totalInternships >= limits.max_internships : false;
+  const isOverActiveLimit = limits ? activeInternships >= limits.max_active_internships : false;
+  const isTypeBlocked = limits ? (
+    (formData.internship_type === 'paid' && !limits.can_post_paid_internships) ||
+    (formData.internship_type === 'free' && !limits.can_post_free_internships)
+  ) : false;
 
   const handleChange = (field: keyof FormData, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -133,6 +170,26 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
       return;
     }
 
+    // Enforce limits
+    if (limits) {
+      if (isOverTotalLimit) {
+        toast.error(`You've reached the maximum of ${limits.max_internships} total internships`);
+        return;
+      }
+      if (isOverActiveLimit) {
+        toast.error(`You've reached the maximum of ${limits.max_active_internships} active internships`);
+        return;
+      }
+      if (formData.internship_type === 'paid' && !limits.can_post_paid_internships) {
+        toast.error('You are not allowed to post paid internships');
+        return;
+      }
+      if (formData.internship_type === 'free' && !limits.can_post_free_internships) {
+        toast.error('You are not allowed to post free internships');
+        return;
+      }
+    }
+
     if (!validateForm()) {
       toast.error('Please fill in all required fields');
       return;
@@ -185,6 +242,25 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
         </h1>
         <p className="text-muted-foreground">Fill in the details to post a new internship opportunity</p>
       </div>
+
+      {/* Limits Warning */}
+      {!limitsLoading && limits && (isOverTotalLimit || isOverActiveLimit) && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {isOverTotalLimit
+              ? `You've reached your limit of ${limits.max_internships} total internships. Contact admin to increase your limit.`
+              : `You've reached your limit of ${limits.max_active_internships} active internships. Deactivate existing ones or contact admin.`}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!limitsLoading && limits && (
+        <div className="flex gap-3 mb-4 text-sm">
+          <Badge variant="outline">Total: {totalInternships}/{limits.max_internships}</Badge>
+          <Badge variant="outline">Active: {activeInternships}/{limits.max_active_internships}</Badge>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
