@@ -92,8 +92,8 @@ const App = () => (
               />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <ZoomControls />
           </BrowserRouter>
+          <ZoomControls />
         </TooltipProvider>
       </ZoomProvider>
     </AuthProvider>
