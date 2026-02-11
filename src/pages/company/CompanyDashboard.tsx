@@ -202,11 +202,11 @@ const CompanyDashboard = () => {
         {/* Sidebar */}
         <aside className="w-64 bg-card border-r border-border shrink-0">
           <div className="p-4 border-b border-border">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
               {company?.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-10 w-10 rounded-lg object-cover" />
+                <img src={company.logo_url} alt={company.name} className="h-10 w-10 rounded-full object-cover" />
               ) : (
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Building2 className="h-5 w-5 text-primary" />
                 </div>
               )}
@@ -317,14 +317,14 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {company?.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-14 w-14 rounded-full object-cover" />
+                <img src={company.logo_url} alt={company.name} className="h-16 w-16 rounded-full object-cover border-2 border-border" />
               ) : (
-                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
-                  <Building2 className="h-7 w-7 text-muted-foreground" />
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                  <Building2 className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
               <div>
-                <h2 className="text-lg font-semibold">{company?.name || 'Your Company'}</h2>
+                <h2 className="text-xl font-semibold">{company?.name || 'Your Company'}</h2>
                 <p className="text-sm text-muted-foreground">
                   {company?.is_verified ? '✓ Verified Company' : '⏳ Pending Verification'}
                 </p>
