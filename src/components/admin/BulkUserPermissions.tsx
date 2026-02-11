@@ -40,9 +40,11 @@ interface FeatureDefinition {
 interface BulkUserPermissionsProps {
   roleType: 'company' | 'university' | 'college_coordinator';
   features: FeatureDefinition[];
+  onPermissionsChanged?: () => void;
+  refreshKey?: number;
 }
 
-export const BulkUserPermissions = ({ roleType, features }: BulkUserPermissionsProps) => {
+export const BulkUserPermissions = ({ roleType, features, onPermissionsChanged, refreshKey }: BulkUserPermissionsProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -264,6 +266,7 @@ export const BulkUserPermissions = ({ roleType, features }: BulkUserPermissionsP
 
     setSelectedUserIds(new Set());
     setBulkPermissions(new Map());
+    onPermissionsChanged?.();
     setSaving(false);
   };
 
