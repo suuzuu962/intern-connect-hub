@@ -13,6 +13,7 @@ const ZoomContext = createContext<ZoomContextType | undefined>(undefined);
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
+const BASE_FONT_SIZE = 16;
 
 export const ZoomProvider = ({ children }: { children: ReactNode }) => {
   const [zoomLevel, setZoomLevelState] = useState(() => {
@@ -22,6 +23,10 @@ export const ZoomProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     localStorage.setItem('app-zoom-level', zoomLevel.toString());
+    document.documentElement.style.fontSize = `${BASE_FONT_SIZE * zoomLevel}px`;
+    return () => {
+      document.documentElement.style.fontSize = '';
+    };
   }, [zoomLevel]);
 
   const setZoomLevel = (level: number) => {
@@ -29,28 +34,12 @@ export const ZoomProvider = ({ children }: { children: ReactNode }) => {
     setZoomLevelState(clampedLevel);
   };
 
-  const zoomIn = () => {
-    setZoomLevel(zoomLevel + ZOOM_STEP);
-  };
-
-  const zoomOut = () => {
-    setZoomLevel(zoomLevel - ZOOM_STEP);
-  };
-
-  const resetZoom = () => {
-    setZoomLevel(1);
-  };
+  const zoomIn = () => setZoomLevel(zoomLevel + ZOOM_STEP);
+  const zoomOut = () => setZoomLevel(zoomLevel - ZOOM_STEP);
+  const resetZoom = () => setZoomLevel(1);
 
   return (
-    <ZoomContext.Provider
-      value={{
-        zoomLevel,
-        setZoomLevel,
-        zoomIn,
-        zoomOut,
-        resetZoom,
-      }}
-    >
+    <ZoomContext.Provider value={{ zoomLevel, setZoomLevel, zoomIn, zoomOut, resetZoom }}>
       {children}
     </ZoomContext.Provider>
   );
