@@ -14,6 +14,7 @@ import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2, Brief
 import { Separator } from '@/components/ui/separator';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { getSuggestedSkills } from '@/lib/domain-skills';
+import { CompanyProfileView } from './CompanyProfileView';
 
 const domainCategories = [
   'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
@@ -390,19 +391,22 @@ export const CompanyProfileForm = () => {
     <Label>{children} <span className="text-muted-foreground text-xs">(optional)</span></Label>
   );
 
+  if (!isEditing) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <CompanyProfileView data={company} onEdit={() => setIsEditing(true)} />
+      </div>
+    );
+  }
+
   return (
-    <div className={`space-y-6 max-w-4xl ${!isEditing ? 'pointer-events-none select-none' : ''}`} style={!isEditing ? { opacity: 0.7 } : undefined}>
-      <div className="mb-6 pointer-events-auto" style={{ opacity: 1 }}>
+    <div className="space-y-6 max-w-4xl">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Company Profile</h1>
             <p className="text-muted-foreground">Complete your company profile to get verified and start posting internships</p>
           </div>
-          {!isEditing && (
-            <Button onClick={() => setIsEditing(true)} className="gap-2">
-              <Pencil className="h-4 w-4" /> Edit Profile
-            </Button>
-          )}
         </div>
       </div>
 
@@ -975,14 +979,12 @@ export const CompanyProfileForm = () => {
       </Card>
 
       {/* Submit */}
-      {isEditing && (
-        <div className="flex justify-end gap-4 pointer-events-auto" style={{ opacity: 1 }}>
-          <Button variant="outline" disabled={saving} onClick={() => setIsEditing(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="gradient-primary border-0">
-            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Profile'}
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" disabled={saving} onClick={() => setIsEditing(false)}>Cancel</Button>
+        <Button onClick={handleSubmit} disabled={saving} className="gradient-primary border-0">
+          {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Profile'}
+        </Button>
+      </div>
     </div>
   );
 };
