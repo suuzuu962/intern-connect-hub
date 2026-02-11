@@ -409,6 +409,65 @@ export type Database = {
         }
         Relationships: []
       }
+      company_limits: {
+        Row: {
+          can_feature_listings: boolean
+          can_post_free_internships: boolean
+          can_post_paid_internships: boolean
+          can_view_resumes: boolean
+          can_view_student_contact: boolean
+          company_id: string
+          created_at: string
+          id: string
+          max_active_internships: number
+          max_applications_per_internship: number
+          max_internships: number
+          notes: string | null
+          set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          can_feature_listings?: boolean
+          can_post_free_internships?: boolean
+          can_post_paid_internships?: boolean
+          can_view_resumes?: boolean
+          can_view_student_contact?: boolean
+          company_id: string
+          created_at?: string
+          id?: string
+          max_active_internships?: number
+          max_applications_per_internship?: number
+          max_internships?: number
+          notes?: string | null
+          set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          can_feature_listings?: boolean
+          can_post_free_internships?: boolean
+          can_post_paid_internships?: boolean
+          can_view_resumes?: boolean
+          can_view_student_contact?: boolean
+          company_id?: string
+          created_at?: string
+          id?: string
+          max_active_internships?: number
+          max_applications_per_internship?: number
+          max_internships?: number
+          notes?: string | null
+          set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_limits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internship_diary: {
         Row: {
           application_id: string
