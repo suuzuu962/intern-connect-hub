@@ -12,6 +12,7 @@ import { CompanyApplicants } from '@/components/company/CompanyApplicants';
 import { CompanyInternships } from '@/components/company/CompanyInternships';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CompanyProfileCompletion } from '@/components/company/CompanyProfileCompletion';
 import { cn } from '@/lib/utils';
 
 interface DashboardStats {
@@ -311,35 +312,14 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
 
   return (
     <div className="space-y-6">
-      {/* Company Header - matches student profile completion card */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {company?.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-16 w-16 rounded-full object-cover border-2 border-border" />
-              ) : (
-                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                  <Building2 className="h-8 w-8 text-muted-foreground" />
-                </div>
-              )}
-              <div>
-                <h2 className="text-xl font-semibold">{company?.name || 'Your Company'}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {company?.is_verified ? '✓ Verified Company' : '⏳ Pending Verification'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <Button onClick={onEditProfile} variant="outline" size="sm">
-              <UserCog className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Profile Completion Card */}
+      <CompanyProfileCompletion
+        companyId={company?.id || null}
+        companyName={company?.name || 'Your Company'}
+        logoUrl={company?.logo_url || null}
+        isVerified={company?.is_verified || null}
+        onEditProfile={onEditProfile}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
