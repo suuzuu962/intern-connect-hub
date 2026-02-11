@@ -83,12 +83,12 @@ export const CompanyProfileView = ({ data, onEdit }: CompanyProfileViewProps) =>
 
           {/* Logo overlapping cover */}
           <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0">
-            <div className="h-24 w-24 rounded-xl border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
+            <div className="h-24 w-24 rounded-full border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
               {data.logo_url ? (
                 <img
                   src={data.logo_url}
                   alt={data.name}
-                  className="h-full w-full object-contain p-1"
+                  className="h-full w-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
