@@ -48,9 +48,11 @@ interface FeatureDefinition {
 interface UserPermissionsProps {
   roleType: 'company' | 'university' | 'college_coordinator';
   features: FeatureDefinition[];
+  onPermissionsChanged?: () => void;
+  refreshKey?: number;
 }
 
-export const UserPermissions = ({ roleType, features }: UserPermissionsProps) => {
+export const UserPermissions = ({ roleType, features, onPermissionsChanged, refreshKey }: UserPermissionsProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,6 +68,15 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
     fetchUsers();
     fetchUsersWithOverrides();
   }, [roleType]);
+
+  useEffect(() => {
+    if (refreshKey && refreshKey > 0) {
+      fetchUsersWithOverrides();
+      if (selectedUser) {
+        fetchUserPermissions(selectedUser.user_id);
+      }
+    }
+  }, [refreshKey]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -277,6 +288,7 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
     setChanges(new Map());
     fetchUserPermissions(selectedUser.user_id);
     fetchUsersWithOverrides();
+    onPermissionsChanged?.();
     setSaving(false);
   };
 
@@ -301,6 +313,7 @@ export const UserPermissions = ({ roleType, features }: UserPermissionsProps) =>
         next.delete(selectedUser.user_id);
         return next;
       });
+      onPermissionsChanged?.();
     }
 
     setResetting(false);

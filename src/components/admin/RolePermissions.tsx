@@ -147,6 +147,8 @@ export const RolePermissions = () => {
   const [saving, setSaving] = useState(false);
   const [activeRole, setActiveRole] = useState('student');
   const [changes, setChanges] = useState<Map<string, Partial<Permission>>>(new Map());
+  const [individualRefreshKey, setIndividualRefreshKey] = useState(0);
+  const [bulkRefreshKey, setBulkRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchPermissions();
@@ -351,10 +353,14 @@ export const RolePermissions = () => {
                 <UserPermissions
                   roleType={role.value}
                   features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
+                  onPermissionsChanged={() => setBulkRefreshKey((k) => k + 1)}
+                  refreshKey={individualRefreshKey}
                 />
                 <BulkUserPermissions
                   roleType={role.value}
                   features={FEATURE_DEFINITIONS[role.value as keyof typeof FEATURE_DEFINITIONS] || []}
+                  onPermissionsChanged={() => setIndividualRefreshKey((k) => k + 1)}
+                  refreshKey={bulkRefreshKey}
                 />
               </>
             )}
