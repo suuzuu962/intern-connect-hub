@@ -399,7 +399,7 @@ export const CompanyProfileForm = () => {
     );
   }
 
-  return (
+   return (
     <div className="space-y-6 max-w-4xl">
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -409,6 +409,116 @@ export const CompanyProfileForm = () => {
           </div>
         </div>
       </div>
+
+      {/* Cover Image & Logo at Top */}
+      <Card className="overflow-hidden">
+        <div className="space-y-0">
+          {/* Cover Image */}
+          <div className="relative w-full" style={{ aspectRatio: '1130/200' }}>
+            <div className="relative w-full h-full overflow-hidden bg-muted/30">
+              {company.cover_image_url ? (
+                <>
+                  <img 
+                    src={company.cover_image_url} 
+                    alt="Cover Image" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <label className="absolute bottom-3 right-3 cursor-pointer">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploading === 'cover_image_url'} 
+                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
+                    />
+                    <div className="flex items-center gap-2 bg-background/90 hover:bg-background text-foreground px-3 py-2 rounded-lg shadow-md transition-colors">
+                      {uploading === 'cover_image_url' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Pencil className="h-4 w-4" />
+                      )}
+                      <span className="text-sm font-medium">Edit Cover</span>
+                    </div>
+                  </label>
+                </>
+              ) : (
+                <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors border-2 border-dashed rounded-t-lg">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    disabled={uploading === 'cover_image_url'} 
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
+                  />
+                  {uploading === 'cover_image_url' ? (
+                    <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+                  ) : (
+                    <>
+                      <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mt-2">Click to upload cover image</p>
+                      <p className="text-xs text-muted-foreground">1130 × 200 px recommended</p>
+                    </>
+                  )}
+                </label>
+              )}
+
+              {/* Logo overlapping cover */}
+              <div className="absolute -bottom-12 left-6">
+                <div className="relative">
+                  <div className="h-24 w-24 rounded-full border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
+                    {company.logo_url ? (
+                      <img 
+                        src={company.logo_url} 
+                        alt="Company Logo" 
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <Building2 className="h-10 w-10 text-muted-foreground" />
+                    )}
+                  </div>
+                  <label className="absolute -bottom-1 -right-1 cursor-pointer">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploading === 'logo_url'} 
+                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} 
+                    />
+                    <div className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-colors">
+                      {uploading === 'logo_url' ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : company.logo_url ? (
+                        <Pencil className="h-3.5 w-3.5" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5" />
+                      )}
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="pt-14 px-6 pb-2">
+            <p className="text-sm text-muted-foreground">{company.logo_url ? 'Click the icon to change logo' : 'Click the icon to upload logo'}</p>
+            {company.logo_url && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-destructive hover:text-destructive h-auto p-0 mt-1"
+                onClick={() => handleChange('logo_url', null)}
+              >
+                Remove logo
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
 
       {/* Basic Information */}
       <Card>
@@ -476,131 +586,7 @@ export const CompanyProfileForm = () => {
         </CardContent>
       </Card>
 
-      {/* Media & Branding */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Upload className="h-5 w-5" /> Media & Branding</CardTitle>
-          <CardDescription>Upload logo and cover image (max 5MB each)</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Cover Image - Full Width Banner */}
-          <div className="space-y-3">
-            <Label>Cover Image <span className="text-muted-foreground text-xs">(Recommended: 1130 × 200 px)</span></Label>
-            <div className="relative w-full" style={{ maxWidth: '1130px' }}>
-              <div 
-                className="relative border-2 border-dashed rounded-lg overflow-hidden bg-muted/30"
-                style={{ height: '200px', aspectRatio: '1130/200' }}
-              >
-                {company.cover_image_url ? (
-                  <>
-                    <img 
-                      src={company.cover_image_url} 
-                      alt="Cover Image" 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                    <label className="absolute bottom-3 right-3 cursor-pointer">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        disabled={uploading === 'cover_image_url'} 
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
-                      />
-                      <div className="flex items-center gap-2 bg-background/90 hover:bg-background text-foreground px-3 py-2 rounded-lg shadow-md transition-colors">
-                        {uploading === 'cover_image_url' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Pencil className="h-4 w-4" />
-                        )}
-                        <span className="text-sm font-medium">Edit Cover</span>
-                      </div>
-                    </label>
-                  </>
-                ) : (
-                  <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      disabled={uploading === 'cover_image_url'} 
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cover_image_url')} 
-                    />
-                    {uploading === 'cover_image_url' ? (
-                      <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
-                    ) : (
-                      <>
-                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mt-2">Click to upload cover image</p>
-                        <p className="text-xs text-muted-foreground">1130 × 200 px recommended</p>
-                      </>
-                    )}
-                  </label>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Logo - Icon Based Upload */}
-          <div className="space-y-3">
-            <Label>Company Logo</Label>
-            <div className="flex items-start gap-6">
-              <div className="relative">
-                <div className="h-28 w-28 rounded-xl border-2 border-dashed bg-muted/30 flex items-center justify-center overflow-hidden">
-                  {company.logo_url ? (
-                    <img 
-                      src={company.logo_url} 
-                      alt="Company Logo" 
-                      className="h-full w-full object-contain p-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <Building2 className="h-12 w-12 text-muted-foreground" />
-                  )}
-                </div>
-                <label className="absolute -bottom-2 -right-2 cursor-pointer">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    disabled={uploading === 'logo_url'} 
-                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} 
-                  />
-                  <div className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-colors">
-                    {uploading === 'logo_url' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : company.logo_url ? (
-                      <Pencil className="h-4 w-4" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                  </div>
-                </label>
-              </div>
-              <div className="flex-1 pt-2">
-                <p className="text-sm font-medium">{company.logo_url ? 'Logo uploaded' : 'Upload your company logo'}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Square image recommended (e.g., 200 × 200 px)
-                </p>
-                {company.logo_url && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="mt-2 text-destructive hover:text-destructive h-auto p-0"
-                    onClick={() => handleChange('logo_url', null)}
-                  >
-                    Remove logo
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Media & Branding section removed - logo/cover now at top */}
 
       {/* Social Links */}
       <Card>
