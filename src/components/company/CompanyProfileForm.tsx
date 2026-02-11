@@ -464,43 +464,43 @@ export const CompanyProfileForm = () => {
                   )}
                 </label>
               )}
+            </div>
 
-              {/* Logo overlapping cover */}
-              <div className="absolute -bottom-12 left-6">
-                <div className="relative">
-                  <div className="h-24 w-24 rounded-full border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
-                    {company.logo_url ? (
-                      <img 
-                        src={company.logo_url} 
-                        alt="Company Logo" 
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
+            {/* Logo overlapping cover - outside overflow-hidden */}
+            <div className="absolute -bottom-12 left-6 z-10">
+              <div className="relative">
+                <div className="h-24 w-24 rounded-full border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
+                  {company.logo_url ? (
+                    <img 
+                      src={company.logo_url} 
+                      alt="Company Logo" 
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Building2 className="h-10 w-10 text-muted-foreground" />
+                  )}
+                </div>
+                <label className="absolute -bottom-1 -right-1 cursor-pointer">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    disabled={uploading === 'logo_url'} 
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} 
+                  />
+                  <div className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-colors">
+                    {uploading === 'logo_url' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : company.logo_url ? (
+                      <Pencil className="h-3.5 w-3.5" />
                     ) : (
-                      <Building2 className="h-10 w-10 text-muted-foreground" />
+                      <Camera className="h-3.5 w-3.5" />
                     )}
                   </div>
-                  <label className="absolute -bottom-1 -right-1 cursor-pointer">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      disabled={uploading === 'logo_url'} 
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo_url')} 
-                    />
-                    <div className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-colors">
-                      {uploading === 'logo_url' ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : company.logo_url ? (
-                        <Pencil className="h-3.5 w-3.5" />
-                      ) : (
-                        <Camera className="h-3.5 w-3.5" />
-                      )}
-                    </div>
-                  </label>
-                </div>
+                </label>
               </div>
             </div>
           </div>
