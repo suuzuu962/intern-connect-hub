@@ -82,7 +82,7 @@ export const CompanyProfileView = ({ data, onEdit }: CompanyProfileViewProps) =>
           )}
 
           {/* Logo overlapping cover */}
-          <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0">
+          <div className="absolute -bottom-12 left-6">
             <div className="h-24 w-24 rounded-full border-4 border-background shadow-lg bg-background flex items-center justify-center overflow-hidden">
               {data.logo_url ? (
                 <img
@@ -100,12 +100,11 @@ export const CompanyProfileView = ({ data, onEdit }: CompanyProfileViewProps) =>
           </div>
         </div>
 
-        <CardHeader className="pt-14 sm:pt-6 sm:pl-36">
-          <CardTitle className="flex items-center gap-2 text-center sm:text-left">
-            <Building2 className="h-5 w-5 text-primary hidden sm:inline" />
-            {data.name}
-          </CardTitle>
-        </CardHeader>
+        {/* Name beside avatar */}
+        <div className="pt-4 pb-2 px-6 flex items-center gap-3" style={{ paddingLeft: 'calc(1.5rem + 6rem + 0.75rem)' }}>
+          <Building2 className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-xl font-bold">{data.name}</h2>
+        </div>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem label="Company Name" value={data.name} />
