@@ -67,7 +67,7 @@ export const CompanyProfileView = ({ data, onEdit }: CompanyProfileViewProps) =>
       {/* Basic Info with Cover Image & Logo */}
       <Card className="overflow-hidden">
         {/* Cover Image */}
-        <div className="relative w-full h-32 sm:h-40">
+        <div className="relative w-full h-32 sm:h-40 overflow-hidden">
           {data.cover_image_url ? (
             <img
               src={data.cover_image_url}
