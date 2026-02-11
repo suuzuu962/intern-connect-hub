@@ -311,26 +311,29 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
 
   return (
     <div className="space-y-6">
-      {/* Company Header */}
+      {/* Company Header - matches student profile completion card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {company?.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-16 w-16 rounded-xl object-cover" />
+                <img src={company.logo_url} alt={company.name} className="h-14 w-14 rounded-full object-cover" />
               ) : (
-                <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
+                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                  <Building2 className="h-7 w-7 text-muted-foreground" />
                 </div>
               )}
               <div>
-                <h1 className="text-2xl font-bold">{company?.name || 'Your Company'}</h1>
-                <p className="text-muted-foreground">
+                <h2 className="text-lg font-semibold">{company?.name || 'Your Company'}</h2>
+                <p className="text-sm text-muted-foreground">
                   {company?.is_verified ? '✓ Verified Company' : '⏳ Pending Verification'}
                 </p>
               </div>
             </div>
-            <Button onClick={onEditProfile} variant="outline">
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={onEditProfile} variant="outline" size="sm">
               <UserCog className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
