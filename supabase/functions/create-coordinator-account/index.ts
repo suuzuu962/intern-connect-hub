@@ -18,7 +18,6 @@ interface CreateCoordinatorRequest {
 }
 
 serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,49 +26,26 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Create admin client for user creation
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Verify the requesting user is authenticated
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify the user making the request
     const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(
       authHeader.replace("Bearer ", "")
     );
 
     if (authError || !requestingUser) {
-      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Invalid authorization" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Verify the user is a university owner
-    const { data: universityData, error: universityError } = await supabaseAdmin
-      .from("universities")
-      .select("id")
-      .eq("user_id", requestingUser.id)
-      .single();
-
-    if (universityError || !universityData) {
-      console.error("University verification error:", universityError);
-      return new Response(
-        JSON.stringify({ error: "Only university owners can create coordinator accounts" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -84,7 +60,6 @@ serve(async (req: Request) => {
       );
     }
 
-    // Validate password strength
     if (body.password.length < 6) {
       return new Response(
         JSON.stringify({ error: "Password must be at least 6 characters" }),
@@ -92,15 +67,44 @@ serve(async (req: Request) => {
       );
     }
 
-    // Verify the university_id matches the requesting user's university
-    if (body.university_id !== universityData.id) {
+    // Authorization: check if user is a university owner OR a college coordinator for this college
+    let authorized = false;
+
+    // Check 1: University owner
+    const { data: universityData } = await supabaseAdmin
+      .from("universities")
+      .select("id")
+      .eq("user_id", requestingUser.id)
+      .single();
+
+    if (universityData && universityData.id === body.university_id) {
+      authorized = true;
+    }
+
+    // Check 2: College coordinator for the same college
+    if (!authorized) {
+      const { data: coordinatorData } = await supabaseAdmin
+        .from("college_coordinators")
+        .select("id, college_id, university_id")
+        .eq("user_id", requestingUser.id)
+        .eq("college_id", body.college_id)
+        .eq("is_approved", true)
+        .eq("is_active", true)
+        .single();
+
+      if (coordinatorData && coordinatorData.university_id === body.university_id) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) {
       return new Response(
-        JSON.stringify({ error: "You can only add coordinators to your own university" }),
+        JSON.stringify({ error: "Only university owners or approved college coordinators can create coordinator accounts" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify the college belongs to this university
+    // Verify the college belongs to the university
     const { data: collegeData, error: collegeError } = await supabaseAdmin
       .from("colleges")
       .select("id, university_id")
@@ -114,21 +118,19 @@ serve(async (req: Request) => {
       );
     }
 
-    if (collegeData.university_id !== universityData.id) {
+    if (collegeData.university_id !== body.university_id) {
       return new Response(
-        JSON.stringify({ error: "This college does not belong to your university" }),
+        JSON.stringify({ error: "This college does not belong to the specified university" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 1: Create auth user for the coordinator
+    // Create auth user
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email: body.email,
       password: body.password,
       email_confirm: true,
-      user_metadata: {
-        full_name: body.name,
-      },
+      user_metadata: { full_name: body.name },
     });
 
     if (createUserError) {
@@ -142,11 +144,9 @@ serve(async (req: Request) => {
     const userId = authData.user!.id;
     console.log("Auth user created with ID:", userId);
 
-    // Note: Profile is automatically created by the handle_new_user trigger
-    // We just need to wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Step 2: Create user role as college_coordinator
+    // Create user role
     const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
       user_id: userId,
       role: "college_coordinator",
@@ -154,7 +154,6 @@ serve(async (req: Request) => {
 
     if (roleError) {
       console.error("Error creating user role:", roleError);
-      // Rollback
       await supabaseAdmin.auth.admin.deleteUser(userId);
       return new Response(
         JSON.stringify({ error: "Failed to create user role: " + roleError.message }),
@@ -162,7 +161,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Step 3: Create college_coordinator record
+    // Create college_coordinator record
     const { data: coordinatorData, error: coordinatorError } = await supabaseAdmin
       .from("college_coordinators")
       .insert({
@@ -182,7 +181,6 @@ serve(async (req: Request) => {
 
     if (coordinatorError) {
       console.error("Error creating coordinator:", coordinatorError);
-      // Rollback
       await supabaseAdmin.auth.admin.deleteUser(userId);
       return new Response(
         JSON.stringify({ error: "Failed to create coordinator: " + coordinatorError.message }),
