@@ -12,10 +12,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Loader2, GraduationCap, UserPlus, Eye, EyeOff, MoreHorizontal, UserX, Power, PowerOff, Trash2 } from 'lucide-react';
 import { CollegeCoordinator } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CollegeCoordinatorsProps {
   collegeId: string;
@@ -28,7 +46,9 @@ export const CollegeCoordinators = ({ collegeId }: CollegeCoordinatorsProps) => 
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [universityId, setUniversityId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,7 +77,6 @@ export const CollegeCoordinators = ({ collegeId }: CollegeCoordinatorsProps) => 
   useEffect(() => {
     fetchCoordinators();
 
-    // Get university_id from the college
     const fetchUniversityId = async () => {
       const { data } = await supabase
         .from('colleges')
@@ -120,6 +139,55 @@ export const CollegeCoordinators = ({ collegeId }: CollegeCoordinatorsProps) => 
     }
 
     setSaving(false);
+  };
+
+  const handleToggleActive = async (coordinator: CollegeCoordinator) => {
+    // Prevent deactivating yourself
+    if (coordinator.user_id === user?.id) {
+      toast({ title: 'Error', description: 'You cannot deactivate your own account', variant: 'destructive' });
+      return;
+    }
+
+    setActionLoading(coordinator.id);
+    const newStatus = !coordinator.is_active;
+
+    const { error } = await supabase
+      .from('college_coordinators')
+      .update({ is_active: newStatus })
+      .eq('id', coordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to update coordinator status', variant: 'destructive' });
+    } else {
+      toast({
+        title: newStatus ? 'Coordinator activated' : 'Coordinator deactivated',
+        description: `${coordinator.name} has been ${newStatus ? 'activated' : 'deactivated'}`,
+      });
+      fetchCoordinators();
+    }
+    setActionLoading(null);
+  };
+
+  const handleRemove = async (coordinator: CollegeCoordinator) => {
+    if (coordinator.user_id === user?.id) {
+      toast({ title: 'Error', description: 'You cannot remove your own account', variant: 'destructive' });
+      return;
+    }
+
+    setActionLoading(coordinator.id);
+
+    const { error } = await supabase
+      .from('college_coordinators')
+      .delete()
+      .eq('id', coordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to remove coordinator', variant: 'destructive' });
+    } else {
+      toast({ title: 'Coordinator removed', description: `${coordinator.name} has been removed` });
+      fetchCoordinators();
+    }
+    setActionLoading(null);
   };
 
   if (loading) {
@@ -264,11 +332,12 @@ export const CollegeCoordinators = ({ collegeId }: CollegeCoordinatorsProps) => 
                 <TableHead>Phone</TableHead>
                 <TableHead>Designation</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-[60px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {coordinators.map((coordinator) => (
-                <TableRow key={coordinator.id}>
+                <TableRow key={coordinator.id} className={!coordinator.is_active ? 'opacity-60' : ''}>
                   <TableCell className="font-medium">{coordinator.name}</TableCell>
                   <TableCell>{coordinator.email}</TableCell>
                   <TableCell>{coordinator.phone || '-'}</TableCell>
@@ -282,6 +351,65 @@ export const CollegeCoordinators = ({ collegeId }: CollegeCoordinatorsProps) => 
                         {coordinator.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {coordinator.user_id !== user?.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={actionLoading === coordinator.id}>
+                            {actionLoading === coordinator.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleToggleActive(coordinator)}>
+                            {coordinator.is_active ? (
+                              <>
+                                <PowerOff className="h-4 w-4 mr-2" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <Power className="h-4 w-4 mr-2" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove Coordinator</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove <strong>{coordinator.name}</strong>? 
+                                  This will remove their coordinator record. Their login account will remain but they won't have coordinator access.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleRemove(coordinator)}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
