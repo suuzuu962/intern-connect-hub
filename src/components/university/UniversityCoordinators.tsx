@@ -7,7 +7,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, UserCheck, Search, Filter, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, UserCheck, Search, Filter, CheckCircle, XCircle, MoreHorizontal, Power, PowerOff, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { CollegeCoordinator, College } from '@/types/database';
 import { AddCoordinatorDialog } from './AddCoordinatorDialog';
 
@@ -21,6 +39,7 @@ export const UniversityCoordinators = ({ universityId }: UniversityCoordinatorsP
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -92,6 +111,44 @@ export const UniversityCoordinators = ({ universityId }: UniversityCoordinatorsP
       toast({ title: 'College assigned successfully' });
       fetchData();
     }
+  };
+
+  const handleToggleActive = async (coordinator: CollegeCoordinator) => {
+    setActionLoading(coordinator.id);
+    const newStatus = !coordinator.is_active;
+
+    const { error } = await supabase
+      .from('college_coordinators')
+      .update({ is_active: newStatus })
+      .eq('id', coordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to update coordinator status', variant: 'destructive' });
+    } else {
+      toast({
+        title: newStatus ? 'Coordinator activated' : 'Coordinator deactivated',
+        description: `${coordinator.name} has been ${newStatus ? 'activated' : 'deactivated'}`,
+      });
+      fetchData();
+    }
+    setActionLoading(null);
+  };
+
+  const handleRemove = async (coordinator: CollegeCoordinator) => {
+    setActionLoading(coordinator.id);
+
+    const { error } = await supabase
+      .from('college_coordinators')
+      .delete()
+      .eq('id', coordinator.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to remove coordinator', variant: 'destructive' });
+    } else {
+      toast({ title: 'Coordinator removed', description: `${coordinator.name} has been removed` });
+      fetchData();
+    }
+    setActionLoading(null);
   };
 
   const filteredCoordinators = coordinators.filter((coord) => {
@@ -197,39 +254,90 @@ export const UniversityCoordinators = ({ universityId }: UniversityCoordinatorsP
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={coordinator.is_approved ? 'default' : 'secondary'}>
-                      {coordinator.is_approved ? 'Approved' : 'Pending'}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant={coordinator.is_approved ? 'default' : 'secondary'}>
+                        {coordinator.is_approved ? 'Approved' : 'Pending'}
+                      </Badge>
+                      <Badge variant={coordinator.is_active ? 'outline' : 'destructive'}>
+                        {coordinator.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    {!coordinator.is_approved ? (
-                      <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-1">
+                      {!coordinator.is_approved && (
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleApprove(coordinator.id)}
                           title="Approve"
                         >
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-primary" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleReject(coordinator.id)}
-                          title="Reject"
-                        >
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReject(coordinator.id)}
-                      >
-                        Revoke
-                      </Button>
-                    )}
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={actionLoading === coordinator.id}>
+                            {actionLoading === coordinator.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {coordinator.is_approved && (
+                            <DropdownMenuItem onClick={() => handleReject(coordinator.id)}>
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Revoke Approval
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => handleToggleActive(coordinator)}>
+                            {coordinator.is_active ? (
+                              <>
+                                <PowerOff className="h-4 w-4 mr-2" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <Power className="h-4 w-4 mr-2" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove Coordinator</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove <strong>{coordinator.name}</strong>?
+                                  This will remove their coordinator record. Their login account will remain but they won't have coordinator access.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleRemove(coordinator)}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
