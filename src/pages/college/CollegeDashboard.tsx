@@ -14,6 +14,7 @@ import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
 import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval';
 import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
 import { College } from '@/types/database';
+import { PermissionGate } from '@/components/auth/PermissionGate';
 
 interface CollegeWithStats extends College {
   studentCount?: number;
@@ -211,19 +212,25 @@ const CollegeDashboard = () => {
           </TabsContent>
 
           <TabsContent value="students">
-            <CollegeStudents collegeId={college.id} viewMode="detailed" />
+            <PermissionGate permission="activity.view_college" showForbidden>
+              <CollegeStudents collegeId={college.id} viewMode="detailed" />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="diary-approvals">
-            <CollegeDiaryApproval 
-              collegeId={college.id} 
-              collegeName={college.name}
-              onPendingCountChange={setPendingDiaryCount}
-            />
+            <PermissionGate permission="activity.review" showForbidden>
+              <CollegeDiaryApproval 
+                collegeId={college.id} 
+                collegeName={college.name}
+                onPendingCountChange={setPendingDiaryCount}
+              />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="coordinators">
-            <CollegeCoordinators collegeId={college.id} />
+            <PermissionGate permission="user.edit" showForbidden>
+              <CollegeCoordinators collegeId={college.id} />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="profile">
