@@ -97,7 +97,7 @@ const FEATURE_DEFINITIONS = {
     {
       key: 'view_students',
       label: 'View Students',
-      description: 'Access to student information',
+      description: 'Access to student information (maps to student.view permission)',
       dataFields: [
         { key: 'show_full_profile', label: 'Show Full Profile' },
         { key: 'show_applications', label: 'Show Application History' },
@@ -106,13 +106,13 @@ const FEATURE_DEFINITIONS = {
     {
       key: 'manage_colleges',
       label: 'Manage Colleges',
-      description: 'Add and manage affiliated colleges',
+      description: 'Add and manage affiliated colleges (maps to college.manage permission)',
       dataFields: [],
     },
     {
       key: 'view_coordinators',
       label: 'View Coordinators',
-      description: 'Access coordinator information',
+      description: 'Access coordinator information (maps to coordinator.view permission)',
       dataFields: [],
     },
   ],
