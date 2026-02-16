@@ -389,12 +389,10 @@ export const RBACRoles = () => {
                       onClick={async () => {
                         if (!selectedRole) return;
                         const toAdd = permissions.filter(p => !rolePermissions.has(p.id));
-                        const newSet = new Set(rolePermissions);
                         for (const p of toAdd) {
                           await supabase.from('custom_role_permissions').insert({ role_id: selectedRole.id, permission_id: p.id });
-                          newSet.add(p.id);
                         }
-                        setRolePermissions(newSet);
+                        setRolePermissions(new Set(permissions.map(p => p.id)));
                         logRBACAction({ action: 'permissions_select_all', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { count: toAdd.length } });
                         toast({ title: 'All permissions granted' });
                       }}
