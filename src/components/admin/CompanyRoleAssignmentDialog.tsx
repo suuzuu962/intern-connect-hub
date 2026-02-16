@@ -15,9 +15,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Plus, Loader2, CheckCircle, Users } from 'lucide-react';
+import { Shield, Plus, Loader2, CheckCircle, Users, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { logRBACAction } from '@/lib/rbac-audit';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface CompanyRoleAssignmentDialogProps {
   open: boolean;
@@ -26,7 +27,13 @@ interface CompanyRoleAssignmentDialogProps {
     id: string;
     name: string;
     user_id: string;
-  };
+  } | null;
+  companies?: {
+    id: string;
+    name: string;
+    user_id: string;
+  }[];
+  bulkMode?: boolean;
   onComplete: () => void;
 }
 
@@ -43,6 +50,8 @@ export const CompanyRoleAssignmentDialog = ({
   open,
   onOpenChange,
   company,
+  companies = [],
+  bulkMode = false,
   onComplete,
 }: CompanyRoleAssignmentDialogProps) => {
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
@@ -97,6 +106,13 @@ export const CompanyRoleAssignmentDialog = ({
     setLoading(false);
   };
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const targetCompanies = bulkMode ? companies : (company ? [company] : []);
+  const dialogTitle = bulkMode
+    ? `Bulk Assign Role: ${targetCompanies.length} Companies`
+    : `Assign Role: ${company?.name || ''}`;
+
   const handleAssign = async () => {
     setAssigning(true);
     try {
@@ -111,7 +127,6 @@ export const CompanyRoleAssignmentDialog = ({
           return;
         }
 
-        // Create new role
         const { data: newRole, error: createError } = await supabase
           .from('custom_roles')
           .insert({
@@ -132,7 +147,6 @@ export const CompanyRoleAssignmentDialog = ({
         roleId = (newRole as any).id;
         roleName = newRoleName.trim();
 
-        // Auto-assign default company permissions
         if (defaultPermissions.length > 0) {
           const permInserts = defaultPermissions.map(p => ({
             role_id: roleId,
@@ -146,7 +160,7 @@ export const CompanyRoleAssignmentDialog = ({
           entityType: 'custom_role',
           entityId: roleId,
           entityName: roleName,
-          details: { scope: 'company', created_during: 'company_approval', company: company.name, auto_permissions: defaultPermissions.length },
+          details: { scope: 'company', created_during: 'company_approval', company_count: targetCompanies.length, auto_permissions: defaultPermissions.length },
         });
 
         toast.success(`Role "${roleName}" created with ${defaultPermissions.length} default permissions`);
@@ -159,41 +173,55 @@ export const CompanyRoleAssignmentDialog = ({
         roleName = roles.find(r => r.id === roleId)?.name || '';
       }
 
-      // Check if user already has this role
-      const { data: existing } = await supabase
-        .from('user_custom_roles')
-        .select('id')
-        .eq('user_id', company.user_id)
-        .eq('role_id', roleId)
-        .maybeSingle();
+      // Assign role to all target companies
+      let assignedCount = 0;
+      let skippedCount = 0;
 
-      if (existing) {
-        toast.info(`${company.name} already has the "${roleName}" role`);
-      } else {
-        // Assign role to company user
+      for (const comp of targetCompanies) {
+        const { data: existing } = await supabase
+          .from('user_custom_roles')
+          .select('id')
+          .eq('user_id', comp.user_id)
+          .eq('role_id', roleId)
+          .maybeSingle();
+
+        if (existing) {
+          skippedCount++;
+          continue;
+        }
+
         const { error: assignError } = await supabase
           .from('user_custom_roles')
           .insert({
-            user_id: company.user_id,
+            user_id: comp.user_id,
             role_id: roleId,
             assigned_by: user?.id,
           });
 
         if (assignError) {
-          toast.error('Failed to assign role: ' + assignError.message);
-          setAssigning(false);
-          return;
+          toast.error(`Failed to assign role to ${comp.name}: ` + assignError.message);
+          continue;
         }
+
+        assignedCount++;
 
         logRBACAction({
           action: 'user_role_assigned',
           entityType: 'user_custom_role',
           entityId: roleId,
           entityName: roleName,
-          details: { user_id: company.user_id, company: company.name, assigned_during: 'company_approval' },
+          details: { user_id: comp.user_id, company: comp.name, assigned_during: bulkMode ? 'bulk_assignment' : 'company_approval' },
         });
+      }
 
-        toast.success(`Role "${roleName}" assigned to ${company.name}`);
+      if (bulkMode) {
+        toast.success(`Role "${roleName}" assigned to ${assignedCount} companies${skippedCount > 0 ? ` (${skippedCount} already had it)` : ''}`);
+      } else {
+        if (assignedCount > 0) {
+          toast.success(`Role "${roleName}" assigned to ${targetCompanies[0]?.name}`);
+        } else if (skippedCount > 0) {
+          toast.info(`${targetCompanies[0]?.name} already has the "${roleName}" role`);
+        }
       }
 
       onOpenChange(false);
@@ -216,10 +244,12 @@ export const CompanyRoleAssignmentDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Assign Role: {company.name}
+            {dialogTitle}
           </DialogTitle>
           <DialogDescription>
-            Assign a custom role to define granular permissions for this company, or skip to use default permissions.
+            {bulkMode
+              ? `Assign a custom role to ${targetCompanies.length} selected companies, or create a new one.`
+              : 'Assign a custom role to define granular permissions for this company, or skip to use default permissions.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -334,9 +364,30 @@ export const CompanyRoleAssignmentDialog = ({
                   rows={2}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Scope: <Badge variant="outline" className="text-xs">company</Badge>. Default permissions ({defaultPermissions.length}) for internships, applications & student viewing will be auto-assigned. Fine-tune later in Access Control → Roles.
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Scope: <Badge variant="outline" className="text-xs">company</Badge>. {defaultPermissions.length} default permissions will be auto-assigned. Fine-tune later in Access Control → Roles.
+                </p>
+                <Collapsible open={previewOpen} onOpenChange={setPreviewOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1.5 h-7 px-2 text-xs">
+                      {previewOpen ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      {previewOpen ? 'Hide' : 'Preview'} Permissions ({defaultPermissions.length})
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 max-h-[150px] overflow-y-auto rounded border bg-muted/30 p-2">
+                      <div className="flex flex-wrap gap-1">
+                        {defaultPermissions.map(p => (
+                          <Badge key={p.id} variant="secondary" className="text-[10px] font-mono">
+                            {p.key}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             </div>
           )}
         </div>
