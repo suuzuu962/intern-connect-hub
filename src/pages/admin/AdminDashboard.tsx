@@ -18,7 +18,8 @@ import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { RolePermissions } from '@/components/admin/RolePermissions';
-import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key } from 'lucide-react';
+import { AccessControlManager } from '@/components/admin/AccessControlManager';
+import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key, Lock } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -99,6 +100,10 @@ const AdminDashboard = () => {
               <Key className="h-4 w-4" />
               <span className="hidden sm:inline">Permissions</span>
             </TabsTrigger>
+            <TabsTrigger value="access-control" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              <span className="hidden sm:inline">Access Control</span>
+            </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
@@ -163,6 +168,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="permissions">
             <RolePermissions />
+          </TabsContent>
+
+          <TabsContent value="access-control">
+            <AccessControlManager />
           </TabsContent>
 
           <TabsContent value="settings">
