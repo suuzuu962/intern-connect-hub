@@ -291,6 +291,7 @@ export const StudentManagement = () => {
     }
   };
 
+  const handleDeleteStudent = async (studentId: string, userId: string) => {
     try {
       const { error: studentError } = await supabase
         .from('students')
@@ -469,7 +470,7 @@ export const StudentManagement = () => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDelete(student.id, student.user_id)}
+                      onClick={() => handleDeleteStudent(student.id, student.user_id)}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Remove
