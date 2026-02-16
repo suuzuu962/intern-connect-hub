@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Shield, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Loader2, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logRBACAction } from '@/lib/rbac-audit';
 
 interface CustomRole {
   id: string;
@@ -125,6 +126,7 @@ export const RBACRoles = () => {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Success', description: 'Role updated' });
+        logRBACAction({ action: 'role_updated', entityType: 'custom_role', entityId: editRole.id, entityName: formName, details: { scope: formScope } });
         if (selectedRole?.id === editRole.id) {
           setSelectedRole({ ...editRole, name: formName, description: formDescription, scope: formScope });
         }
@@ -138,6 +140,7 @@ export const RBACRoles = () => {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Success', description: 'Role created' });
+        logRBACAction({ action: 'role_created', entityType: 'custom_role', entityName: formName, details: { scope: formScope } });
       }
     }
 
@@ -163,6 +166,7 @@ export const RBACRoles = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Role deleted' });
+      logRBACAction({ action: 'role_deleted', entityType: 'custom_role', entityId: deleteTarget.id, entityName: deleteTarget.name });
       if (selectedRole?.id === deleteTarget.id) setSelectedRole(null);
     }
     setShowDeleteDialog(false);
@@ -175,6 +179,7 @@ export const RBACRoles = () => {
 
     const hasPermission = rolePermissions.has(permissionId);
     const newSet = new Set(rolePermissions);
+    const perm = permissions.find(p => p.id === permissionId);
 
     if (hasPermission) {
       const { error } = await supabase
@@ -182,12 +187,18 @@ export const RBACRoles = () => {
         .delete()
         .eq('role_id', selectedRole.id)
         .eq('permission_id', permissionId);
-      if (!error) newSet.delete(permissionId);
+      if (!error) {
+        newSet.delete(permissionId);
+        logRBACAction({ action: 'permission_revoked', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { permission: perm?.key } });
+      }
     } else {
       const { error } = await supabase
         .from('custom_role_permissions')
         .insert({ role_id: selectedRole.id, permission_id: permissionId });
-      if (!error) newSet.add(permissionId);
+      if (!error) {
+        newSet.add(permissionId);
+        logRBACAction({ action: 'permission_granted', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { permission: perm?.key } });
+      }
     }
 
     setRolePermissions(newSet);
@@ -200,7 +211,6 @@ export const RBACRoles = () => {
     const newSet = new Set(rolePermissions);
 
     if (allChecked) {
-      // Remove all in group
       for (const p of groupPermissions) {
         await supabase
           .from('custom_role_permissions')
@@ -209,8 +219,8 @@ export const RBACRoles = () => {
           .eq('permission_id', p.id);
         newSet.delete(p.id);
       }
+      logRBACAction({ action: 'permissions_bulk_revoked', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { group: groupPermissions[0]?.group_name, count: groupPermissions.length } });
     } else {
-      // Add all missing in group
       const toAdd = groupPermissions.filter(p => !rolePermissions.has(p.id));
       for (const p of toAdd) {
         await supabase
@@ -218,9 +228,48 @@ export const RBACRoles = () => {
           .insert({ role_id: selectedRole.id, permission_id: p.id });
         newSet.add(p.id);
       }
+      logRBACAction({ action: 'permissions_bulk_granted', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { group: groupPermissions[0]?.group_name, count: toAdd.length } });
     }
 
     setRolePermissions(newSet);
+  };
+
+  const duplicateRole = async (role: CustomRole, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Create the new role
+    const { data: newRole, error } = await supabase
+      .from('custom_roles')
+      .insert({ name: `${role.name} (Copy)`, description: role.description, scope: role.scope, created_by: user?.id })
+      .select('id')
+      .single();
+
+    if (error || !newRole) {
+      toast({ title: 'Error', description: error?.message || 'Failed to duplicate', variant: 'destructive' });
+      setSaving(false);
+      return;
+    }
+
+    // Copy permissions
+    const { data: perms } = await supabase
+      .from('custom_role_permissions')
+      .select('permission_id')
+      .eq('role_id', role.id);
+
+    if (perms && perms.length > 0) {
+      const inserts = (perms as unknown as RolePermission[]).map(p => ({
+        role_id: (newRole as any).id,
+        permission_id: p.permission_id,
+      }));
+      await supabase.from('custom_role_permissions').insert(inserts);
+    }
+
+    logRBACAction({ action: 'role_duplicated', entityType: 'custom_role', entityId: (newRole as any).id, entityName: `${role.name} (Copy)`, details: { source_role: role.name, permissions_copied: perms?.length || 0 } });
+    toast({ title: 'Success', description: `Role "${role.name}" duplicated` });
+    setSaving(false);
+    fetchData();
   };
 
   // Group permissions by group_name
@@ -276,6 +325,16 @@ export const RBACRoles = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Duplicate role"
+                  disabled={saving}
+                  onClick={(e) => duplicateRole(role, e)}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
