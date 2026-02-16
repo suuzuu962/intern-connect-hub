@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +13,7 @@ import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +22,20 @@ const UniversityDashboard = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isFeatureEnabled, loading: permLoading } = useRolePermissions();
+
+  // Map feature keys to tab keys
+  const TAB_FEATURE_MAP: Record<string, string> = {
+    colleges: 'manage_colleges',
+    students: 'view_students',
+    coordinators: 'view_coordinators',
+  };
+
+  const isTabEnabled = (tabKey: string) => {
+    const featureKey = TAB_FEATURE_MAP[tabKey];
+    if (!featureKey) return true; // tabs without a feature mapping are always visible
+    return isFeatureEnabled(featureKey);
+  };
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -55,7 +70,7 @@ const UniversityDashboard = () => {
     setSearchParams({ tab: value });
   };
 
-  if (loading) {
+  if (loading || permLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -89,12 +104,18 @@ const UniversityDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-7 mb-8">
+          <TabsList className={`grid w-full mb-8`} style={{ gridTemplateColumns: `repeat(${2 + (isTabEnabled('colleges') ? 1 : 0) + (isTabEnabled('students') ? 1 : 0) + (isTabEnabled('coordinators') ? 1 : 0) + 2}, minmax(0, 1fr))` }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="org-chart">Org Chart</TabsTrigger>
-            <TabsTrigger value="colleges">Colleges</TabsTrigger>
-            <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
+            {isTabEnabled('colleges') && (
+              <TabsTrigger value="colleges">Colleges</TabsTrigger>
+            )}
+            {isTabEnabled('students') && (
+              <TabsTrigger value="students">Students</TabsTrigger>
+            )}
+            {isTabEnabled('coordinators') && (
+              <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
+            )}
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -107,23 +128,29 @@ const UniversityDashboard = () => {
             <UniversityOrgChart universityId={university.id} />
           </TabsContent>
 
-          <TabsContent value="colleges">
-            <PermissionGate permission="user.edit" showForbidden>
-              <UniversityColleges universityId={university.id} />
-            </PermissionGate>
-          </TabsContent>
+          {isTabEnabled('colleges') && (
+            <TabsContent value="colleges">
+              <PermissionGate permission="user.edit" showForbidden>
+                <UniversityColleges universityId={university.id} />
+              </PermissionGate>
+            </TabsContent>
+          )}
 
-          <TabsContent value="students">
-            <PermissionGate permission="internship.view_all" showForbidden>
-              <UniversityStudents universityId={university.id} viewMode="detailed" />
-            </PermissionGate>
-          </TabsContent>
+          {isTabEnabled('students') && (
+            <TabsContent value="students">
+              <PermissionGate permission="internship.view_all" showForbidden>
+                <UniversityStudents universityId={university.id} viewMode="detailed" />
+              </PermissionGate>
+            </TabsContent>
+          )}
 
-          <TabsContent value="coordinators">
-            <PermissionGate permission="user.edit" showForbidden>
-              <UniversityCoordinators universityId={university.id} />
-            </PermissionGate>
-          </TabsContent>
+          {isTabEnabled('coordinators') && (
+            <TabsContent value="coordinators">
+              <PermissionGate permission="user.edit" showForbidden>
+                <UniversityCoordinators universityId={university.id} />
+              </PermissionGate>
+            </TabsContent>
+          )}
 
           <TabsContent value="users">
             <PermissionGate permission="user.create" showForbidden>
