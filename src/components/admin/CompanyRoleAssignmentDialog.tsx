@@ -52,6 +52,7 @@ export const CompanyRoleAssignmentDialog = ({
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
+  const [defaultPermissions, setDefaultPermissions] = useState<{ id: string; key: string }[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -65,27 +66,29 @@ export const CompanyRoleAssignmentDialog = ({
 
   const fetchRoles = async () => {
     setLoading(true);
-    // Fetch roles with company scope or global, and their permission counts
-    const { data: rolesData } = await supabase
-      .from('custom_roles')
-      .select('*')
-      .order('name');
+    const [rolesRes, permCountsRes, defaultPermsRes] = await Promise.all([
+      supabase.from('custom_roles').select('*').order('name'),
+      supabase.from('custom_role_permissions').select('role_id'),
+      // Fetch default company permissions (internship, application, student view)
+      supabase.from('permissions').select('id, key').or(
+        'key.like.internship.%,key.like.application.%,key.eq.student.view,key.eq.student.view_contact,key.eq.student.view_resume'
+      ),
+    ]);
 
-    if (rolesData) {
-      // Fetch permission counts for each role
-      const { data: permCounts } = await supabase
-        .from('custom_role_permissions')
-        .select('role_id');
+    if (defaultPermsRes.data) {
+      setDefaultPermissions(defaultPermsRes.data as { id: string; key: string }[]);
+    }
 
+    if (rolesRes.data) {
       const countMap: Record<string, number> = {};
-      if (permCounts) {
-        for (const p of permCounts) {
+      if (permCountsRes.data) {
+        for (const p of permCountsRes.data) {
           countMap[(p as any).role_id] = (countMap[(p as any).role_id] || 0) + 1;
         }
       }
 
       setRoles(
-        (rolesData as unknown as CustomRole[]).map(r => ({
+        (rolesRes.data as unknown as CustomRole[]).map(r => ({
           ...r,
           permission_count: countMap[r.id] || 0,
         }))
@@ -129,15 +132,24 @@ export const CompanyRoleAssignmentDialog = ({
         roleId = (newRole as any).id;
         roleName = newRoleName.trim();
 
+        // Auto-assign default company permissions
+        if (defaultPermissions.length > 0) {
+          const permInserts = defaultPermissions.map(p => ({
+            role_id: roleId,
+            permission_id: p.id,
+          }));
+          await supabase.from('custom_role_permissions').insert(permInserts);
+        }
+
         logRBACAction({
           action: 'role_created',
           entityType: 'custom_role',
           entityId: roleId,
           entityName: roleName,
-          details: { scope: 'company', created_during: 'company_approval', company: company.name },
+          details: { scope: 'company', created_during: 'company_approval', company: company.name, auto_permissions: defaultPermissions.length },
         });
 
-        toast.success(`Role "${roleName}" created`);
+        toast.success(`Role "${roleName}" created with ${defaultPermissions.length} default permissions`);
       } else {
         if (!roleId) {
           toast.error('Please select a role');
@@ -323,7 +335,7 @@ export const CompanyRoleAssignmentDialog = ({
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Scope will be set to <Badge variant="outline" className="text-xs">company</Badge>. You can configure permissions later in Access Control → Roles.
+                Scope: <Badge variant="outline" className="text-xs">company</Badge>. Default permissions ({defaultPermissions.length}) for internships, applications & student viewing will be auto-assigned. Fine-tune later in Access Control → Roles.
               </p>
             </div>
           )}
