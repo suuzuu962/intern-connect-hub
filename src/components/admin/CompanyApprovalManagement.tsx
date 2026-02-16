@@ -108,6 +108,8 @@ export const CompanyApprovalManagement = () => {
   const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
   const [roleAssignCompany, setRoleAssignCompany] = useState<Company | null>(null);
   const [companyRoles, setCompanyRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
+  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [bulkRoleDialogOpen, setBulkRoleDialogOpen] = useState(false);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
@@ -1056,10 +1058,37 @@ export const CompanyApprovalManagement = () => {
       {/* Approved Companies */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Check className="h-5 w-5 text-green-600" />
-            Approved Companies ({approvedCompanies.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-600" />
+              Approved Companies ({approvedCompanies.length})
+            </CardTitle>
+            {approvedCompanies.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedCompanies.size === approvedCompanies.length && approvedCompanies.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCompanies(new Set(approvedCompanies.map(c => c.id)));
+                    } else {
+                      setSelectedCompanies(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">Select All</span>
+                {selectedCompanies.size > 0 && (
+                  <Button
+                    size="sm"
+                    className="gap-1.5 ml-2"
+                    onClick={() => setBulkRoleDialogOpen(true)}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Bulk Assign Role ({selectedCompanies.size})
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {approvedCompanies.length === 0 ? (
@@ -1067,7 +1096,23 @@ export const CompanyApprovalManagement = () => {
           ) : (
             <div className="space-y-4">
               {approvedCompanies.map((company) => (
-                <CompanyDetailsCard key={company.id} company={company} isPending={false} />
+                <div key={company.id} className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedCompanies.has(company.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedCompanies(prev => {
+                        const newSet = new Set(prev);
+                        if (checked) newSet.add(company.id);
+                        else newSet.delete(company.id);
+                        return newSet;
+                      });
+                    }}
+                    className="mt-6"
+                  />
+                  <div className="flex-1">
+                    <CompanyDetailsCard company={company} isPending={false} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -1103,6 +1148,21 @@ export const CompanyApprovalManagement = () => {
           onComplete={fetchCompanies}
         />
       )}
+      {/* Bulk Role Assignment Dialog */}
+      <CompanyRoleAssignmentDialog
+        open={bulkRoleDialogOpen}
+        onOpenChange={(open) => {
+          setBulkRoleDialogOpen(open);
+          if (!open) setSelectedCompanies(new Set());
+        }}
+        company={null}
+        companies={approvedCompanies.filter(c => selectedCompanies.has(c.id))}
+        bulkMode={true}
+        onComplete={() => {
+          setSelectedCompanies(new Set());
+          fetchCompanies();
+        }}
+      />
     </div>
   );
 };
