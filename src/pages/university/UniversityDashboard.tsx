@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +13,7 @@ import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 import { PermissionGate } from '@/components/auth/PermissionGate';
-import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,19 +22,18 @@ const UniversityDashboard = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isFeatureEnabled, loading: permLoading } = useRolePermissions();
+  const { hasPermission, loading: permLoading } = usePermissions();
 
-  // Map feature keys to tab keys
-  const TAB_FEATURE_MAP: Record<string, string> = {
-    colleges: 'manage_colleges',
-    students: 'view_students',
-    coordinators: 'view_coordinators',
-  };
-
-  const isTabEnabled = (tabKey: string) => {
-    const featureKey = TAB_FEATURE_MAP[tabKey];
-    if (!featureKey) return true; // tabs without a feature mapping are always visible
-    return isFeatureEnabled(featureKey);
+  // Unified permission checks: uses both role_permissions feature toggles
+  // and custom RBAC permissions via the unified usePermissions hook.
+  // feature:* keys are injected by usePermissions when role-level features are enabled.
+  const isTabVisible = (tabKey: string) => {
+    switch (tabKey) {
+      case 'colleges': return hasPermission('college.manage') || hasPermission('feature:manage_colleges');
+      case 'students': return hasPermission('student.view') || hasPermission('feature:view_students');
+      case 'coordinators': return hasPermission('coordinator.view') || hasPermission('feature:view_coordinators');
+      default: return true;
+    }
   };
 
   useEffect(() => {
@@ -93,6 +92,11 @@ const UniversityDashboard = () => {
     );
   }
 
+  const showColleges = isTabVisible('colleges');
+  const showStudents = isTabVisible('students');
+  const showCoordinators = isTabVisible('coordinators');
+  const visibleTabCount = 4 + (showColleges ? 1 : 0) + (showStudents ? 1 : 0) + (showCoordinators ? 1 : 0);
+
   return (
     <Layout>
       <div className="container py-8">
@@ -104,18 +108,15 @@ const UniversityDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className={`grid w-full mb-8`} style={{ gridTemplateColumns: `repeat(${2 + (isTabEnabled('colleges') ? 1 : 0) + (isTabEnabled('students') ? 1 : 0) + (isTabEnabled('coordinators') ? 1 : 0) + 2}, minmax(0, 1fr))` }}>
+          <TabsList
+            className="grid w-full mb-8"
+            style={{ gridTemplateColumns: `repeat(${visibleTabCount}, minmax(0, 1fr))` }}
+          >
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="org-chart">Org Chart</TabsTrigger>
-            {isTabEnabled('colleges') && (
-              <TabsTrigger value="colleges">Colleges</TabsTrigger>
-            )}
-            {isTabEnabled('students') && (
-              <TabsTrigger value="students">Students</TabsTrigger>
-            )}
-            {isTabEnabled('coordinators') && (
-              <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
-            )}
+            {showColleges && <TabsTrigger value="colleges">Colleges</TabsTrigger>}
+            {showStudents && <TabsTrigger value="students">Students</TabsTrigger>}
+            {showCoordinators && <TabsTrigger value="coordinators">Coordinators</TabsTrigger>}
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -128,25 +129,25 @@ const UniversityDashboard = () => {
             <UniversityOrgChart universityId={university.id} />
           </TabsContent>
 
-          {isTabEnabled('colleges') && (
+          {showColleges && (
             <TabsContent value="colleges">
-              <PermissionGate permission="user.edit" showForbidden>
+              <PermissionGate permission="college.manage" showForbidden>
                 <UniversityColleges universityId={university.id} />
               </PermissionGate>
             </TabsContent>
           )}
 
-          {isTabEnabled('students') && (
+          {showStudents && (
             <TabsContent value="students">
-              <PermissionGate permission="internship.view_all" showForbidden>
+              <PermissionGate permission="student.view" showForbidden>
                 <UniversityStudents universityId={university.id} viewMode="detailed" />
               </PermissionGate>
             </TabsContent>
           )}
 
-          {isTabEnabled('coordinators') && (
+          {showCoordinators && (
             <TabsContent value="coordinators">
-              <PermissionGate permission="user.edit" showForbidden>
+              <PermissionGate permission="coordinator.view" showForbidden>
                 <UniversityCoordinators universityId={university.id} />
               </PermissionGate>
             </TabsContent>
