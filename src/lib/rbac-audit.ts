@@ -9,6 +9,8 @@ export type RBACAction =
   | 'permission_revoked'
   | 'permissions_bulk_granted'
   | 'permissions_bulk_revoked'
+  | 'permissions_select_all'
+  | 'permissions_deselect_all'
   | 'user_role_assigned'
   | 'user_role_removed';
 
