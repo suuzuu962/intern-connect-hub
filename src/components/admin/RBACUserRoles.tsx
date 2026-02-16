@@ -117,12 +117,9 @@ export const RBACUserRoles = () => {
       const roleMap: Record<string, string> = {};
       (roleData as unknown as UserRole[] || []).forEach(r => { roleMap[r.user_id] = r.role; });
 
-      // Filter to only university/college_coordinator roles
+      // Include all users with roles
       const results = (profileData as unknown as UserProfile[])
-        .filter(p => {
-          const role = roleMap[p.user_id];
-          return role === 'university' || role === 'college_coordinator';
-        })
+        .filter(p => roleMap[p.user_id])
         .map(p => ({ ...p, role: roleMap[p.user_id] }));
 
       setSearchResults(results);
