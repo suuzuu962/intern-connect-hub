@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Briefcase, Shield, Eye, Star, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CompanyRoleAssignmentDialog } from './CompanyRoleAssignmentDialog';
 
 interface CompanyApprovalDialogProps {
   open: boolean;
@@ -78,6 +79,7 @@ export const CompanyApprovalDialog = ({
   const [approving, setApproving] = useState(false);
   const [activeInternships, setActiveInternships] = useState(0);
   const [totalInternships, setTotalInternships] = useState(0);
+  const [showRoleAssignment, setShowRoleAssignment] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -162,7 +164,8 @@ export const CompanyApprovalDialog = ({
 
       toast.success(`${company.name} approved with configured limits`);
       onOpenChange(false);
-      onApproved();
+      // Show role assignment dialog
+      setShowRoleAssignment(true);
     } catch (error: any) {
       toast.error('Failed to approve company: ' + error.message);
       console.error(error);
@@ -175,6 +178,7 @@ export const CompanyApprovalDialog = ({
   const remainingActive = limits.max_active_internships - activeInternships;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
@@ -333,5 +337,13 @@ export const CompanyApprovalDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <CompanyRoleAssignmentDialog
+      open={showRoleAssignment}
+      onOpenChange={setShowRoleAssignment}
+      company={company}
+      onComplete={onApproved}
+    />
+    </>
   );
 };
