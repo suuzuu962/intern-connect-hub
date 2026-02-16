@@ -377,7 +377,48 @@ export const RBACRoles = () => {
               )}
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {rolePermissions.size}/{permissions.length} permissions selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!selectedRole) return;
+                        const toAdd = permissions.filter(p => !rolePermissions.has(p.id));
+                        const newSet = new Set(rolePermissions);
+                        for (const p of toAdd) {
+                          await supabase.from('custom_role_permissions').insert({ role_id: selectedRole.id, permission_id: p.id });
+                          newSet.add(p.id);
+                        }
+                        setRolePermissions(newSet);
+                        logRBACAction({ action: 'permissions_select_all', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { count: toAdd.length } });
+                        toast({ title: 'All permissions granted' });
+                      }}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!selectedRole) return;
+                        const toRemove = permissions.filter(p => rolePermissions.has(p.id));
+                        for (const p of toRemove) {
+                          await supabase.from('custom_role_permissions').delete().eq('role_id', selectedRole.id).eq('permission_id', p.id);
+                        }
+                        setRolePermissions(new Set());
+                        logRBACAction({ action: 'permissions_deselect_all', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { count: toRemove.length } });
+                        toast({ title: 'All permissions revoked' });
+                      }}
+                    >
+                      Deselect All
+                    </Button>
+                  </div>
+                </div>
                 {sortedGroups.map(([groupName, groupPerms]) => {
                   const allChecked = groupPerms.every(p => rolePermissions.has(p.id));
                   const someChecked = groupPerms.some(p => rolePermissions.has(p.id));
@@ -460,9 +501,13 @@ export const RBACRoles = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="university">University</SelectItem>
                   <SelectItem value="college">College</SelectItem>
                   <SelectItem value="coordinator">Coordinator</SelectItem>
+                  <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
                 </SelectContent>
               </Select>
             </div>
