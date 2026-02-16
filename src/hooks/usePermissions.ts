@@ -8,19 +8,20 @@ import { useAuth } from '@/contexts/AuthContext';
  */
 const FEATURE_TO_PERMISSION_MAP: Record<string, string[]> = {
   // University features
-  view_students: ['student.view', 'internship.view_all'],
-  manage_colleges: ['college.manage'],
-  view_coordinators: ['coordinator.view'],
+  view_students: ['student.view', 'student.view_contact', 'student.view_resume', 'student.export'],
+  manage_colleges: ['college.manage', 'college.create', 'college.edit', 'college.delete', 'college.view', 'college.assign_coordinator'],
+  view_coordinators: ['coordinator.view', 'coordinator.create', 'coordinator.edit', 'coordinator.delete', 'coordinator.approve', 'coordinator.suspend'],
   // Student features
   view_internships: ['internship.view_own', 'internship.view_all'],
   apply_internships: ['application.view'],
-  view_companies: [],
-  diary_entries: ['activity.add', 'activity.edit_own'],
+  view_companies: ['company.view'],
+  diary_entries: ['activity.add', 'activity.edit_own', 'diary.view'],
   // Company features
-  post_internships: ['internship.create', 'internship.edit', 'internship.publish'],
-  view_applications: ['application.view', 'application.shortlist', 'application.reject', 'application.select'],
+  post_internships: ['internship.create', 'internship.edit', 'internship.publish', 'internship.close'],
+  view_applications: ['application.view', 'application.shortlist', 'application.reject', 'application.select', 'application.export'],
   // Coordinator features
-  approve_diary: ['activity.review', 'activity.mark_reviewed'],
+  approve_diary: ['activity.review', 'activity.mark_reviewed', 'diary.approve', 'diary.reject', 'diary.add_remarks'],
+  view_students_coord: ['student.view', 'student.view_contact'],
 };
 
 interface UsePermissionsReturn {
