@@ -11,6 +11,7 @@ import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudent
 import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
 import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChart';
 import { CollegeCoordinator } from '@/types/database';
+import { PermissionGate } from '@/components/auth/PermissionGate';
 
 const CoordinatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,11 +125,15 @@ const CoordinatorDashboard = () => {
           </TabsContent>
 
           <TabsContent value="students">
-            <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" />
+            <PermissionGate permission="activity.view_college" showForbidden>
+              <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="diary">
-            <CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} />
+            <PermissionGate permission="activity.review" showForbidden>
+              <CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="profile">

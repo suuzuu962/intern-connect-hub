@@ -12,6 +12,7 @@ import { UniversityCoordinators } from '@/components/university/UniversityCoordi
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
+import { PermissionGate } from '@/components/auth/PermissionGate';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -107,22 +108,30 @@ const UniversityDashboard = () => {
           </TabsContent>
 
           <TabsContent value="colleges">
-            <UniversityColleges universityId={university.id} />
+            <PermissionGate permission="user.edit" showForbidden>
+              <UniversityColleges universityId={university.id} />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="students">
-            <UniversityStudents universityId={university.id} viewMode="detailed" />
+            <PermissionGate permission="internship.view_all" showForbidden>
+              <UniversityStudents universityId={university.id} viewMode="detailed" />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="coordinators">
-            <UniversityCoordinators universityId={university.id} />
+            <PermissionGate permission="user.edit" showForbidden>
+              <UniversityCoordinators universityId={university.id} />
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="users">
-            <div className="space-y-6">
-              <UniversityUsers universityId={university.id} />
-              <UniversityLoginLogs universityId={university.id} />
-            </div>
+            <PermissionGate permission="user.create" showForbidden>
+              <div className="space-y-6">
+                <UniversityUsers universityId={university.id} />
+                <UniversityLoginLogs universityId={university.id} />
+              </div>
+            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="profile">
