@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Shield, Users } from 'lucide-react';
+import { Shield, Users, Clock } from 'lucide-react';
 import { RBACRoles } from './RBACRoles';
 import { RBACUserRoles } from './RBACUserRoles';
+import { RBACAuditLog } from './RBACAuditLog';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_ITEMS = [
   { key: 'roles', label: 'Roles', icon: Shield },
   { key: 'user-roles', label: 'User Roles', icon: Users },
+  { key: 'audit-log', label: 'Audit Log', icon: Clock },
 ];
 
 export const AccessControlManager = () => {
@@ -44,6 +46,7 @@ export const AccessControlManager = () => {
       <div className="flex-1 min-w-0">
         {activeSection === 'roles' && <RBACRoles />}
         {activeSection === 'user-roles' && <RBACUserRoles />}
+        {activeSection === 'audit-log' && <RBACAuditLog />}
       </div>
     </div>
   );

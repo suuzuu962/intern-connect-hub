@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import { Plus, Trash2, Search, Loader2, Users, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logRBACAction } from '@/lib/rbac-audit';
 
 interface CustomRole {
   id: string;
@@ -149,7 +150,9 @@ export const RBACUserRoles = () => {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       }
     } else {
+      const assignedRole = roles.find(r => r.id === assignRoleId);
       toast({ title: 'Success', description: 'Role assigned to user' });
+      logRBACAction({ action: 'user_role_assigned', entityType: 'user_custom_role', entityName: assignedRole?.name, details: { user_id: assignUserId, role_id: assignRoleId } });
       setShowAssignDialog(false);
       setAssignUserId('');
       setAssignRoleId('');
@@ -167,6 +170,7 @@ export const RBACUserRoles = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Role assignment removed' });
+      logRBACAction({ action: 'user_role_removed', entityType: 'user_custom_role', entityName: deleteTarget.custom_roles?.name, details: { user_id: deleteTarget.user_id, role_id: deleteTarget.role_id } });
     }
     setShowDeleteDialog(false);
     setDeleteTarget(null);
