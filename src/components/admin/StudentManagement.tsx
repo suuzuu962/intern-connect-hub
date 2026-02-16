@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Users, Trash2, Search, GraduationCap, MapPin, Plus, School, ChevronDown, ChevronUp,
-  Mail, Phone, Calendar, Briefcase, Globe, Github, Linkedin, BookOpen, User, FileText
+  Mail, Phone, Calendar, Briefcase, Globe, Github, Linkedin, BookOpen, User, FileText, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -124,6 +124,8 @@ export const StudentManagement = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [studentRoles, setStudentRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
+  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
   const [filters, setFilters] = useState<StudentFilters>({
     college: 'all',
     department: 'all',
@@ -213,6 +215,35 @@ export const StudentManagement = () => {
       
       setStudents(studentsWithProfiles);
       setColleges(collegesResult.data || []);
+
+      // Fetch student roles
+      if (userIds.length > 0) {
+        const { data: roleData } = await supabase
+          .from('user_custom_roles')
+          .select('user_id, role_id, custom_roles(id, name)')
+          .in('user_id', userIds);
+
+        if (roleData) {
+          const roleMap: Record<string, { roleId: string; roleName: string }> = {};
+          for (const item of roleData as any[]) {
+            if (item.custom_roles) {
+              const student = studentsWithProfiles.find(s => s.user_id === item.user_id);
+              if (student) {
+                roleMap[student.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
+              }
+            }
+          }
+          setStudentRoles(roleMap);
+        }
+      }
+
+      // Fetch available student-scoped roles
+      const { data: rolesData } = await supabase
+        .from('custom_roles')
+        .select('id, name')
+        .eq('scope', 'student')
+        .order('name');
+      setAvailableRoles(rolesData || []);
     } catch (error: any) {
       toast.error('Failed to fetch students');
       console.error('Error fetching students:', error);
@@ -237,7 +268,29 @@ export const StudentManagement = () => {
     });
   };
 
-  const handleDelete = async (studentId: string, userId: string) => {
+  const handleChangeStudentRole = async (studentId: string, userId: string, newRoleId: string) => {
+    try {
+      // Remove existing roles
+      await supabase.from('user_custom_roles').delete().eq('user_id', userId);
+      
+      // Assign new role
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('user_custom_roles').insert({
+        user_id: userId,
+        role_id: newRoleId,
+        assigned_by: user?.id,
+      });
+
+      if (error) throw error;
+      
+      const roleName = availableRoles.find(r => r.id === newRoleId)?.name || '';
+      toast.success(`Role updated to "${roleName}"`);
+      fetchData();
+    } catch (error: any) {
+      toast.error('Failed to change role: ' + error.message);
+    }
+  };
+
     try {
       const { error: studentError } = await supabase
         .from('students')
@@ -352,7 +405,15 @@ export const StudentManagement = () => {
                 </div>
               )}
               <div>
-                <p className="font-medium">{student.profile?.full_name || 'Unknown'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{student.profile?.full_name || 'Unknown'}</p>
+                  {studentRoles[student.id] && (
+                    <Badge variant="outline" className="text-[10px] gap-0.5 px-1.5 py-0">
+                      <Shield className="h-2.5 w-2.5" />
+                      {studentRoles[student.id].roleName}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{student.profile?.email}</p>
               </div>
             </div>
@@ -548,6 +609,38 @@ export const StudentManagement = () => {
                         <p className="text-sm text-muted-foreground">No links available</p>
                       )}
                     </div>
+                  </div>
+                  <Separator />
+                  {/* Role & Permissions */}
+                  <div>
+                    <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <Shield className="h-4 w-4 text-primary" />
+                      Role & Permissions
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="gap-1">
+                        <Shield className="h-3 w-3" />
+                        {studentRoles[student.id]?.roleName || 'Student Standard Access'}
+                      </Badge>
+                      <Select
+                        value={studentRoles[student.id]?.roleId || '00000000-0000-0000-0000-000000000001'}
+                        onValueChange={(val) => handleChangeStudentRole(student.id, student.user_id, val)}
+                      >
+                        <SelectTrigger className="w-[200px] h-8 text-xs">
+                          <SelectValue placeholder="Change role..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableRoles.map(role => (
+                            <SelectItem key={role.id} value={role.id} className="text-xs">
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      All students get standard access automatically. Super Admin can change roles to customize permissions.
+                    </p>
                   </div>
                 </div>
               </ScrollArea>
