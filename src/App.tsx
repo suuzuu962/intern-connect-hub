@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UniversityDashboard from "./pages/university/UniversityDashboard";
 
 import CollegeDashboard from "./pages/college/CollegeDashboard";
+import UserJourneyMap from "./pages/UserJourneyMap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/internships/:id" element={<InternshipDetails />} />
               <Route path="/companies" element={<Companies />} />
               <Route path="/companies/:id" element={<CompanyDetails />} />
+              <Route path="/user-journey" element={<UserJourneyMap />} />
               <Route path="/about" element={<About />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
