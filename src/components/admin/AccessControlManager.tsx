@@ -3,6 +3,7 @@ import { Shield, Users, Clock } from 'lucide-react';
 import { RBACRoles } from './RBACRoles';
 import { RBACUserRoles } from './RBACUserRoles';
 import { RBACAuditLog } from './RBACAuditLog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_ITEMS = [
@@ -15,7 +16,7 @@ export const AccessControlManager = () => {
   const [activeSection, setActiveSection] = useState('roles');
 
   return (
-    <div className="flex gap-6 min-h-[600px]">
+    <div className="flex gap-6 h-[calc(100vh-280px)] min-h-[500px]">
       {/* Left Sidebar */}
       <div className="w-56 shrink-0">
         <div className="mb-4">
@@ -23,31 +24,35 @@ export const AccessControlManager = () => {
             Access Permission
           </h3>
         </div>
-        <nav className="space-y-1">
-          {SIDEBAR_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActiveSection(item.key)}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                activeSection === item.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <ScrollArea className="h-[calc(100%-2.5rem)]">
+          <nav className="space-y-1 pr-3">
+            {SIDEBAR_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setActiveSection(item.key)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  activeSection === item.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </ScrollArea>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        {activeSection === 'roles' && <RBACRoles />}
-        {activeSection === 'user-roles' && <RBACUserRoles />}
-        {activeSection === 'audit-log' && <RBACAuditLog />}
-      </div>
+      <ScrollArea className="flex-1 min-w-0">
+        <div className="pr-4">
+          {activeSection === 'roles' && <RBACRoles />}
+          {activeSection === 'user-roles' && <RBACUserRoles />}
+          {activeSection === 'audit-log' && <RBACAuditLog />}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
