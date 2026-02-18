@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Briefcase, Trash2, Search, Eye, EyeOff, Building2, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -191,7 +192,8 @@ export const InternshipManagement = () => {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+      <div className="space-y-6 pr-4">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -363,6 +365,7 @@ export const InternshipManagement = () => {
           </CardContent>
         </Card>
       </div>
+      </ScrollArea>
     </TooltipProvider>
   );
 };

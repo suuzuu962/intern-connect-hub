@@ -935,7 +935,8 @@ export const CompanyApprovalManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       {/* Add Company Button */}
       <div className="flex justify-end">
         <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
@@ -1164,5 +1165,6 @@ export const CompanyApprovalManagement = () => {
         }}
       />
     </div>
+    </ScrollArea>
   );
 };

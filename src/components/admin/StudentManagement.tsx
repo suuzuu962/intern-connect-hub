@@ -660,7 +660,8 @@ export const StudentManagement = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4">
@@ -872,5 +873,6 @@ export const StudentManagement = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };

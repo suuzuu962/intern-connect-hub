@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Bell, Edit, Trash2, Plus, Users, Building } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
 interface Notification {
@@ -170,7 +171,8 @@ const NotificationManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Notification Management</h2>
@@ -327,6 +329,7 @@ const NotificationManagement = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };
 
