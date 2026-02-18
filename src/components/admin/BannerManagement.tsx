@@ -16,6 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Eye, EyeOff, Image, Calendar as CalendarIcon, Clock, MapPin, Users, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Banner {
   id: string;
@@ -231,7 +232,8 @@ export const BannerManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Advertisement Banners</h2>
@@ -670,5 +672,6 @@ export const BannerManagement = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };

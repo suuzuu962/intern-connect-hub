@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock, Filter, X, FileText, FileSpreadsheet } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -478,7 +479,8 @@ export const PaymentsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -1262,5 +1264,6 @@ export const PaymentsManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </ScrollArea>
   );
 };
