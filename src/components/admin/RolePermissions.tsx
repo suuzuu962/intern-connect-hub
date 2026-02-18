@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -263,7 +264,7 @@ export const RolePermissions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center sticky top-0 z-10 bg-background pb-2">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6" /> Role Permissions
@@ -285,6 +286,8 @@ export const RolePermissions = () => {
         </div>
       </div>
 
+      <ScrollArea className="h-[calc(100vh-320px)] min-h-[400px]">
+      <div className="pr-4">
       <Tabs value={activeRole} onValueChange={setActiveRole}>
         <TabsList className="grid grid-cols-4 w-full max-w-2xl">
           {ROLES.map(role => (
@@ -392,6 +395,8 @@ export const RolePermissions = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+      </ScrollArea>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Activity, AlertTriangle, CheckCircle, Search, Download, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -91,7 +92,8 @@ export const SecurityLogs = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -227,5 +229,6 @@ export const SecurityLogs = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };

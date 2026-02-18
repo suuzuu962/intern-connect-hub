@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -572,7 +573,8 @@ export const DataExport = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       <div>
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Download className="h-6 w-6 text-primary" />
@@ -721,5 +723,6 @@ export const DataExport = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };
