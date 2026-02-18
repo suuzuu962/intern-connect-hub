@@ -405,6 +405,8 @@ export const UniversityManagement = () => {
   }
 
   return (
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="pr-4">
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1050,5 +1052,7 @@ export const UniversityManagement = () => {
         </Dialog>
       </CardContent>
     </Card>
+    </div>
+    </ScrollArea>
   );
 };

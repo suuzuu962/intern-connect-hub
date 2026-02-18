@@ -12,6 +12,7 @@ import { Shield, Plus, User, Mail, Calendar, Loader2, Trash2, Pencil, Key, Shiel
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AdminUser {
   id: string;
@@ -371,7 +372,8 @@ export const AdminManagement = () => {
   const hasMfaEnabled = verifiedFactors.length > 0;
 
   return (
-    <div className="space-y-6">
+    <ScrollArea className="h-[calc(100vh-280px)] min-h-[400px]">
+    <div className="space-y-6 pr-4">
       {/* 2FA Setup Card for Current Admin */}
       <Card className={hasMfaEnabled ? "border-green-200 dark:border-green-800" : "border-amber-200 dark:border-amber-800"}>
         <CardHeader>
@@ -880,5 +882,6 @@ export const AdminManagement = () => {
         </CardContent>
       </Card>
     </div>
+    </ScrollArea>
   );
 };
