@@ -3,7 +3,7 @@ import { Shield, Users, Clock } from 'lucide-react';
 import { RBACRoles } from './RBACRoles';
 import { RBACUserRoles } from './RBACUserRoles';
 import { RBACAuditLog } from './RBACAuditLog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_ITEMS = [
@@ -46,12 +46,13 @@ export const AccessControlManager = () => {
       </div>
 
       {/* Main Content */}
-      <ScrollArea className="flex-1 min-w-0">
-        <div className="pr-4">
+      <ScrollArea className="flex-1 min-w-0" type="always">
+        <div className="pr-4 pb-4 min-w-[600px]">
           {activeSection === 'roles' && <RBACRoles />}
           {activeSection === 'user-roles' && <RBACUserRoles />}
           {activeSection === 'audit-log' && <RBACAuditLog />}
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
   );
