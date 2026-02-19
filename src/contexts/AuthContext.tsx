@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole } from '@/types/database';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 
 interface AuthContextType {
   user: User | null;
@@ -191,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     // Clear state first for immediate UI feedback
     setUser(null);
     setSession(null);
@@ -202,7 +203,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
       console.error('Error signing out:', error);
     }
-  };
+  }, []);
+
+  // Auto-logout after 15 minutes of inactivity
+  useIdleTimeout(signOut, !!user);
 
   return (
     <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, signOut }}>
