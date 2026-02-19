@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { CreditCard, DollarSign, TrendingUp, Users, Search, Download, RefreshCw, Briefcase, Building2, Calendar, MapPin, Eye, RotateCcw, XCircle, History, Plus, ArrowDownLeft, ArrowUpRight, CheckCircle, AlertCircle, Clock, Filter, X, FileText, FileSpreadsheet } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -1264,6 +1264,7 @@ export const PaymentsManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };

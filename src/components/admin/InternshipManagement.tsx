@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Briefcase, Trash2, Search, Eye, EyeOff, Building2, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -365,6 +365,7 @@ export const InternshipManagement = () => {
           </CardContent>
         </Card>
       </div>
+      <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </TooltipProvider>
   );

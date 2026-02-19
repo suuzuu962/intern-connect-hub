@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, GraduationCap, Search, Plus, CheckCircle, XCircle, Pencil, Trash2, Eye, Link2, Building, Users, Upload, FileSpreadsheet, AlertCircle, Check, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 
@@ -1259,6 +1259,7 @@ export const CollegeManagement = () => {
       </CardContent>
     </Card>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };
