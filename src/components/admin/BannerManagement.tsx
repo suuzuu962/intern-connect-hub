@@ -16,7 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Eye, EyeOff, Image, Calendar as CalendarIcon, Clock, MapPin, Users, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface Banner {
   id: string;
@@ -672,6 +672,7 @@ export const BannerManagement = () => {
         </CardContent>
       </Card>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };

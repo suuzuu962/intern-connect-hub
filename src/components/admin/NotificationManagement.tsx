@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Bell, Edit, Trash2, Plus, Users, Building } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
 interface Notification {
@@ -329,6 +329,7 @@ const NotificationManagement = () => {
         </CardContent>
       </Card>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };

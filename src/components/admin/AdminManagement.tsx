@@ -12,7 +12,7 @@ import { Shield, Plus, User, Mail, Calendar, Loader2, Trash2, Pencil, Key, Shiel
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface AdminUser {
   id: string;
@@ -882,6 +882,7 @@ export const AdminManagement = () => {
         </CardContent>
       </Card>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };

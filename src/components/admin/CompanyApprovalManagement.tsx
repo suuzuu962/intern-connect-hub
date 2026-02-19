@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1165,6 +1165,7 @@ export const CompanyApprovalManagement = () => {
         }}
       />
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };

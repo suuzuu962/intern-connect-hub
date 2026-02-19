@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -723,6 +723,7 @@ export const DataExport = () => {
         </CardContent>
       </Card>
     </div>
+    <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 };
