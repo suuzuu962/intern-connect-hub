@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole } from '@/types/database';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useIdleTimeoutSetting } from '@/hooks/useIdleTimeoutSetting';
 
 interface AuthContextType {
   user: User | null;
@@ -205,8 +206,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Auto-logout after 15 minutes of inactivity
-  useIdleTimeout(signOut, !!user);
+  // Auto-logout after configured idle timeout
+  const idleTimeoutMs = useIdleTimeoutSetting();
+  useIdleTimeout(signOut, !!user, idleTimeoutMs);
 
   return (
     <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, signOut }}>

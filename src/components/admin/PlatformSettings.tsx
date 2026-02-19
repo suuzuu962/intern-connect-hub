@@ -51,7 +51,7 @@ const defaultSettings: Record<string, any> = {
   maxInternshipsPerCompany: 50,
   maxCollegesPerUniversity: 100,
   maxCoordinatorsPerCollege: 5,
-  sessionTimeout: 30,
+  sessionTimeout: 15,
   
   // Company Settings
   autoApproveCompanies: false,
@@ -220,7 +220,7 @@ export const PlatformSettings = () => {
         { id: 'maxInternshipsPerCompany', label: 'Max Internships/Company', description: 'Maximum active internships per company', type: 'number', value: settings.maxInternshipsPerCompany },
         { id: 'maxCollegesPerUniversity', label: 'Max Colleges/University', description: 'Maximum colleges under a university', type: 'number', value: settings.maxCollegesPerUniversity },
         { id: 'maxCoordinatorsPerCollege', label: 'Max Coordinators/College', description: 'Maximum coordinators per college', type: 'number', value: settings.maxCoordinatorsPerCollege },
-        { id: 'sessionTimeout', label: 'Session Timeout (min)', description: 'Auto logout after inactivity', type: 'number', value: settings.sessionTimeout },
+        { id: 'sessionTimeout', label: 'Idle Timeout (min)', description: 'Auto logout after inactivity (minutes)', type: 'number', value: settings.sessionTimeout },
       ]
     },
     {

@@ -1,16 +1,16 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const DEFAULT_IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
-export const useIdleTimeout = (onTimeout: () => void, enabled = true) => {
+export const useIdleTimeout = (onTimeout: () => void, enabled = true, timeoutMs = DEFAULT_IDLE_TIMEOUT_MS) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (enabled) {
-      timerRef.current = setTimeout(onTimeout, IDLE_TIMEOUT_MS);
+      timerRef.current = setTimeout(onTimeout, timeoutMs);
     }
-  }, [onTimeout, enabled]);
+  }, [onTimeout, enabled, timeoutMs]);
 
   useEffect(() => {
     if (!enabled) return;
