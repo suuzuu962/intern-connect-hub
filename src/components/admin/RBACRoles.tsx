@@ -53,15 +53,25 @@ export const RBACRoles = () => {
   const [formDescription, setFormDescription] = useState('');
   const [formScope, setFormScope] = useState('university');
 
+  const [rolePermCounts, setRolePermCounts] = useState<Record<string, number>>({});
+
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [rolesRes, permsRes] = await Promise.all([
+    const [rolesRes, permsRes, rolePermsRes] = await Promise.all([
       supabase.from('custom_roles').select('*').order('created_at'),
       supabase.from('permissions').select('*').order('group_order').order('permission_order'),
+      supabase.from('custom_role_permissions').select('role_id'),
     ]);
 
     if (rolesRes.data) setRoles(rolesRes.data as unknown as CustomRole[]);
     if (permsRes.data) setPermissions(permsRes.data as unknown as Permission[]);
+    if (rolePermsRes.data) {
+      const counts: Record<string, number> = {};
+      for (const rp of rolePermsRes.data as { role_id: string }[]) {
+        counts[rp.role_id] = (counts[rp.role_id] || 0) + 1;
+      }
+      setRolePermCounts(counts);
+    }
     setLoading(false);
   }, []);
 
@@ -204,6 +214,7 @@ export const RBACRoles = () => {
     }
 
     setRolePermissions(newSet);
+    setRolePermCounts(prev => ({ ...prev, [selectedRole.id]: newSet.size }));
   };
 
   const toggleGroupPermissions = async (groupPermissions: Permission[]) => {
@@ -234,6 +245,7 @@ export const RBACRoles = () => {
     }
 
     setRolePermissions(newSet);
+    setRolePermCounts(prev => ({ ...prev, [selectedRole.id]: newSet.size }));
   };
 
   const duplicateRole = async (role: CustomRole, e: React.MouseEvent) => {
@@ -351,9 +363,12 @@ export const RBACRoles = () => {
                 <Shield className="h-4 w-4 shrink-0 text-primary" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{role.name}</p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     <Badge variant="outline" className="text-xs">{role.scope}</Badge>
                     {role.is_system && <Badge variant="secondary" className="text-xs">System</Badge>}
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {rolePermCounts[role.id] || 0}/{permissions.length}
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -426,6 +441,7 @@ export const RBACRoles = () => {
                           await supabase.from('custom_role_permissions').insert({ role_id: selectedRole.id, permission_id: p.id });
                         }
                         setRolePermissions(new Set(permissions.map(p => p.id)));
+                        setRolePermCounts(prev => ({ ...prev, [selectedRole.id]: permissions.length }));
                         logRBACAction({ action: 'permissions_select_all', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { count: toAdd.length } });
                         toast({ title: 'All permissions granted' });
                       }}
@@ -442,6 +458,7 @@ export const RBACRoles = () => {
                           await supabase.from('custom_role_permissions').delete().eq('role_id', selectedRole.id).eq('permission_id', p.id);
                         }
                         setRolePermissions(new Set());
+                        setRolePermCounts(prev => ({ ...prev, [selectedRole.id]: 0 }));
                         logRBACAction({ action: 'permissions_deselect_all', entityType: 'custom_role_permission', entityId: selectedRole.id, entityName: selectedRole.name, details: { count: toRemove.length } });
                         toast({ title: 'All permissions revoked' });
                       }}
