@@ -12,7 +12,8 @@ export type RBACAction =
   | 'permissions_select_all'
   | 'permissions_deselect_all'
   | 'user_role_assigned'
-  | 'user_role_removed';
+  | 'user_role_removed'
+  | 'user_role_changed';
 
 export type RBACEntityType = 'custom_role' | 'custom_role_permission' | 'user_custom_role';
 

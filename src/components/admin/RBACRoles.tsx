@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Shield, Loader2, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Loader2, Copy, Search, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logRBACAction } from '@/lib/rbac-audit';
 
@@ -42,6 +42,8 @@ export const RBACRoles = () => {
   const [selectedRole, setSelectedRole] = useState<CustomRole | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [scopeFilter, setScopeFilter] = useState<string>('all');
+  const [roleSearch, setRoleSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -302,8 +304,39 @@ export const RBACRoles = () => {
           </Button>
         </div>
 
+        <div className="space-y-2 mb-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search roles..."
+              value={roleSearch}
+              onChange={(e) => setRoleSearch(e.target.value)}
+              className="pl-8 h-8 text-xs"
+            />
+          </div>
+          <Select value={scopeFilter} onValueChange={setScopeFilter}>
+            <SelectTrigger className="h-8 text-xs">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Filter by scope" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Scopes</SelectItem>
+              <SelectItem value="super_admin">Super Admin</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="university">University</SelectItem>
+              <SelectItem value="college">College</SelectItem>
+              <SelectItem value="coordinator">Coordinator</SelectItem>
+              <SelectItem value="company">Company</SelectItem>
+              <SelectItem value="student">Student</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
-          {roles.map((role) => (
+          {roles
+            .filter(r => scopeFilter === 'all' || r.scope === scopeFilter)
+            .filter(r => !roleSearch || r.name.toLowerCase().includes(roleSearch.toLowerCase()))
+            .map((role) => (
             <div
               key={role.id}
               onClick={() => handleSelectRole(role)}

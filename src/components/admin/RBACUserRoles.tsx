@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Trash2, Search, Loader2, Users, Shield } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Users, Shield, Filter, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logRBACAction } from '@/lib/rbac-audit';
 
@@ -43,9 +43,14 @@ export const RBACUserRoles = () => {
   const [roles, setRoles] = useState<CustomRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserCustomRole | null>(null);
+  const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
+  const [changeRoleTarget, setChangeRoleTarget] = useState<UserCustomRole | null>(null);
+  const [newRoleId, setNewRoleId] = useState('');
+  const [changingRole, setChangingRole] = useState(false);
 
   // Assignment form
   const [assignRoleId, setAssignRoleId] = useState('');
@@ -174,7 +179,40 @@ export const RBACUserRoles = () => {
     fetchData();
   };
 
+  const handleChangeRole = async () => {
+    if (!changeRoleTarget || !newRoleId) return;
+    setChangingRole(true);
+
+    // Delete old assignment, insert new one
+    const { error: delError } = await supabase.from('user_custom_roles').delete().eq('id', changeRoleTarget.id);
+    if (delError) {
+      toast({ title: 'Error', description: delError.message, variant: 'destructive' });
+      setChangingRole(false);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: insError } = await supabase
+      .from('user_custom_roles')
+      .insert({ user_id: changeRoleTarget.user_id, role_id: newRoleId, assigned_by: user?.id });
+
+    if (insError) {
+      toast({ title: 'Error', description: insError.message, variant: 'destructive' });
+    } else {
+      const newRole = roles.find(r => r.id === newRoleId);
+      toast({ title: 'Success', description: 'Role changed successfully' });
+      logRBACAction({ action: 'user_role_changed', entityType: 'user_custom_role', entityName: newRole?.name, details: { user_id: changeRoleTarget.user_id, old_role: changeRoleTarget.custom_roles?.name, new_role: newRole?.name } });
+    }
+
+    setShowChangeRoleDialog(false);
+    setChangeRoleTarget(null);
+    setNewRoleId('');
+    setChangingRole(false);
+    fetchData();
+  };
+
   const filtered = userCustomRoles.filter(ucr => {
+    if (scopeFilter !== 'all' && ucr.custom_roles?.scope !== scopeFilter) return false;
     if (!search) return true;
     const profile = profiles[ucr.user_id];
     const roleName = ucr.custom_roles?.name || '';
@@ -205,14 +243,32 @@ export const RBACUserRoles = () => {
         </Button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, email, or role..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or role..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={scopeFilter} onValueChange={setScopeFilter}>
+          <SelectTrigger className="w-[160px]">
+            <Filter className="h-3.5 w-3.5 mr-1" />
+            <SelectValue placeholder="All Scopes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Scopes</SelectItem>
+            <SelectItem value="super_admin">Super Admin</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="university">University</SelectItem>
+            <SelectItem value="college">College</SelectItem>
+            <SelectItem value="coordinator">Coordinator</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
+            <SelectItem value="student">Student</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -225,7 +281,7 @@ export const RBACUserRoles = () => {
                 <TableHead>Assigned Role</TableHead>
                 <TableHead>Scope</TableHead>
                 <TableHead>Assigned On</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,15 +307,26 @@ export const RBACUserRoles = () => {
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(ucr.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => { setDeleteTarget(ucr); setShowDeleteDialog(true); }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Change role"
+                          onClick={() => { setChangeRoleTarget(ucr); setNewRoleId(''); setShowChangeRoleDialog(true); }}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          onClick={() => { setDeleteTarget(ucr); setShowDeleteDialog(true); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -359,6 +426,49 @@ export const RBACUserRoles = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Change Role Dialog */}
+      <Dialog open={showChangeRoleDialog} onOpenChange={setShowChangeRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Current role: <Badge variant="outline" className="ml-1">{changeRoleTarget?.custom_roles?.name}</Badge>
+              </p>
+              <p className="text-sm text-muted-foreground mb-2">
+                User: <span className="font-medium text-foreground">{changeRoleTarget ? (profiles[changeRoleTarget.user_id]?.full_name || profiles[changeRoleTarget.user_id]?.email || 'Unknown') : ''}</span>
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">New Role</label>
+              <Select value={newRoleId} onValueChange={setNewRoleId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select new role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles
+                    .filter(r => r.id !== changeRoleTarget?.role_id)
+                    .map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name} ({role.scope})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowChangeRoleDialog(false)}>Cancel</Button>
+            <Button onClick={handleChangeRole} disabled={changingRole || !newRoleId}>
+              {changingRole ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Change Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
