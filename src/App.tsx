@@ -26,6 +26,7 @@ import UniversityDashboard from "./pages/university/UniversityDashboard";
 
 import CollegeDashboard from "./pages/college/CollegeDashboard";
 import UserJourneyMap from "./pages/UserJourneyMap";
+import ArchitectureDoc from "./pages/admin/ArchitectureDoc";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['college_coordinator']}>
                     <CollegeDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/architecture-doc" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ArchitectureDoc />
                   </ProtectedRoute>
                 } 
               />
