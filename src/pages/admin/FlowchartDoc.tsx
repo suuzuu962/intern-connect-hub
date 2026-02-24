@@ -1,97 +1,319 @@
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Printer, ArrowLeft, GitBranch, ArrowDown, ArrowRight, 
   Building2, School, Users, GraduationCap, Briefcase, 
   FileText, Shield, CheckCircle, XCircle, Clock, 
   LogIn, UserPlus, Settings, Bell, Database,
-  Eye, Edit, Trash2, Star, BookOpen
+  Eye, Edit, Star, BookOpen, RefreshCw, Loader2,
+  Globe, Server, CreditCard, Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  scanPlatformFeatures, 
+  type ScanResult, 
+  type ScanPhase, 
+  type FlowchartData, 
+  type FlowNodeData,
+  SCAN_PHASES 
+} from '@/lib/platform-feature-scanner';
 
-const FlowSection = ({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) => (
-  <section className="mb-12 break-inside-avoid">
-    <div className="mb-6">
-      <h2 className="text-xl font-bold text-foreground print:text-black">{title}</h2>
-      <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
-    </div>
-    {children}
-  </section>
-);
-
-interface FlowNodeProps {
-  icon: React.ReactNode;
-  label: string;
-  sublabel?: string;
-  variant?: 'default' | 'start' | 'success' | 'warning' | 'danger' | 'process' | 'decision';
-}
-
-const FlowNode = ({ icon, label, sublabel, variant = 'default' }: FlowNodeProps) => {
-  const variants = {
-    default: 'bg-card border-border',
-    start: 'bg-primary/10 border-primary/30',
-    success: 'bg-green-500/10 border-green-500/30',
-    warning: 'bg-amber-500/10 border-amber-500/30',
-    danger: 'bg-destructive/10 border-destructive/30',
-    process: 'bg-blue-500/10 border-blue-500/30',
-    decision: 'bg-purple-500/10 border-purple-500/30 rotate-0',
-  };
-
-  const iconVariants = {
-    default: 'bg-muted text-muted-foreground',
-    start: 'bg-primary/20 text-primary',
-    success: 'bg-green-500/20 text-green-600 dark:text-green-400',
-    warning: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
-    danger: 'bg-destructive/20 text-destructive',
-    process: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-    decision: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  };
-
-  return (
-    <div className={`flex items-center gap-2.5 p-3 rounded-lg border min-w-[170px] ${variants[variant]}`}>
-      <div className={`p-1.5 rounded-full shrink-0 ${iconVariants[variant]}`}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-medium leading-tight truncate">{label}</p>
-        {sublabel && <p className="text-xs text-muted-foreground leading-tight">{sublabel}</p>}
-      </div>
-    </div>
-  );
+// Icon resolver
+const iconMap: Record<string, React.ReactNode> = {
+  LogIn: <LogIn className="h-4 w-4" />,
+  FileText: <FileText className="h-4 w-4" />,
+  Shield: <Shield className="h-4 w-4" />,
+  Database: <Database className="h-4 w-4" />,
+  CheckCircle: <CheckCircle className="h-4 w-4" />,
+  XCircle: <XCircle className="h-4 w-4" />,
+  Clock: <Clock className="h-4 w-4" />,
+  Eye: <Eye className="h-4 w-4" />,
+  Edit: <Edit className="h-4 w-4" />,
+  Star: <Star className="h-4 w-4" />,
+  Building2: <Building2 className="h-4 w-4" />,
+  School: <School className="h-4 w-4" />,
+  Users: <Users className="h-4 w-4" />,
+  GraduationCap: <GraduationCap className="h-4 w-4" />,
+  Briefcase: <Briefcase className="h-4 w-4" />,
+  Settings: <Settings className="h-4 w-4" />,
+  Bell: <Bell className="h-4 w-4" />,
+  BookOpen: <BookOpen className="h-4 w-4" />,
+  UserPlus: <UserPlus className="h-4 w-4" />,
+  GitBranch: <GitBranch className="h-4 w-4" />,
+  Globe: <Globe className="h-4 w-4" />,
+  Server: <Server className="h-4 w-4" />,
+  CreditCard: <CreditCard className="h-4 w-4" />,
+  Zap: <Zap className="h-4 w-4" />,
 };
 
-const FlowArrow = ({ direction = 'right', label }: { direction?: 'right' | 'down'; label?: string }) => (
-  <div className={`flex items-center justify-center ${direction === 'down' ? 'flex-col py-1' : 'px-1'}`}>
+const phaseIconMap: Record<string, React.ReactNode> = {
+  GitBranch: <GitBranch className="h-5 w-5" />,
+  Database: <Database className="h-5 w-5" />,
+  Settings: <Settings className="h-5 w-5" />,
+  Users: <Users className="h-5 w-5" />,
+  FileText: <FileText className="h-5 w-5" />,
+};
+
+// ─── Flow building blocks ───
+
+const nodeVariants = {
+  default: 'bg-card border-border',
+  start: 'bg-primary/10 border-primary/30',
+  success: 'bg-green-500/10 border-green-500/30',
+  warning: 'bg-amber-500/10 border-amber-500/30',
+  danger: 'bg-destructive/10 border-destructive/30',
+  process: 'bg-blue-500/10 border-blue-500/30',
+  decision: 'bg-purple-500/10 border-purple-500/30',
+};
+
+const nodeIconVariants = {
+  default: 'bg-muted text-muted-foreground',
+  start: 'bg-primary/20 text-primary',
+  success: 'bg-green-500/20 text-green-600 dark:text-green-400',
+  warning: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+  danger: 'bg-destructive/20 text-destructive',
+  process: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+  decision: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+};
+
+const FlowNodeEl = ({ data, index }: { data: FlowNodeData; index: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ delay: index * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    className={`flex items-center gap-2.5 p-3 rounded-lg border min-w-[160px] ${nodeVariants[data.variant]}`}
+  >
+    <div className={`p-1.5 rounded-full shrink-0 ${nodeIconVariants[data.variant]}`}>
+      {iconMap[data.icon] || <Zap className="h-4 w-4" />}
+    </div>
+    <div className="min-w-0">
+      <p className="text-sm font-medium leading-tight">{data.label}</p>
+      {data.sublabel && <p className="text-xs text-muted-foreground leading-tight">{data.sublabel}</p>}
+    </div>
+  </motion.div>
+);
+
+const FlowArrowEl = ({ direction = 'down', delay: d = 0 }: { direction?: 'right' | 'down'; delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: d, duration: 0.3 }}
+    className="flex items-center justify-center py-0.5"
+  >
     {direction === 'right' ? (
-      <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
+      <ArrowRight className="h-4 w-4 text-muted-foreground" />
     ) : (
       <ArrowDown className="h-4 w-4 text-muted-foreground" />
     )}
-    {label && <span className="text-[10px] text-muted-foreground font-medium">{label}</span>}
-  </div>
+  </motion.div>
 );
 
-const HorizontalFlow = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-wrap items-center gap-2 pl-2">{children}</div>
+// ─── Dynamic flowchart renderer ───
+
+const DynamicFlowchart = ({ chart, index }: { chart: FlowchartData; index: number }) => {
+  const isHorizontal = chart.id === 'application-status';
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.12, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mb-10 break-inside-avoid"
+    >
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Badge variant="outline" className="text-xs capitalize">{chart.category}</Badge>
+          <h2 className="text-lg font-bold text-foreground">{chart.title}</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">{chart.subtitle}</p>
+      </div>
+
+      <Card className="p-5 overflow-x-auto">
+        <CardContent className="p-0">
+          <div className={`flex ${isHorizontal ? 'flex-wrap items-center gap-2' : 'flex-col items-center gap-1'}`}>
+            {chart.nodes.map((node, i) => (
+              <div key={node.id} className={`flex ${isHorizontal ? 'items-center gap-2' : 'flex-col items-center gap-1'}`}>
+                {i > 0 && <FlowArrowEl direction={isHorizontal ? 'right' : 'down'} delay={i * 0.08} />}
+                <FlowNodeEl data={node} index={i} />
+              </div>
+            ))}
+
+            {/* Branches */}
+            {chart.branches?.map((branch, bi) => (
+              <div key={bi} className="flex flex-col items-center gap-1 w-full">
+                <FlowArrowEl direction="down" delay={chart.nodes.length * 0.08} />
+                <div className="flex flex-col sm:flex-row gap-4 items-start justify-center w-full">
+                  {branch.paths.map((path, pi) => (
+                    <div key={pi} className="flex flex-col items-center gap-1 flex-1">
+                      {path.map((node, ni) => (
+                        <div key={node.id} className="flex flex-col items-center gap-1">
+                          {ni > 0 && <FlowArrowEl direction="down" delay={(chart.nodes.length + ni) * 0.08} />}
+                          <FlowNodeEl data={node} index={chart.nodes.length + bi + ni + pi} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.section>
+  );
+};
+
+// ─── Scanning overlay ───
+
+const ScanningOverlay = ({ phase, progress }: { phase: ScanPhase; progress: number }) => {
+  const currentPhaseInfo = SCAN_PHASES.find(p => p.phase === phase);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        className="bg-card border border-border rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4"
+      >
+        <div className="text-center mb-6">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            className="inline-flex p-4 rounded-full bg-primary/10 mb-4"
+          >
+            <RefreshCw className="h-8 w-8 text-primary" />
+          </motion.div>
+          <h2 className="text-xl font-bold text-foreground">Scanning Platform</h2>
+          <p className="text-sm text-muted-foreground mt-1">Detecting features & generating flowcharts</p>
+        </div>
+
+        <Progress value={progress} className="mb-4 h-2" />
+
+        <div className="space-y-2">
+          {SCAN_PHASES.map((p, i) => {
+            const isActive = p.phase === phase;
+            const isDone = SCAN_PHASES.indexOf(p) < SCAN_PHASES.findIndex(sp => sp.phase === phase);
+
+            return (
+              <motion.div
+                key={p.phase}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm transition-colors ${
+                  isActive ? 'bg-primary/10 text-primary font-medium' : 
+                  isDone ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                }`}
+              >
+                {isDone ? (
+                  <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                ) : isActive ? (
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border border-muted-foreground/30 shrink-0" />
+                )}
+                <span>{p.label}</span>
+                {isDone && <span className="ml-auto text-xs">✓</span>}
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── Stats summary ───
+
+const ScanStats = ({ result }: { result: ScanResult }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8"
+  >
+    {[
+      { label: 'Routes', value: result.routes.length, icon: <GitBranch className="h-4 w-4" /> },
+      { label: 'Tables', value: result.tables.length, icon: <Database className="h-4 w-4" /> },
+      { label: 'Edge Functions', value: result.edgeFunctions.length, icon: <Server className="h-4 w-4" /> },
+      { label: 'Roles', value: result.roles.length, icon: <Users className="h-4 w-4" /> },
+      { label: 'Flowcharts', value: result.flowcharts.length, icon: <GitBranch className="h-4 w-4" /> },
+    ].map((stat, i) => (
+      <motion.div
+        key={stat.label}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: i * 0.1, duration: 0.4 }}
+        className="bg-card border border-border rounded-xl p-4 text-center"
+      >
+        <div className="flex justify-center mb-2 text-primary">{stat.icon}</div>
+        <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+        <p className="text-xs text-muted-foreground">{stat.label}</p>
+      </motion.div>
+    ))}
+  </motion.div>
 );
 
-const VerticalFlow = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col items-center gap-1">{children}</div>
-);
+// ─── Category filter ───
 
-const BranchFlow = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col sm:flex-row gap-3 items-stretch justify-center">{children}</div>
-);
+const CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'auth', label: 'Authentication' },
+  { key: 'workflow', label: 'Workflows' },
+  { key: 'lifecycle', label: 'Lifecycle' },
+  { key: 'system', label: 'System' },
+  { key: 'data', label: 'Data' },
+];
+
+// ─── Main component ───
 
 const FlowchartDoc = () => {
   const navigate = useNavigate();
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanPhase, setScanPhase] = useState<ScanPhase>('idle');
+  const [progress, setProgress] = useState(0);
+  const [isScanning, setIsScanning] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const handleScan = useCallback(async () => {
+    setIsScanning(true);
+    setScanResult(null);
+    setActiveCategory('all');
+
+    const result = await scanPlatformFeatures((phase, prog) => {
+      setScanPhase(phase);
+      setProgress(prog);
+    });
+
+    setScanResult(result);
+    setIsScanning(false);
+    setScanPhase('idle');
+  }, []);
+
   const handlePrint = () => window.print();
+
+  const filteredFlowcharts = scanResult?.flowcharts.filter(
+    f => activeCategory === 'all' || f.category === activeCategory
+  ) || [];
 
   return (
     <div className="min-h-screen bg-background print:bg-white">
+      {/* Scanning Overlay */}
+      <AnimatePresence>
+        {isScanning && <ScanningOverlay phase={scanPhase} progress={progress} />}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="print:hidden sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -103,338 +325,211 @@ const FlowchartDoc = () => {
             <h1 className="text-lg font-bold">Platform Flowchart Documentation</h1>
           </div>
         </div>
-        <Button onClick={handlePrint} className="gap-2">
-          <Printer className="h-4 w-4" />
-          Print / Save as PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleScan} 
+            disabled={isScanning}
+            variant="default"
+            className="gap-2"
+          >
+            {isScanning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {scanResult ? 'Re-scan & Update' : 'Scan & Generate'}
+          </Button>
+          {scanResult && (
+            <Button onClick={handlePrint} variant="outline" className="gap-2">
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="h-[calc(100vh-57px)] print:h-auto">
         <div className="max-w-5xl mx-auto px-8 py-10 print:px-0 print:py-4">
 
-          {/* Title */}
-          <div className="text-center mb-12 print:mb-8">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground print:text-black mb-2">
-              Platform Flowchart Documentation
-            </h1>
-            <p className="text-lg text-muted-foreground">Visual Process & Workflow Reference</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 mt-4">
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-primary mr-1.5" />Start</Badge>
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1.5" />Process</Badge>
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1.5" />Decision</Badge>
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5" />Edge Function</Badge>
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5" />Success</Badge>
-              <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-destructive mr-1.5" />Error / Reject</Badge>
-            </div>
-          </div>
+          {/* Empty state */}
+          {!scanResult && !isScanning && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-32 text-center"
+            >
+              <div className="p-6 rounded-full bg-primary/10 mb-6">
+                <GitBranch className="h-12 w-12 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Platform Flowchart Generator</h2>
+              <p className="text-muted-foreground max-w-md mb-8">
+                Click the button below to scan all platform features, routes, database tables, 
+                and workflows — then generate live flowcharts automatically.
+              </p>
+              <Button size="lg" onClick={handleScan} className="gap-2 text-base px-8">
+                <Zap className="h-5 w-5" />
+                Scan & Generate Flowcharts
+              </Button>
+              <p className="text-xs text-muted-foreground mt-4">
+                Scans routes, tables, edge functions, roles, enums, and generates visual flowcharts
+              </p>
+            </motion.div>
+          )}
 
-          <Separator className="mb-10" />
-
-          {/* 1. Student Registration Flow */}
-          <FlowSection title="1. Student Registration & Onboarding" subtitle="How students sign up, complete profiles, and access the platform">
-            <VerticalFlow>
-              <FlowNode icon={<LogIn className="h-4 w-4" />} label="Visit /auth" sublabel="Select 'Student' role" variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<FileText className="h-4 w-4" />} label="Fill Registration Form" sublabel="Name, Email, Password" variant="default" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Shield className="h-4 w-4" />} label="Email Verification" sublabel="Confirm email address" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Database className="h-4 w-4" />} label="Auto-Create Records" sublabel="Auth User → Profile → Role → Student" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Edit className="h-4 w-4" />} label="Complete Student Profile" sublabel="College, Degree, Skills, Domain" variant="default" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Access Student Dashboard" sublabel="/student/dashboard" variant="success" />
-            </VerticalFlow>
-          </FlowSection>
-
-          <Separator className="mb-10" />
-
-          {/* 2. Company Registration Flow */}
-          <FlowSection title="2. Company Registration & Verification" subtitle="How companies register, get verified, and start posting internships">
-            <VerticalFlow>
-              <FlowNode icon={<LogIn className="h-4 w-4" />} label="Visit /auth" sublabel="Select 'Company' role" variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<FileText className="h-4 w-4" />} label="Fill Company Details" sublabel="Name, Industry, Contact Info" variant="default" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Shield className="h-4 w-4" />} label="Email Verification" sublabel="Verify company email" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Database className="h-4 w-4" />} label="Create Records" sublabel="Auth User → Profile → Role → Company" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Edit className="h-4 w-4" />} label="Complete Company Profile" sublabel="Logo, Description, Domains, Skills" variant="default" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Eye className="h-4 w-4" />} label="Admin Review" sublabel="Pending verification (is_verified)" variant="decision" />
-              <FlowArrow direction="down" />
-              <BranchFlow>
-                <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Approved" sublabel="Can post internships" variant="success" />
-                <FlowNode icon={<XCircle className="h-4 w-4" />} label="Rejected" sublabel="Notified via system" variant="danger" />
-              </BranchFlow>
-            </VerticalFlow>
-          </FlowSection>
-
-          <Separator className="mb-10" />
-
-          {/* 3. Institutional Onboarding */}
-          <FlowSection title="3. Institutional Onboarding Hierarchy" subtitle="University → College → Coordinator → Student chain">
-            <Card className="p-6">
-              <CardContent className="p-0">
-                <VerticalFlow>
-                  {/* University */}
-                  <div className="w-full max-w-lg">
-                    <h3 className="text-sm font-semibold text-primary mb-3 text-center">Step 1: University Registration</h3>
-                    <HorizontalFlow>
-                      <FlowNode icon={<Building2 className="h-4 w-4" />} label="/university-auth" sublabel="Sign up form" variant="start" />
-                      <FlowArrow />
-                      <FlowNode icon={<Settings className="h-4 w-4" />} label="university-signup" sublabel="Edge Function" variant="warning" />
-                      <FlowArrow />
-                      <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="University Created" sublabel="Immediate access" variant="success" />
-                    </HorizontalFlow>
-                  </div>
-                  
-                  <FlowArrow direction="down" label="manages" />
-
-                  {/* College */}
-                  <div className="w-full max-w-lg">
-                    <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-3 text-center">Step 2: College Creation</h3>
-                    <HorizontalFlow>
-                      <FlowNode icon={<Building2 className="h-4 w-4" />} label="University Dashboard" sublabel="Colleges Tab" variant="process" />
-                      <FlowArrow />
-                      <FlowNode icon={<Settings className="h-4 w-4" />} label="create-college-account" sublabel="Edge Function" variant="warning" />
-                      <FlowArrow />
-                      <FlowNode icon={<School className="h-4 w-4" />} label="College Created" sublabel="Login enabled" variant="success" />
-                    </HorizontalFlow>
-                  </div>
-
-                  <FlowArrow direction="down" label="assigns" />
-
-                  {/* Coordinator */}
-                  <div className="w-full max-w-lg">
-                    <h3 className="text-sm font-semibold text-purple-600 dark:text-purple-400 mb-3 text-center">Step 3: Coordinator Assignment</h3>
-                    <HorizontalFlow>
-                      <FlowNode icon={<Building2 className="h-4 w-4" />} label="University Dashboard" sublabel="Coordinators Tab" variant="process" />
-                      <FlowArrow />
-                      <FlowNode icon={<Settings className="h-4 w-4" />} label="create-coordinator-account" sublabel="Edge Function" variant="warning" />
-                      <FlowArrow />
-                      <FlowNode icon={<Users className="h-4 w-4" />} label="Coordinator Ready" sublabel="Linked to college" variant="success" />
-                    </HorizontalFlow>
-                  </div>
-
-                  <FlowArrow direction="down" label="oversees" />
-
-                  {/* Student */}
-                  <div className="w-full max-w-lg">
-                    <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-3 text-center">Step 4: Student Self-Registration</h3>
-                    <HorizontalFlow>
-                      <FlowNode icon={<UserPlus className="h-4 w-4" />} label="Student signs up" sublabel="/auth → selects college" variant="start" />
-                      <FlowArrow />
-                      <FlowNode icon={<Database className="h-4 w-4" />} label="college_id linked" sublabel="FK to colleges" variant="process" />
-                      <FlowArrow />
-                      <FlowNode icon={<GraduationCap className="h-4 w-4" />} label="Visible to hierarchy" sublabel="Coordinator & University" variant="success" />
-                    </HorizontalFlow>
-                  </div>
-                </VerticalFlow>
-              </CardContent>
-            </Card>
-          </FlowSection>
-
-          <Separator className="mb-10" />
-
-          {/* 4. Internship Lifecycle */}
-          <FlowSection title="4. Internship Lifecycle" subtitle="From posting to completion — the full internship journey">
-            <VerticalFlow>
-              <FlowNode icon={<Briefcase className="h-4 w-4" />} label="Company Posts Internship" sublabel="Title, Skills, Duration, Stipend" variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Eye className="h-4 w-4" />} label="Listed on Platform" sublabel="Students can browse & filter" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<FileText className="h-4 w-4" />} label="Student Applies" sublabel="Cover letter + Resume" variant="default" />
-              <FlowArrow direction="down" label="status: applied" />
-              <FlowNode icon={<Clock className="h-4 w-4" />} label="Under Review" sublabel="Company reviews application" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Eye className="h-4 w-4" />} label="Decision Point" sublabel="Company evaluates candidate" variant="decision" />
-              <FlowArrow direction="down" />
-              <BranchFlow>
-                <VerticalFlow>
-                  <FlowNode icon={<Star className="h-4 w-4" />} label="Shortlisted" sublabel="Moves to next round" variant="process" />
-                  <FlowArrow direction="down" />
-                  <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Offer Released" sublabel="Student notified" variant="success" />
-                  <FlowArrow direction="down" />
-                  <BranchFlow>
-                    <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Offer Accepted" sublabel="Internship begins" variant="success" />
-                    <FlowNode icon={<XCircle className="h-4 w-4" />} label="Withdrawn" sublabel="Student declines" variant="danger" />
-                  </BranchFlow>
-                </VerticalFlow>
-                <FlowNode icon={<XCircle className="h-4 w-4" />} label="Rejected" sublabel="Application closed" variant="danger" />
-              </BranchFlow>
-            </VerticalFlow>
-          </FlowSection>
-
-          <Separator className="mb-10" />
-
-          {/* 5. Application Status Flow */}
-          <FlowSection title="5. Application Status State Machine" subtitle="All valid status transitions for internship applications">
-            <Card className="p-6">
-              <CardContent className="p-0">
-                <HorizontalFlow>
-                  <FlowNode icon={<FileText className="h-4 w-4" />} label="applied" variant="start" />
-                  <FlowArrow />
-                  <FlowNode icon={<Clock className="h-4 w-4" />} label="under_review" variant="process" />
-                  <FlowArrow />
-                  <FlowNode icon={<Star className="h-4 w-4" />} label="shortlisted" variant="process" />
-                  <FlowArrow />
-                  <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="offer_released" variant="success" />
-                  <FlowArrow />
-                  <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="offer_accepted" variant="success" />
-                </HorizontalFlow>
-                <div className="mt-4 flex flex-wrap gap-3 justify-center">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Any stage →</Badge>
-                    <FlowNode icon={<XCircle className="h-4 w-4" />} label="withdrawn" sublabel="By student" variant="danger" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">Review/Shortlist →</Badge>
-                    <FlowNode icon={<XCircle className="h-4 w-4" />} label="rejected" sublabel="By company" variant="danger" />
-                  </div>
+          {/* Results */}
+          {scanResult && (
+            <>
+              {/* Title */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-8 print:mb-6"
+              >
+                <h1 className="text-3xl font-extrabold tracking-tight text-foreground print:text-black mb-2">
+                  Platform Flowchart Documentation
+                </h1>
+                <p className="text-lg text-muted-foreground">Visual Process & Workflow Reference</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Generated on {new Date(scanResult.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  <span className="ml-2">• Scan took {(scanResult.scanDuration / 1000).toFixed(1)}s</span>
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-primary mr-1.5" />Start</Badge>
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1.5" />Process</Badge>
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1.5" />Decision</Badge>
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5" />Edge Function</Badge>
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5" />Success</Badge>
+                  <Badge variant="secondary"><span className="inline-block w-2 h-2 rounded-full bg-destructive mr-1.5" />Error</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          </FlowSection>
+              </motion.div>
 
-          <Separator className="mb-10" />
+              {/* Stats */}
+              <ScanStats result={scanResult} />
 
-          {/* 6. Diary Workflow */}
-          <FlowSection title="6. Internship Diary Workflow" subtitle="Student diary submission and coordinator approval process">
-            <VerticalFlow>
-              <FlowNode icon={<GraduationCap className="h-4 w-4" />} label="Student has active internship" sublabel="status: offer_accepted" variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<BookOpen className="h-4 w-4" />} label="Create Diary Entry" sublabel="Date, Title, Content, Hours, Skills" variant="default" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Clock className="h-4 w-4" />} label="Pending Approval" sublabel="is_approved = null" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Users className="h-4 w-4" />} label="Coordinator Reviews" sublabel="College dashboard → Diary Approval" variant="decision" />
-              <FlowArrow direction="down" />
-              <BranchFlow>
-                <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Approved" sublabel="approved_by + timestamp" variant="success" />
-                <FlowNode icon={<XCircle className="h-4 w-4" />} label="Rejected with Remarks" sublabel="coordinator_remarks added" variant="danger" />
-              </BranchFlow>
-            </VerticalFlow>
-          </FlowSection>
+              <Separator className="mb-6" />
 
-          <Separator className="mb-10" />
+              {/* Category Filter */}
+              <div className="flex flex-wrap gap-2 mb-8 print:hidden">
+                {CATEGORIES.map(cat => (
+                  <Button
+                    key={cat.key}
+                    variant={activeCategory === cat.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setActiveCategory(cat.key)}
+                    className="text-xs"
+                  >
+                    {cat.label}
+                    {cat.key !== 'all' && (
+                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5">
+                        {scanResult.flowcharts.filter(f => f.category === cat.key).length}
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
 
-          {/* 7. RBAC Permission Resolution */}
-          <FlowSection title="7. RBAC Permission Resolution Flow" subtitle="How the system determines if a user has access to a feature">
-            <VerticalFlow>
-              <FlowNode icon={<Shield className="h-4 w-4" />} label="Permission Check Requested" sublabel="usePermissions() hook called" variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Eye className="h-4 w-4" />} label="Is role 'admin'?" sublabel="Bypass all checks" variant="decision" />
-              <FlowArrow direction="down" />
-              <BranchFlow>
-                <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Yes → ALLOW" sublabel="Admin has full access" variant="success" />
-                <VerticalFlow>
-                  <FlowNode icon={<Database className="h-4 w-4" />} label="No → Check user_permissions" sublabel="User-level override?" variant="process" />
-                  <FlowArrow direction="down" />
-                  <FlowNode icon={<Database className="h-4 w-4" />} label="Check role_permissions" sublabel="Legacy feature toggle?" variant="process" />
-                  <FlowArrow direction="down" />
-                  <FlowNode icon={<Database className="h-4 w-4" />} label="Check custom_role_permissions" sublabel="Via user_custom_roles" variant="process" />
-                  <FlowArrow direction="down" />
-                  <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="Default → ALLOW" sublabel="No record = permitted" variant="success" />
-                </VerticalFlow>
-              </BranchFlow>
-            </VerticalFlow>
-          </FlowSection>
+              {/* Flowcharts */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeCategory}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {filteredFlowcharts.map((chart, i) => (
+                    <DynamicFlowchart key={chart.id} chart={chart} index={i} />
+                  ))}
+                </motion.div>
+              </AnimatePresence>
 
-          <Separator className="mb-10" />
-
-          {/* 8. Notification Flow */}
-          <FlowSection title="8. Notification Dispatch Flow" subtitle="How system and admin notifications reach users">
-            <VerticalFlow>
-              <FlowNode icon={<Bell className="h-4 w-4" />} label="Trigger Event" sublabel="Application update, admin action, etc." variant="start" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Database className="h-4 w-4" />} label="Insert into notifications" sublabel="user_id, title, message, type" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Eye className="h-4 w-4" />} label="Target Filtering" sublabel="target_role or specific user_id" variant="decision" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<Bell className="h-4 w-4" />} label="NotificationBell Updates" sublabel="Unread count badge" variant="process" />
-              <FlowArrow direction="down" />
-              <FlowNode icon={<CheckCircle className="h-4 w-4" />} label="User Views & Reads" sublabel="is_read → true" variant="success" />
-            </VerticalFlow>
-          </FlowSection>
-
-          <Separator className="mb-10" />
-
-          {/* 9. Data Hierarchy Diagram */}
-          <FlowSection title="9. Data Hierarchy & Relationships" subtitle="How database entities relate to each other">
-            <Card className="p-6">
-              <CardContent className="p-0">
-                <VerticalFlow>
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 w-full max-w-sm text-center">
-                    <Building2 className="h-5 w-5 text-primary mx-auto mb-1" />
-                    <span className="font-semibold">Universities</span>
-                    <Badge variant="outline" className="ml-2 text-xs">Root Entity</Badge>
-                  </div>
-                  <FlowArrow direction="down" label="university_id FK" />
-                  <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20 w-full max-w-sm text-center">
-                    <School className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                    <span className="font-semibold">Colleges</span>
-                  </div>
-                  <FlowArrow direction="down" label="college_id FK" />
-                  <BranchFlow>
-                    <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20 text-center flex-1">
-                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
-                      <span className="font-semibold text-sm">Coordinators</span>
+              {/* Scanned Details */}
+              <Separator className="my-8" />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <h2 className="text-lg font-bold mb-4">Scan Details</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Tables detected */}
+                  <Card className="p-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <Database className="h-4 w-4 text-primary" />
+                      Database Tables ({scanResult.tables.length})
+                    </h3>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {scanResult.tables.map(t => (
+                        <div key={t.name} className="flex items-center justify-between text-xs">
+                          <code className="text-primary">{t.name}</code>
+                          <span className="text-muted-foreground">{t.columns} cols</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20 text-center flex-1">
-                      <GraduationCap className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                      <span className="font-semibold text-sm">Students</span>
-                    </div>
-                  </BranchFlow>
-                  <FlowArrow direction="down" label="student_id FK" />
-                  <BranchFlow>
-                    <div className="p-4 bg-amber-500/10 rounded-lg border border-amber-500/20 text-center flex-1">
-                      <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-                      <span className="font-semibold text-sm">Applications</span>
-                    </div>
-                    <div className="p-4 bg-card rounded-lg border border-border text-center flex-1">
-                      <BookOpen className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                      <span className="font-semibold text-sm">Diary Entries</span>
-                    </div>
-                  </BranchFlow>
-                </VerticalFlow>
+                  </Card>
 
-                <Separator className="my-6" />
-
-                <div className="text-center">
-                  <h3 className="text-sm font-semibold mb-3">Company Side</h3>
-                  <VerticalFlow>
-                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 w-full max-w-sm text-center mx-auto">
-                      <Briefcase className="h-5 w-5 text-primary mx-auto mb-1" />
-                      <span className="font-semibold">Companies</span>
+                  {/* Routes detected */}
+                  <Card className="p-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <GitBranch className="h-4 w-4 text-primary" />
+                      Routes ({scanResult.routes.length})
+                    </h3>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {scanResult.routes.map(r => (
+                        <div key={r.path} className="flex items-center justify-between text-xs">
+                          <code>{r.path}</code>
+                          <Badge variant={r.type === 'protected' ? 'default' : 'outline'} className="text-[10px] px-1.5">
+                            {r.type}{r.role ? ` (${r.role})` : ''}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
-                    <FlowArrow direction="down" label="company_id FK" />
-                    <BranchFlow>
-                      <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20 text-center flex-1">
-                        <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                        <span className="font-semibold text-sm">Internships</span>
-                      </div>
-                      <div className="p-4 bg-card rounded-lg border border-border text-center flex-1">
-                        <Settings className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                        <span className="font-semibold text-sm">Company Limits</span>
-                      </div>
-                    </BranchFlow>
-                  </VerticalFlow>
+                  </Card>
+
+                  {/* Edge Functions */}
+                  <Card className="p-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <Server className="h-4 w-4 text-primary" />
+                      Edge Functions ({scanResult.edgeFunctions.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {scanResult.edgeFunctions.map(f => (
+                        <div key={f.name}>
+                          <code className="text-xs text-primary font-bold">{f.name}</code>
+                          <p className="text-xs text-muted-foreground">{f.purpose}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* Enums */}
+                  <Card className="p-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Enums ({scanResult.enums.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {scanResult.enums.map(e => (
+                        <div key={e.name}>
+                          <code className="text-xs font-bold">{e.name}</code>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {e.values.map(v => <Badge key={v} variant="outline" className="text-[10px]">{v}</Badge>)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
-          </FlowSection>
+              </motion.div>
 
-          {/* Footer */}
-          <Separator className="my-6" />
-          <div className="text-center text-xs text-muted-foreground pb-8">
-            <p>Internship Management Portal — Flowchart Documentation</p>
-            <p>Generated {new Date().toISOString()}</p>
-          </div>
+              {/* Footer */}
+              <Separator className="my-6" />
+              <div className="text-center text-xs text-muted-foreground pb-8">
+                <p>Internship Management Portal — Flowchart Documentation</p>
+                <p>Generated {scanResult.timestamp}</p>
+              </div>
+            </>
+          )}
         </div>
       </ScrollArea>
     </div>
