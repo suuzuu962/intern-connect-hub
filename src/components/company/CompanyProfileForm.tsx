@@ -93,6 +93,7 @@ export const CompanyProfileForm = () => {
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [originalCompany, setOriginalCompany] = useState<CompanyData | null>(null);
 
   // Get suggested skills based on selected domains
   const selectedDomains = company?.internship_domains || [];
@@ -117,14 +118,16 @@ export const CompanyProfileForm = () => {
     if (data) {
       // Handle both old and new column names for backwards compatibility
       const companyData = data as any;
-      setCompany({
+      const parsed = {
         ...companyData,
         internship_domains: companyData.internship_domains || [],
         custom_domains: companyData.custom_domains || [],
         internship_skills: companyData.internship_skills || [],
         internship_modes: companyData.internship_modes || [],
         internship_durations: companyData.internship_durations || [],
-      } as CompanyData);
+      } as CompanyData;
+      setCompany(parsed);
+      setOriginalCompany(parsed);
     } else if (error?.code === 'PGRST116') {
       const { data: profile } = await supabase
         .from('profiles')
@@ -318,6 +321,15 @@ export const CompanyProfileForm = () => {
     }
 
     setSaving(true);
+
+    // Determine if only image fields changed — skip re-verification in that case
+    const imageOnlyFields = ['logo_url', 'cover_image_url'];
+    const nonImageFieldChanged = originalCompany ? Object.keys(company).some(key => {
+      if (imageOnlyFields.includes(key)) return false;
+      if (key === 'id' || key === 'user_id' || key === 'created_at' || key === 'updated_at' || key === 'is_verified') return false;
+      return JSON.stringify((company as any)[key]) !== JSON.stringify((originalCompany as any)[key]);
+    }) : true;
+
     const { error } = await supabase
       .from('companies')
       .update({
@@ -363,7 +375,7 @@ export const CompanyProfileForm = () => {
         registration_profile_url: company.registration_profile_url,
         terms_accepted: company.terms_accepted,
         declaration_accepted: company.declaration_accepted,
-        is_verified: false,
+        ...(nonImageFieldChanged ? { is_verified: false } : {}),
       })
       .eq('id', company.id);
 
@@ -371,7 +383,12 @@ export const CompanyProfileForm = () => {
     if (error) {
       toast.error('Failed to save profile');
     } else {
-      toast.success('Profile submitted for approval');
+      setOriginalCompany(company);
+      if (nonImageFieldChanged) {
+        toast.success('Profile submitted for approval');
+      } else {
+        toast.success('Profile updated successfully');
+      }
     }
   };
 
