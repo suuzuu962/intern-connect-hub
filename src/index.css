@@ -200,6 +200,26 @@
   .dashboard-sidebar {
     background: hsl(var(--sidebar-background));
     color: hsl(var(--sidebar-foreground));
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-accent)) transparent;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-accent));
+    border-radius: 4px;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-primary) / 0.5);
   }
 
   .dashboard-sidebar-item {
