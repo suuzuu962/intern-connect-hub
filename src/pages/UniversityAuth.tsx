@@ -651,232 +651,271 @@ const UniversityAuth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Link to="/" className="text-2xl font-bold text-primary">
-              InternHub
-            </Link>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Decorative */}
+      <div className="hidden lg:flex lg:w-1/2 gradient-hero relative overflow-hidden items-center justify-center">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+        </div>
+        <div className="relative z-10 text-center px-12 max-w-lg">
+          <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-8">
+            <GraduationCap className="h-8 w-8 text-white" />
           </div>
-          {/* Role indicator badge - only show in signup mode */}
-          {mode === 'signup' && signupStep === 'details' && (
-            <div className="flex justify-center mb-2">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                role === 'university' 
-                  ? 'bg-primary/10 text-primary border border-primary/20' 
-                  : 'bg-accent text-accent-foreground border border-accent'
-              }`}>
-                {role === 'university' ? (
-                  <Building className="h-3 w-3" />
-                ) : (
-                  <GraduationCap className="h-3 w-3" />
-                )}
-                {role === 'university' ? 'University Signup' : 'College Signup'}
-              </span>
+          <h2 className="text-4xl font-heading font-bold text-white mb-4">
+            Institutional Portal
+          </h2>
+          <p className="text-white/70 text-lg leading-relaxed">
+            Manage your university or college internship programs, track student progress, and collaborate with industry partners.
+          </p>
+          <div className="mt-12 grid grid-cols-2 gap-4 text-left">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <Building className="h-5 w-5 text-white/80 mb-2" />
+              <p className="text-white font-semibold text-sm">Universities</p>
+              <p className="text-white/60 text-xs">Full admin access</p>
             </div>
-          )}
-          <CardTitle className="text-2xl">{getTitle()}</CardTitle>
-          <CardDescription>{getDescription()}</CardDescription>
-        </CardHeader>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <GraduationCap className="h-5 w-5 text-white/80 mb-2" />
+              <p className="text-white font-semibold text-sm">Colleges</p>
+              <p className="text-white/60 text-xs">Coordinator access</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <CardContent>
-          {mode === 'forgot-password' ? (
-            renderForgotPassword()
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Role selection - only for signup */}
-              {mode === 'signup' && signupStep === 'details' && (
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <Button
-                    type="button"
-                    variant={role === 'university' ? 'default' : 'outline'}
-                    className="flex flex-col items-center gap-1 h-auto py-3"
-                    onClick={() => setRole('university')}
-                  >
-                    <Building className="h-5 w-5" />
-                    <span className="text-xs">University</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={role === 'college' ? 'default' : 'outline'}
-                    className="flex flex-col items-center gap-1 h-auto py-3"
-                    onClick={() => setRole('college')}
-                  >
-                    <GraduationCap className="h-5 w-5" />
-                    <span className="text-xs">College</span>
-                  </Button>
+      {/* Right Panel - Form */}
+      <div className="flex-1 flex items-center justify-center bg-background px-4 py-12">
+        <Card className="w-full max-w-md border-0 shadow-xl bg-card">
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-4 lg:hidden">
+              <Link to="/" className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <span className="text-xl font-bold text-primary-foreground">EL</span>
                 </div>
-              )}
+                <span className="text-xl font-heading font-bold">Economic Labs</span>
+              </Link>
+            </div>
+            {/* Role indicator badge - only show in signup mode */}
+            {mode === 'signup' && signupStep === 'details' && (
+              <div className="flex justify-center mb-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                  role === 'university' 
+                    ? 'bg-primary/10 text-primary border border-primary/20' 
+                    : 'bg-accent text-accent-foreground border border-accent'
+                }`}>
+                  {role === 'university' ? (
+                    <Building className="h-3 w-3" />
+                  ) : (
+                    <GraduationCap className="h-3 w-3" />
+                  )}
+                  {role === 'university' ? 'University Signup' : 'College Signup'}
+                </span>
+              </div>
+            )}
+            <CardTitle className="text-2xl font-heading">{getTitle()}</CardTitle>
+            <CardDescription>{getDescription()}</CardDescription>
+          </CardHeader>
 
-              {mode === 'signup' && signupStep === 'verify-email' ? (
-                <div className="space-y-6">
-                  <div className="flex justify-center">
-                    <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Verify Email
-                  </Button>
-                  <div className="text-center space-y-2">
-                    <button
+          <CardContent className="pt-4">
+            {mode === 'forgot-password' ? (
+              renderForgotPassword()
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Role selection - only for signup */}
+                {mode === 'signup' && signupStep === 'details' && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <Button
                       type="button"
-                      onClick={handleResendOtp}
-                      disabled={resendCooldown > 0 || loading}
-                      className="text-sm text-primary hover:underline disabled:opacity-50"
+                      variant={role === 'university' ? 'default' : 'outline'}
+                      className={`flex flex-col items-center gap-1 h-auto py-3 ${role === 'university' ? 'gradient-primary border-0 shadow-md' : ''}`}
+                      onClick={() => setRole('university')}
                     >
-                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
-                    </button>
-                    <div>
+                      <Building className="h-5 w-5" />
+                      <span className="text-xs">University</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={role === 'college' ? 'default' : 'outline'}
+                      className={`flex flex-col items-center gap-1 h-auto py-3 ${role === 'college' ? 'gradient-primary border-0 shadow-md' : ''}`}
+                      onClick={() => setRole('college')}
+                    >
+                      <GraduationCap className="h-5 w-5" />
+                      <span className="text-xs">College</span>
+                    </Button>
+                  </div>
+                )}
+
+                {mode === 'signup' && signupStep === 'verify-email' ? (
+                  <div className="space-y-6">
+                    <div className="flex justify-center">
+                      <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <Button type="submit" className="w-full h-11 gradient-primary border-0" disabled={loading || otp.length !== 6}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Verify Email
+                    </Button>
+                    <div className="text-center space-y-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSignupStep('details');
-                          setOtp('');
-                        }}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mx-auto"
+                        onClick={handleResendOtp}
+                        disabled={resendCooldown > 0 || loading}
+                        className="text-sm text-primary hover:underline disabled:opacity-50 font-medium"
                       >
-                        <ArrowLeft className="h-4 w-4" />
-                        Change email
+                        {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
                       </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {mode === 'signup' && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="institutionName">
-                          {role === 'university' ? 'University Name' : 'College Name'}
-                        </Label>
-                        <Input
-                          id="institutionName"
-                          placeholder={role === 'university' ? 'e.g., xyz university' : 'e.g., ABC College'}
-                          value={institutionName}
-                          onChange={(e) => setInstitutionName(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fullName">Contact Person Name</Label>
-                        <Input
-                          id="fullName"
-                          placeholder="Your full name"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@institution.edu"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Password</Label>
-                      {mode === 'login' && (
+                      <div>
                         <button
                           type="button"
-                          onClick={() => setMode('forgot-password')}
-                          className="text-xs text-primary hover:underline"
+                          onClick={() => {
+                            setSignupStep('details');
+                            setOtp('');
+                          }}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mx-auto"
                         >
-                          Forgot password?
+                          <ArrowLeft className="h-4 w-4" />
+                          Change email
                         </button>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                      </div>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    {mode === 'signup' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="institutionName" className="text-sm font-medium">
+                            {role === 'university' ? 'University Name' : 'College Name'}
+                          </Label>
+                          <Input
+                            id="institutionName"
+                            placeholder={role === 'university' ? 'e.g., xyz university' : 'e.g., ABC College'}
+                            value={institutionName}
+                            onChange={(e) => setInstitutionName(e.target.value)}
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="fullName" className="text-sm font-medium">Contact Person Name</Label>
+                          <Input
+                            id="fullName"
+                            placeholder="Your full name"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="h-11"
+                          />
+                        </div>
+                      </>
+                    )}
 
-                  {mode === 'signup' && (
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <PhoneInput
-                        value={phoneNumber}
-                        onChange={setPhoneNumber}
-                      />
+                      <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="you@institution.edu"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10 h-11"
+                        />
+                      </div>
                     </div>
-                  )}
 
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {mode === 'login' ? 'Sign In' : 'Create Account'}
-                  </Button>
-                </>
-              )}
-            </form>
-          )}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                        {mode === 'login' && (
+                          <button
+                            type="button"
+                            onClick={() => setMode('forgot-password')}
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
+                            Forgot password?
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10 pr-10 h-11"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
 
-          {mode !== 'forgot-password' && signupStep === 'details' && (
-            <div className="mt-6 text-center text-sm">
-              {mode === 'login' ? (
-                <p>
-                  Don't have an account?{' '}
-                  <button
-                    onClick={() => setMode('signup')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign up
-                  </button>
+                    {mode === 'signup' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                        <PhoneInput
+                          value={phoneNumber}
+                          onChange={setPhoneNumber}
+                        />
+                      </div>
+                    )}
+
+                    <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {mode === 'login' ? 'Sign In' : 'Create Account'}
+                    </Button>
+                  </>
+                )}
+              </form>
+            )}
+
+            {mode !== 'forgot-password' && signupStep === 'details' && (
+              <div className="mt-6 text-center text-sm">
+                {mode === 'login' ? (
+                  <p className="text-muted-foreground">
+                    Don't have an account?{' '}
+                    <button
+                      onClick={() => setMode('signup')}
+                      className="text-primary hover:underline font-semibold"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Already have an account?{' '}
+                    <button
+                      onClick={() => setMode('login')}
+                      className="text-primary hover:underline font-semibold"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                )}
+                <p className="mt-2 text-muted-foreground">
+                  <Link to="/auth" className="hover:underline text-primary font-medium">
+                    Login as Student/Company →
+                  </Link>
                 </p>
-              ) : (
-                <p>
-                  Already have an account?{' '}
-                  <button
-                    onClick={() => setMode('login')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign in
-                  </button>
-                </p>
-              )}
-              <p className="mt-2 text-muted-foreground">
-                <Link to="/auth" className="hover:underline">
-                  Login as Student/Company
-                </Link>
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
