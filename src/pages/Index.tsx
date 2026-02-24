@@ -53,10 +53,10 @@ const Index = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 stagger-children">
             {stats.map((stat, i) => (
-              <div key={i} className="text-center animate-slide-up" style={{ animationDelay: `${0.3 + i * 0.1}s` }}>
-                <div className="text-3xl md:text-4xl font-heading font-bold gradient-text">{stat.value}</div>
+              <div key={i} className="text-center p-6 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover-lift">
+                <div className="text-3xl md:text-4xl font-heading font-bold gradient-text animate-count-up">{stat.value}</div>
                 <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
