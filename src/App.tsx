@@ -28,6 +28,7 @@ import UniversityDashboard from "./pages/university/UniversityDashboard";
 import CollegeDashboard from "./pages/college/CollegeDashboard";
 import UserJourneyMap from "./pages/UserJourneyMap";
 import ArchitectureDoc from "./pages/admin/ArchitectureDoc";
+import FlowchartDoc from "./pages/admin/FlowchartDoc";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +105,14 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <PageTransition><ArchitectureDoc /></PageTransition>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/flowchart-documentation" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <PageTransition><FlowchartDoc /></PageTransition>
             </ProtectedRoute>
           } 
         />
