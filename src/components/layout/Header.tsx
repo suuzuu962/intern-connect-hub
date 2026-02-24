@@ -62,8 +62,8 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
               <span className="text-xl font-bold text-primary-foreground">EL</span>
             </div>
             <span className="text-xl font-heading font-bold text-foreground">

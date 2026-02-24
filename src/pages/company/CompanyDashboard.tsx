@@ -201,19 +201,19 @@ const CompanyDashboard = () => {
     <Layout>
       <div className="flex min-h-[calc(100vh-4rem)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-card border-r border-border shrink-0">
-          <div className="p-4 border-b border-border">
+        <aside className="w-64 dashboard-sidebar shrink-0">
+          <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
               {company?.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-10 w-10 rounded-full object-cover" />
+                <img src={company.logo_url} alt={company.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-sidebar-primary/30" />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary" />
+                <div className="h-10 w-10 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-sidebar-primary" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{company?.name || 'Company'}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="font-semibold truncate text-sidebar-foreground">{company?.name || 'Company'}</p>
+                <p className="text-xs text-sidebar-foreground/60">
                   {company?.is_verified ? '✓ Verified' : 'Pending Verification'}
                 </p>
               </div>
@@ -226,10 +226,8 @@ const CompanyDashboard = () => {
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  activeSection === item.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  'dashboard-sidebar-item',
+                  activeSection === item.id && 'active'
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -240,7 +238,7 @@ const CompanyDashboard = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto bg-background">
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
           {renderContent()}
         </main>
       </div>

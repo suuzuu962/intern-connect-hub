@@ -244,7 +244,7 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
   const remainingCount = missingFields.length - 5;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-transition">
       {/* Profile Completion Card */}
       <Card>
         <CardContent className="p-6">
@@ -315,30 +315,30 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-children">
+        <Card className="stat-card stat-card-blue hover-glow">
           <CardContent className="p-4">
             <div className="flex flex-col">
-              <Briefcase className="h-5 w-5 text-primary mb-2" />
-              <span className="text-2xl font-bold">{stats.total}</span>
+              <Briefcase className="h-5 w-5 text-info mb-2" />
+              <span className="text-2xl font-bold animate-count-up">{stats.total}</span>
               <span className="text-sm text-muted-foreground">Applied Internships</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stat-card stat-card-amber hover-glow">
           <CardContent className="p-4">
             <div className="flex flex-col">
-              <Clock className="h-5 w-5 text-yellow-500 mb-2" />
-              <span className="text-2xl font-bold">{stats.pending}</span>
+              <Clock className="h-5 w-5 text-warning mb-2" />
+              <span className="text-2xl font-bold animate-count-up">{stats.pending}</span>
               <span className="text-sm text-muted-foreground">Pending Review</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="stat-card stat-card-green hover-glow">
           <CardContent className="p-4">
             <div className="flex flex-col">
-              <CheckCircle className="h-5 w-5 text-green-500 mb-2" />
-              <span className="text-2xl font-bold">{stats.approved}</span>
+              <CheckCircle className="h-5 w-5 text-success mb-2" />
+              <span className="text-2xl font-bold animate-count-up">{stats.approved}</span>
               <span className="text-sm text-muted-foreground">Approved</span>
             </div>
           </CardContent>

@@ -95,15 +95,15 @@ const StudentDashboard = () => {
     <Layout>
       <div className="flex min-h-[calc(100vh-4rem)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-card border-r border-border shrink-0">
-          <div className="p-4 border-b border-border">
+        <aside className="w-64 dashboard-sidebar shrink-0">
+          <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+                <User className="h-5 w-5 text-sidebar-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">Student Dashboard</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="font-semibold truncate text-sidebar-foreground">Student Dashboard</p>
+                <p className="text-xs text-sidebar-foreground/60">
                   {student?.university || 'Complete your profile'}
                 </p>
               </div>
@@ -116,10 +116,8 @@ const StudentDashboard = () => {
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  activeSection === item.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  'dashboard-sidebar-item',
+                  activeSection === item.id && 'active'
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -130,7 +128,7 @@ const StudentDashboard = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto bg-background">
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
           {renderContent()}
         </main>
       </div>
