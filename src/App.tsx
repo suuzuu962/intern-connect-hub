@@ -101,6 +101,14 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/admin/architecture-documentation" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ArchitectureDoc />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
