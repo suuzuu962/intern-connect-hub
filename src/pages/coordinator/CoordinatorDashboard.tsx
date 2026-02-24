@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Network } from 'lucide-react';
+import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile';
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
@@ -12,44 +11,39 @@ import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDi
 import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChart';
 import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { cn } from '@/lib/utils';
+
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'profile';
 
 const CoordinatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeSection, setActiveSection] = useState<ActiveSection>((searchParams.get('tab') as ActiveSection) || 'dashboard');
   const [coordinator, setCoordinator] = useState<CollegeCoordinator | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
-    }
+    const tab = searchParams.get('tab') as ActiveSection;
+    if (tab) setActiveSection(tab);
   }, [searchParams]);
 
   useEffect(() => {
     const fetchCoordinator = async () => {
       if (!user) return;
-
       const { data, error } = await supabase
         .from('college_coordinators')
         .select('*, college:colleges(*), university:universities(*)')
         .eq('user_id', user.id)
         .single();
-
-      if (error) {
-        console.error('Error fetching coordinator:', error);
-      } else {
-        setCoordinator(data);
-      }
+      if (error) console.error('Error fetching coordinator:', error);
+      else setCoordinator(data);
       setLoading(false);
     };
-
     fetchCoordinator();
   }, [user]);
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
+  const handleNavigate = (value: ActiveSection) => {
+    setActiveSection(value);
     setSearchParams({ tab: value });
   };
 
@@ -66,11 +60,9 @@ const CoordinatorDashboard = () => {
   if (!coordinator) {
     return (
       <Layout>
-        <div className="container py-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Coordinator Profile Not Found</h2>
-            <p className="text-muted-foreground">Please complete your profile setup.</p>
-          </div>
+        <div className="container py-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Coordinator Profile Not Found</h2>
+          <p className="text-muted-foreground">Please complete your profile setup.</p>
         </div>
       </Layout>
     );
@@ -85,7 +77,6 @@ const CoordinatorDashboard = () => {
             <AlertTitle>Pending Approval</AlertTitle>
             <AlertDescription>
               Your account is pending approval from the university. You'll be able to access the dashboard once approved.
-              In the meantime, you can update your profile.
             </AlertDescription>
           </Alert>
           <div className="mt-8 max-w-2xl mx-auto">
@@ -96,50 +87,63 @@ const CoordinatorDashboard = () => {
     );
   }
 
+  const sidebarItems = [
+    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
+    { id: 'students' as const, label: 'All Students', icon: Users },
+    { id: 'diary' as const, label: 'Diary Approvals', icon: BookOpen },
+    { id: 'profile' as const, label: 'Profile', icon: Settings },
+  ];
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard': return <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="summary" />;
+      case 'org-chart': return <CoordinatorOrgChart coordinatorId={coordinator.id} collegeId={coordinator.college_id} />;
+      case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" /></PermissionGate>;
+      case 'diary': return <PermissionGate permission="activity.review" showForbidden><CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} /></PermissionGate>;
+      case 'profile': return <CoordinatorProfile coordinator={coordinator} onUpdate={setCoordinator} />;
+      default: return null;
+    }
+  };
+
   return (
     <Layout>
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">{coordinator.college?.name || 'College Coordinator'}</h1>
-          <p className="text-muted-foreground">{coordinator.name}</p>
-        </div>
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+                <User className="h-5 w-5 text-sidebar-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate text-sidebar-foreground">{coordinator.name}</p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">
+                  {coordinator.college?.name || 'Coordinator'}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-5 mb-8">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="org-chart" className="flex items-center gap-1">
-              <Network className="h-3 w-3" />
-              Org Chart
-            </TabsTrigger>
-            <TabsTrigger value="students">All Students</TabsTrigger>
-            <TabsTrigger value="diary">Diary Approvals</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
+          <nav className="p-2 space-y-1 flex-1">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavigate(item.id)}
+                className={cn(
+                  'dashboard-sidebar-item',
+                  activeSection === item.id && 'active'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-          <TabsContent value="dashboard">
-            <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="summary" />
-          </TabsContent>
-
-          <TabsContent value="org-chart">
-            <CoordinatorOrgChart coordinatorId={coordinator.id} collegeId={coordinator.college_id} />
-          </TabsContent>
-
-          <TabsContent value="students">
-            <PermissionGate permission="activity.view_college" showForbidden>
-              <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" />
-            </PermissionGate>
-          </TabsContent>
-
-          <TabsContent value="diary">
-            <PermissionGate permission="activity.review" showForbidden>
-              <CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} />
-            </PermissionGate>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <CoordinatorProfile coordinator={coordinator} onUpdate={setCoordinator} />
-          </TabsContent>
-        </Tabs>
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+          {renderContent()}
+        </main>
       </div>
     </Layout>
   );

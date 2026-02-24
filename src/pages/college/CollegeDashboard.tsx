@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, Network } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, Network, LayoutDashboard, UserCheck, Settings } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
@@ -15,15 +14,18 @@ import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval'
 import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
 import { College } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { cn } from '@/lib/utils';
 
 interface CollegeWithStats extends College {
   studentCount?: number;
   coordinatorCount?: number;
 }
 
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'coordinators' | 'profile';
+
 const CollegeDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeSection, setActiveSection] = useState<ActiveSection>((searchParams.get('tab') as ActiveSection) || 'dashboard');
   const [college, setCollege] = useState<CollegeWithStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ students: 0, coordinators: 0, diaryEntries: 0 });
@@ -31,17 +33,13 @@ const CollegeDashboard = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
-    }
+    const tab = searchParams.get('tab') as ActiveSection;
+    if (tab) setActiveSection(tab);
   }, [searchParams]);
 
   useEffect(() => {
     const fetchCollege = async () => {
       if (!user) return;
-
-      // First, check if user is a college coordinator with a college
       const { data: coordinatorData, error: coordinatorError } = await supabase
         .from('college_coordinators')
         .select('*, college:colleges(*, university:universities(*))')
@@ -56,45 +54,26 @@ const CollegeDashboard = () => {
 
       if (coordinatorData?.college) {
         setCollege(coordinatorData.college);
-
-        // Fetch stats
         const [studentsResult, coordinatorsResult, diaryResult] = await Promise.all([
-          supabase
-            .from('students')
-            .select('id', { count: 'exact', head: true })
-            .eq('college_id', coordinatorData.college.id),
-          supabase
-            .from('college_coordinators')
-            .select('id', { count: 'exact', head: true })
-            .eq('college_id', coordinatorData.college.id)
-            .eq('is_approved', true),
-          supabase
-            .from('internship_diary')
-            .select('id', { count: 'exact', head: true })
-            .in('student_id', 
-              (await supabase
-                .from('students')
-                .select('id')
-                .eq('college_id', coordinatorData.college.id)
-              ).data?.map(s => s.id) || []
-            )
+          supabase.from('students').select('id', { count: 'exact', head: true }).eq('college_id', coordinatorData.college.id),
+          supabase.from('college_coordinators').select('id', { count: 'exact', head: true }).eq('college_id', coordinatorData.college.id).eq('is_approved', true),
+          supabase.from('internship_diary').select('id', { count: 'exact', head: true }).in('student_id',
+            (await supabase.from('students').select('id').eq('college_id', coordinatorData.college.id)).data?.map(s => s.id) || []
+          )
         ]);
-
         setStats({
           students: studentsResult.count || 0,
           coordinators: coordinatorsResult.count || 0,
           diaryEntries: diaryResult.count || 0,
         });
       }
-
       setLoading(false);
     };
-
     fetchCollege();
   }, [user]);
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
+  const handleNavigate = (value: ActiveSection) => {
+    setActiveSection(value);
     setSearchParams({ tab: value });
   };
 
@@ -116,7 +95,7 @@ const CollegeDashboard = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>College Not Assigned</AlertTitle>
             <AlertDescription>
-              Your account is not yet associated with a college. Please contact your university administrator to assign you to a college.
+              Your account is not yet associated with a college. Please contact your university administrator.
             </AlertDescription>
           </Alert>
         </div>
@@ -124,54 +103,21 @@ const CollegeDashboard = () => {
     );
   }
 
-  return (
-    <Layout>
-      <div className="container py-8">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <GraduationCap className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">{college.name}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={college.is_active ? 'default' : 'secondary'}>
-                {college.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-              {college.university && (
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Building className="h-4 w-4" />
-                  {college.university.name}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+  const sidebarItems = [
+    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
+    { id: 'students' as const, label: 'Students', icon: Users },
+    { id: 'diary-approvals' as const, label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
+    { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck },
+    { id: 'profile' as const, label: 'Profile', icon: Settings },
+  ];
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-6 mb-8">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="org-chart" className="flex items-center gap-1">
-              <Network className="h-3 w-3" />
-              Org Chart
-            </TabsTrigger>
-            <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="diary-approvals" className="relative">
-              Diary Approvals
-              {pendingDiaryCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
-                >
-                  {pendingDiaryCount > 99 ? '99+' : pendingDiaryCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="coordinators">Coordinators</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard">
-            <div className="grid gap-6 md:grid-cols-3 mb-8">
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-3">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Total Students</CardTitle>
@@ -203,40 +149,63 @@ const CollegeDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-
             <CollegeStudents collegeId={college.id} viewMode="summary" />
-          </TabsContent>
+          </div>
+        );
+      case 'org-chart': return <CollegeOrgChart collegeId={college.id} />;
+      case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CollegeStudents collegeId={college.id} viewMode="detailed" /></PermissionGate>;
+      case 'diary-approvals': return <PermissionGate permission="activity.review" showForbidden><CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} /></PermissionGate>;
+      case 'coordinators': return <PermissionGate permission="user.edit" showForbidden><CollegeCoordinators collegeId={college.id} /></PermissionGate>;
+      case 'profile': return <CollegeProfile college={college} onUpdate={setCollege} />;
+      default: return null;
+    }
+  };
 
-          <TabsContent value="org-chart">
-            <CollegeOrgChart collegeId={college.id} />
-          </TabsContent>
+  return (
+    <Layout>
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-sidebar-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate text-sidebar-foreground">{college.name}</p>
+                <p className="text-xs text-sidebar-foreground/60 flex items-center gap-1">
+                  <Badge variant={college.is_active ? 'default' : 'secondary'} className="text-[10px] h-4">
+                    {college.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <TabsContent value="students">
-            <PermissionGate permission="activity.view_college" showForbidden>
-              <CollegeStudents collegeId={college.id} viewMode="detailed" />
-            </PermissionGate>
-          </TabsContent>
+          <nav className="p-2 space-y-1 flex-1">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavigate(item.id)}
+                className={cn(
+                  'dashboard-sidebar-item relative',
+                  activeSection === item.id && 'active'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+                {item.badge && (
+                  <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1.5">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-          <TabsContent value="diary-approvals">
-            <PermissionGate permission="activity.review" showForbidden>
-              <CollegeDiaryApproval 
-                collegeId={college.id} 
-                collegeName={college.name}
-                onPendingCountChange={setPendingDiaryCount}
-              />
-            </PermissionGate>
-          </TabsContent>
-
-          <TabsContent value="coordinators">
-            <PermissionGate permission="user.edit" showForbidden>
-              <CollegeCoordinators collegeId={college.id} />
-            </PermissionGate>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <CollegeProfile college={college} onUpdate={setCollege} />
-          </TabsContent>
-        </Tabs>
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+          {renderContent()}
+        </main>
       </div>
     </Layout>
   );

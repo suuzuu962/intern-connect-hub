@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminOverview } from '@/components/admin/AdminOverview';
 import { CompanyApprovalManagement } from '@/components/admin/CompanyApprovalManagement';
 import { InternshipManagement } from '@/components/admin/InternshipManagement';
@@ -20,180 +19,124 @@ import { BannerManagement } from '@/components/admin/BannerManagement';
 import { RolePermissions } from '@/components/admin/RolePermissions';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type ActiveSection = 'overview' | 'org-chart' | 'admins' | 'companies' | 'internships' | 'students' | 'universities' | 'colleges' | 'coordinators' | 'banners' | 'permissions' | 'access-control' | 'settings' | 'payments' | 'security' | 'notifications' | 'reports';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('section') || 'overview');
+  const [activeSection, setActiveSection] = useState<ActiveSection>((searchParams.get('section') as ActiveSection) || 'overview');
 
   useEffect(() => {
-    const section = searchParams.get('section');
+    const section = searchParams.get('section') as ActiveSection;
     if (section) {
-      setActiveTab(section);
+      setActiveSection(section);
     }
   }, [searchParams]);
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
+  const handleNavigate = (value: ActiveSection) => {
+    setActiveSection(value);
     setSearchParams({ section: value });
+  };
+
+  const mainItems = [
+    { id: 'overview' as const, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
+    { id: 'admins' as const, label: 'Admins', icon: ShieldCheck },
+    { id: 'companies' as const, label: 'Companies', icon: Building2 },
+    { id: 'internships' as const, label: 'Internships', icon: Briefcase },
+    { id: 'students' as const, label: 'Students', icon: Users },
+    { id: 'universities' as const, label: 'Universities', icon: GraduationCap },
+    { id: 'colleges' as const, label: 'Colleges', icon: School },
+    { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck },
+    { id: 'banners' as const, label: 'Banners', icon: Image },
+  ];
+
+  const bottomItems = [
+    { id: 'permissions' as const, label: 'Permissions', icon: Key },
+    { id: 'access-control' as const, label: 'Access Control', icon: Lock },
+    { id: 'payments' as const, label: 'Payments', icon: CreditCard },
+    { id: 'security' as const, label: 'Security Logs', icon: FileText },
+    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+    { id: 'reports' as const, label: 'Reports', icon: Download },
+    { id: 'settings' as const, label: 'Settings', icon: Settings },
+  ];
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'overview': return <AdminOverview onNavigate={(s) => handleNavigate(s as ActiveSection)} />;
+      case 'org-chart': return <AdminOrgChart />;
+      case 'admins': return <AdminManagement />;
+      case 'companies': return <CompanyApprovalManagement />;
+      case 'internships': return <InternshipManagement />;
+      case 'students': return <StudentManagement />;
+      case 'universities': return <UniversityManagement />;
+      case 'colleges': return <CollegeManagement />;
+      case 'coordinators': return <CoordinatorManagement />;
+      case 'banners': return <BannerManagement />;
+      case 'permissions': return <RolePermissions />;
+      case 'access-control': return <AccessControlManager />;
+      case 'settings': return <PlatformSettings />;
+      case 'payments': return <PaymentsManagement />;
+      case 'security': return <SecurityLogs />;
+      case 'notifications': return <NotificationManagement />;
+      case 'reports': return <DataExport />;
+      default: return null;
+    }
   };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Shield className="h-6 w-6 text-primary" />
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-sidebar-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate text-sidebar-foreground">Super Admin</p>
+                <p className="text-xs text-sidebar-foreground/60">Platform Management</p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
           </div>
-          <p className="text-muted-foreground">
-            Manage companies, internships, universities, colleges, and students across the platform.
-          </p>
-        </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-8 lg:grid-cols-16 mb-8">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="org-chart" className="flex items-center gap-2">
-              <Network className="h-4 w-4" />
-              <span className="hidden sm:inline">Org Chart</span>
-            </TabsTrigger>
-            <TabsTrigger value="admins" className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Admins</span>
-            </TabsTrigger>
-            <TabsTrigger value="companies" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Companies</span>
-            </TabsTrigger>
-            <TabsTrigger value="internships" className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              <span className="hidden sm:inline">Internships</span>
-            </TabsTrigger>
-            <TabsTrigger value="students" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Students</span>
-            </TabsTrigger>
-            <TabsTrigger value="universities" className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
-              <span className="hidden sm:inline">Universities</span>
-            </TabsTrigger>
-            <TabsTrigger value="colleges" className="flex items-center gap-2">
-              <School className="h-4 w-4" />
-              <span className="hidden sm:inline">Colleges</span>
-            </TabsTrigger>
-            <TabsTrigger value="coordinators" className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Coordinators</span>
-            </TabsTrigger>
-            <TabsTrigger value="banners" className="flex items-center gap-2">
-              <Image className="h-4 w-4" />
-              <span className="hidden sm:inline">Banners</span>
-            </TabsTrigger>
-            <TabsTrigger value="permissions" className="flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              <span className="hidden sm:inline">Permissions</span>
-            </TabsTrigger>
-            <TabsTrigger value="access-control" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              <span className="hidden sm:inline">Access Control</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              <span className="hidden sm:inline">Payments</span>
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Security</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notifications</span>
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Reports</span>
-            </TabsTrigger>
-          </TabsList>
+          <nav className="p-2 space-y-1 flex-1 overflow-y-auto">
+            {mainItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavigate(item.id)}
+                className={cn(
+                  'dashboard-sidebar-item',
+                  activeSection === item.id && 'active'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
 
-          <TabsContent value="overview">
-            <AdminOverview onNavigate={handleTabChange} />
-          </TabsContent>
+          <div className="p-2 space-y-1 border-t border-sidebar-border">
+            {bottomItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavigate(item.id)}
+                className={cn(
+                  'dashboard-sidebar-item',
+                  activeSection === item.id && 'active'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </aside>
 
-          <TabsContent value="org-chart">
-            <AdminOrgChart />
-          </TabsContent>
-
-          <TabsContent value="admins">
-            <AdminManagement />
-          </TabsContent>
-
-          <TabsContent value="companies">
-            <CompanyApprovalManagement />
-          </TabsContent>
-
-          <TabsContent value="internships">
-            <InternshipManagement />
-          </TabsContent>
-
-          <TabsContent value="students">
-            <StudentManagement />
-          </TabsContent>
-
-          <TabsContent value="universities">
-            <UniversityManagement />
-          </TabsContent>
-
-          <TabsContent value="colleges">
-            <CollegeManagement />
-          </TabsContent>
-
-          <TabsContent value="coordinators">
-            <CoordinatorManagement />
-          </TabsContent>
-
-          <TabsContent value="banners">
-            <BannerManagement />
-          </TabsContent>
-
-          <TabsContent value="permissions">
-            <RolePermissions />
-          </TabsContent>
-
-          <TabsContent value="access-control">
-            <AccessControlManager />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <PlatformSettings />
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <PaymentsManagement />
-          </TabsContent>
-
-          <TabsContent value="security">
-            <SecurityLogs />
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <NotificationManagement />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <DataExport />
-          </TabsContent>
-        </Tabs>
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+          {renderContent()}
+        </main>
       </div>
     </Layout>
   );
