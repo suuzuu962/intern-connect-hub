@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ZoomProvider } from "@/contexts/ZoomContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { isSuperAdmin } from "@/lib/super-admin";
 import { ZoomControls } from "@/components/layout/ZoomControls";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -32,6 +33,15 @@ import FlowchartDoc from "./pages/admin/FlowchartDoc";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Route guard: only the super admin email can access
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  if (!isSuperAdmin(user?.email)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -96,7 +106,9 @@ const AnimatedRoutes = () => {
           path="/admin/architecture-doc" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <PageTransition><ArchitectureDoc /></PageTransition>
+              <SuperAdminRoute>
+                <PageTransition><ArchitectureDoc /></PageTransition>
+              </SuperAdminRoute>
             </ProtectedRoute>
           } 
         />
@@ -104,7 +116,9 @@ const AnimatedRoutes = () => {
           path="/admin/architecture-documentation" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <PageTransition><ArchitectureDoc /></PageTransition>
+              <SuperAdminRoute>
+                <PageTransition><ArchitectureDoc /></PageTransition>
+              </SuperAdminRoute>
             </ProtectedRoute>
           } 
         />
@@ -112,7 +126,9 @@ const AnimatedRoutes = () => {
           path="/admin/flowchart-documentation" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <PageTransition><FlowchartDoc /></PageTransition>
+              <SuperAdminRoute>
+                <PageTransition><FlowchartDoc /></PageTransition>
+              </SuperAdminRoute>
             </ProtectedRoute>
           } 
         />
