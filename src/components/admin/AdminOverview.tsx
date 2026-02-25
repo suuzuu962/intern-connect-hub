@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { isSuperAdmin } from '@/lib/super-admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch } from 'lucide-react';
+import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +25,8 @@ interface AdminOverviewProps {
 export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const showDocs = isSuperAdmin(user?.email);
   const [stats, setStats] = useState<Stats>({
     totalCompanies: 0,
     verifiedCompanies: 0,
@@ -228,26 +232,49 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
         </Card>
       </div>
 
-      {/* Quick Links */}
-      <Card 
-        className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
-        onClick={() => navigate('/admin/flowchart-documentation')}
-      >
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg group-hover:text-primary transition-colors">
-            <div className="p-2 rounded-lg bg-primary/10 group-hover:scale-110 transition-transform">
-              <GitBranch className="h-5 w-5 text-primary" />
-            </div>
-            Flowchart Documentation
-          </CardTitle>
-          <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            View and scan platform flowcharts — registration flows, application lifecycles, RBAC resolution, and more.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Quick Links — Super Admin Only */}
+      {showDocs && (
+        <>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
+            onClick={() => navigate('/admin/architecture-doc')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg group-hover:text-primary transition-colors">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:scale-110 transition-transform">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                Architecture Documentation
+              </CardTitle>
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Complete platform architecture reference — schema, roles, RBAC, edge functions, and RLS patterns.
+              </p>
+            </CardContent>
+          </Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
+            onClick={() => navigate('/admin/flowchart-documentation')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg group-hover:text-primary transition-colors">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:scale-110 transition-transform">
+                  <GitBranch className="h-5 w-5 text-primary" />
+                </div>
+                Flowchart Documentation
+              </CardTitle>
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                View and scan platform flowcharts — registration flows, application lifecycles, RBAC resolution, and more.
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
