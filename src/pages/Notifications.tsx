@@ -175,12 +175,12 @@ const Notifications = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
             <div>
-              <h1 className="text-3xl font-heading font-bold">Notifications</h1>
+              <h1 className="text-2xl sm:text-3xl font-heading font-bold">Notifications</h1>
               <p className="text-muted-foreground">
                 {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
               </p>
