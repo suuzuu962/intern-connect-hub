@@ -68,24 +68,38 @@ export const AdminManagement = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch admin roles first
+      const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
-        .select(`
-          id,
-          user_id,
-          role,
-          created_at,
-          profile:profiles!user_roles_user_id_fkey(email, full_name, phone_number)
-        `)
+        .select("id, user_id, role, created_at")
         .eq("role", "admin")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (rolesError) throw rolesError;
 
-      // Transform data to handle the profile array
-      const transformedData = (data || []).map(item => ({
+      if (!rolesData || rolesData.length === 0) {
+        setAdmins([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch profiles for these admin users
+      const userIds = rolesData.map(r => r.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, email, full_name, phone_number")
+        .in("user_id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Merge roles with profiles
+      const profileMap = new Map(
+        (profilesData || []).map(p => [p.user_id, { email: p.email, full_name: p.full_name, phone_number: p.phone_number }])
+      );
+
+      const transformedData = rolesData.map(item => ({
         ...item,
-        profile: Array.isArray(item.profile) ? item.profile[0] : item.profile
+        profile: profileMap.get(item.user_id) || null,
       }));
 
       setAdmins(transformedData);
