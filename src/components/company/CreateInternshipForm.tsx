@@ -11,8 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2, Briefcase, Plus, ChevronDown, X, AlertTriangle } from 'lucide-react';
+import { Loader2, Briefcase, Plus, ChevronDown, X, AlertTriangle, Sparkles } from 'lucide-react';
 import { internshipDomains, domainSkillsMap, getSuggestedSkills } from '@/lib/domain-skills';
+import { supabase } from '@/integrations/supabase/client';
 
 const durationOptions = [
   '1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', '1 Year'

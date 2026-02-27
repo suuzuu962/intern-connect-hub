@@ -133,6 +133,7 @@ const StudentDashboard = () => {
           {renderContent()}
         </main>
       </div>
+      <CareerChatbot />
     </Layout>
   );
 };
