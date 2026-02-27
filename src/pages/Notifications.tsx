@@ -194,9 +194,9 @@ const Notifications = () => {
           </div>
 
           {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
+          <Card className="mb-4 md:mb-6">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -208,7 +208,7 @@ const Notifications = () => {
                 </div>
                 <div className="flex gap-2">
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[120px] sm:w-[140px]">
                       <Filter className="h-4 w-4 mr-2" />
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>

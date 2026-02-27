@@ -4,8 +4,8 @@ import { Separator } from "@/components/ui/separator";
 const Terms = () => {
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold text-center mb-2">Terms and Conditions of Service and Use</h1>
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2">Terms and Conditions of Service and Use</h1>
         <p className="text-center text-muted-foreground mb-8">Welcome to Economic Labs</p>
         
         <Separator className="my-8" />
