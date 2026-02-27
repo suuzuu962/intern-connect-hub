@@ -13,7 +13,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { Loader2, Briefcase, Plus, ChevronDown, X, AlertTriangle, Sparkles } from 'lucide-react';
 import { internshipDomains, domainSkillsMap, getSuggestedSkills } from '@/lib/domain-skills';
-import { supabase } from '@/integrations/supabase/client';
 
 const durationOptions = [
   '1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', '1 Year'
