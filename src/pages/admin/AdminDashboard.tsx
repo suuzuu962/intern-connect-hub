@@ -86,8 +86,8 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
+    <Layout hideFooter>
+      <div className="flex h-[calc(100vh-4rem)]">
         <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
           <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ const AdminDashboard = () => {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition min-h-0">
           {renderContent()}
         </main>
       </div>
