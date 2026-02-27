@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, Briefcase, CheckCircle, Clock, AlertCircle, UserCog } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { InternshipRecommendations } from './InternshipRecommendations';
+import { ResumeAnalysis } from './ResumeAnalysis';
 
 interface StudentInfo {
   id: string;
@@ -344,6 +345,13 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Profile Analysis */}
+      <ResumeAnalysis
+        studentSkills={studentFullData?.skills || student?.skills || null}
+        interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
+        resumeUrl={null}
+      />
 
       {/* Internship Recommendations */}
       <InternshipRecommendations 
