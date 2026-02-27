@@ -365,6 +365,22 @@ export const UniversityManagement = () => {
 
   const handleChangeUniversityRole = async (universityId: string, userId: string, newRoleId: string) => {
     try {
+      // Verify the user still exists in the auth system before attempting role assignment
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!profileData) {
+        toast({ 
+          title: 'Error', 
+          description: 'Cannot assign role: this university\'s user account no longer exists. The account may have been deleted.', 
+          variant: 'destructive' 
+        });
+        return;
+      }
+
       await supabase.from('user_custom_roles').delete().eq('user_id', userId);
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from('user_custom_roles').insert({
