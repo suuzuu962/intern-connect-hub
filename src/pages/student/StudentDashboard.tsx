@@ -9,6 +9,7 @@ import { StudentProfileForm } from '@/components/student/StudentProfileForm';
 import { AppliedInternships } from '@/components/student/AppliedInternships';
 import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
+import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { cn } from '@/lib/utils';
 
 interface StudentInfo {
