@@ -134,7 +134,7 @@ const AdminDashboard = () => {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+        <main className="flex-1 p-6 overflow-auto bg-background page-transition min-h-0">
           {renderContent()}
         </main>
       </div>
