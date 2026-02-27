@@ -86,8 +86,8 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
+    <Layout hideFooter>
+      <div className="flex h-[calc(100vh-4rem)]">
         <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
           <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
