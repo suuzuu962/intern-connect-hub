@@ -291,7 +291,46 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <RequiredLabel>About Internship</RequiredLabel>
+            <div className="flex items-center justify-between">
+              <RequiredLabel>About Internship</RequiredLabel>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={generating || !formData.title.trim()}
+                onClick={async () => {
+                  setGenerating(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke('generate-internship-description', {
+                      body: {
+                        title: formData.title,
+                        domains: allSelectedDomains,
+                        skills: formData.skills,
+                        workMode: formData.work_mode,
+                        duration: formData.duration,
+                        internshipType: formData.internship_type,
+                      },
+                    });
+                    if (error) throw error;
+                    if (data?.error) { toast.error(data.error); return; }
+                    if (data?.short_description) handleChange('short_description', data.short_description);
+                    if (data?.description) handleChange('description', data.description);
+                    toast.success('Description generated!');
+                  } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to generate description');
+                  } finally {
+                    setGenerating(false);
+                  }
+                }}
+              >
+                {generating ? (
+                  <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                ) : (
+                  <><Sparkles className="h-3 w-3 mr-1" /> AI Generate</>
+                )}
+              </Button>
+            </div>
             <Textarea
               rows={5}
               value={formData.description}
