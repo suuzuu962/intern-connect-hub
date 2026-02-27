@@ -52,6 +52,7 @@ interface CompanyLimits {
 
 export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
