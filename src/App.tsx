@@ -10,6 +10,7 @@ import { isSuperAdmin } from "@/lib/super-admin";
 import { ZoomControls } from "@/components/layout/ZoomControls";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import UniversityAuth from "./pages/UniversityAuth";
