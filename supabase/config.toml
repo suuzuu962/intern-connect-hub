@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.admin-create-user]
 verify_jwt = false
+
+[functions.analyze-resume]
+verify_jwt = false
+
+[functions.generate-internship-description]
+verify_jwt = false
+
+[functions.career-chat]
+verify_jwt = false
