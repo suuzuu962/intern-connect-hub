@@ -66,11 +66,11 @@ const Internships = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">Find Internships</h1>
-            <p className="text-muted-foreground">Discover {totalCount} opportunities waiting for you</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold mb-1">Find Internships</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Discover {totalCount} opportunities waiting for you</p>
           </div>
           
           {/* View Toggle */}

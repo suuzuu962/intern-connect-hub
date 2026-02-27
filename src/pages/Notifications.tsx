@@ -175,12 +175,12 @@ const Notifications = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
             <div>
-              <h1 className="text-3xl font-heading font-bold">Notifications</h1>
+              <h1 className="text-2xl sm:text-3xl font-heading font-bold">Notifications</h1>
               <p className="text-muted-foreground">
                 {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
               </p>
@@ -194,9 +194,9 @@ const Notifications = () => {
           </div>
 
           {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
+          <Card className="mb-4 md:mb-6">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -208,7 +208,7 @@ const Notifications = () => {
                 </div>
                 <div className="flex gap-2">
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[120px] sm:w-[140px]">
                       <Filter className="h-4 w-4 mr-2" />
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
