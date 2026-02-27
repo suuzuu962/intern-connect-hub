@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, Briefcase, CheckCircle, Clock, AlertCircle, UserCog } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { InternshipRecommendations } from './InternshipRecommendations';
+import { ResumeAnalysis } from './ResumeAnalysis';
 
 interface StudentInfo {
   id: string;
