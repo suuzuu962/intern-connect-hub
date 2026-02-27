@@ -124,16 +124,23 @@ const Internships = () => {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <Pagination className="mt-12">
-            <PaginationContent>
-              <PaginationItem><PaginationPrevious onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} /></PaginationItem>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}><PaginationLink isActive={currentPage === page} onClick={() => setCurrentPage(page)}>{page}</PaginationLink></PaginationItem>
-              ))}
-              <PaginationItem><PaginationNext onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} /></PaginationItem>
-            </PaginationContent>
-          </Pagination>
+        {totalPages > 0 && (
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
+            <p className="text-sm text-muted-foreground">
+              Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalCount)}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount}
+            </p>
+            {totalPages > 1 && (
+              <Pagination className="mx-0 w-auto">
+                <PaginationContent>
+                  <PaginationItem><PaginationPrevious onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} /></PaginationItem>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}><PaginationLink isActive={currentPage === page} onClick={() => setCurrentPage(page)}>{page}</PaginationLink></PaginationItem>
+                  ))}
+                  <PaginationItem><PaginationNext onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} /></PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
         )}
       </div>
     </Layout>
