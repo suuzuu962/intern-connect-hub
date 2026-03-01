@@ -85,10 +85,12 @@ const UniversityDashboard = () => {
   const sidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network, visible: true },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, visible: true },
     { id: 'colleges' as const, label: 'Colleges', icon: School, visible: isTabVisible('colleges') },
     { id: 'students' as const, label: 'Students', icon: Users, visible: isTabVisible('students') },
     { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck, visible: isTabVisible('coordinators') },
     { id: 'users' as const, label: 'Users', icon: User, visible: true },
+    { id: 'memos' as const, label: 'Memos', icon: Mail, visible: true },
     { id: 'profile' as const, label: 'Profile', icon: Settings, visible: true },
   ].filter(i => i.visible);
 
