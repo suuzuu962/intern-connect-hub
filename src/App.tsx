@@ -31,6 +31,8 @@ import CollegeDashboard from "./pages/college/CollegeDashboard";
 import UserJourneyMap from "./pages/UserJourneyMap";
 import ArchitectureDoc from "./pages/admin/ArchitectureDoc";
 import FlowchartDoc from "./pages/admin/FlowchartDoc";
+import WorkFunnel from "./pages/WorkFunnel";
+import WorkflowDocumentation from "./pages/WorkflowDocumentation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
