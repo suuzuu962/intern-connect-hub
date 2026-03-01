@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings } from 'lucide-react';
+import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3 } from 'lucide-react';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
 import { UniversityUsers } from '@/components/university/UniversityUsers';
@@ -11,6 +11,8 @@ import { UniversityCoordinators } from '@/components/university/UniversityCoordi
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
+import { UniversityAnalytics } from '@/components/university/UniversityAnalytics';
+import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
