@@ -159,7 +159,9 @@ const CollegeDashboard = () => {
       case 'org-chart': return <CollegeOrgChart collegeId={college.id} />;
       case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CollegeStudents collegeId={college.id} viewMode="detailed" /></PermissionGate>;
       case 'diary-approvals': return <PermissionGate permission="activity.review" showForbidden><CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} /></PermissionGate>;
+      case 'attendance': return <AttendanceTracker collegeId={college.id} role="college" />;
       case 'coordinators': return <PermissionGate permission="user.edit" showForbidden><CollegeCoordinators collegeId={college.id} /></PermissionGate>;
+      case 'memos': return <InstitutionalMemos universityId={(college as any).university_id} collegeId={college.id} senderRole="college" senderName={college.name} />;
       case 'profile': return <CollegeProfile college={college} onUpdate={setCollege} />;
       default: return null;
     }
