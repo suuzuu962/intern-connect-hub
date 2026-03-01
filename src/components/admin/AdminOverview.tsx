@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSuperAdmin } from '@/lib/super-admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch, FileText } from 'lucide-react';
+import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch, FileText, TrendingUp } from 'lucide-react';
+import { AnalyticsFunnel } from '@/components/admin/AnalyticsFunnel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -231,6 +232,9 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Funnel */}
+      <AnalyticsFunnel />
 
       {/* Quick Links — Super Admin Only */}
       {showDocs && (

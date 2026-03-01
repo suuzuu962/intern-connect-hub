@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
 import { HomeBanners } from '@/components/home/HomeBanners';
+import { WorkFunnelSection } from '@/components/home/WorkFunnelSection';
 
 const Index = () => {
   const steps = [
@@ -96,6 +97,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Work Funnel */}
+      <WorkFunnelSection />
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20">
