@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings } from 'lucide-react';
+import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings, Mail, Calendar } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile';
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
