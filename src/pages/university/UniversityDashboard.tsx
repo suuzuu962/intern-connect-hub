@@ -17,7 +17,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate';
 import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'colleges' | 'students' | 'coordinators' | 'users' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
