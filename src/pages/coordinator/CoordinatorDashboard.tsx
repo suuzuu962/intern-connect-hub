@@ -94,6 +94,8 @@ const CoordinatorDashboard = () => {
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
     { id: 'students' as const, label: 'All Students', icon: Users },
     { id: 'diary' as const, label: 'Diary Approvals', icon: BookOpen },
+    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
+    { id: 'memos' as const, label: 'Memos', icon: Mail },
     { id: 'profile' as const, label: 'Profile', icon: Settings },
   ];
 
