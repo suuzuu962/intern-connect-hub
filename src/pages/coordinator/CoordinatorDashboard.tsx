@@ -9,6 +9,8 @@ import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile'
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
 import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
 import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChart';
+import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
+import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { cn } from '@/lib/utils';
