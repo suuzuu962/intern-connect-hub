@@ -4,7 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, Network, LayoutDashboard, UserCheck, Settings } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, Network, LayoutDashboard, UserCheck, Settings, Mail, Calendar } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
@@ -12,6 +12,8 @@ import { CollegeStudents } from '@/components/college/CollegeStudents';
 import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
 import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval';
 import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
+import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
+import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { College } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { cn } from '@/lib/utils';
@@ -21,7 +23,7 @@ interface CollegeWithStats extends College {
   coordinatorCount?: number;
 }
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'coordinators' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'attendance' | 'coordinators' | 'memos' | 'profile';
 
 const CollegeDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,7 +110,9 @@ const CollegeDashboard = () => {
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
     { id: 'students' as const, label: 'Students', icon: Users },
     { id: 'diary-approvals' as const, label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
+    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
     { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck },
+    { id: 'memos' as const, label: 'Memos', icon: Mail },
     { id: 'profile' as const, label: 'Profile', icon: Settings },
   ];
 
@@ -155,7 +159,9 @@ const CollegeDashboard = () => {
       case 'org-chart': return <CollegeOrgChart collegeId={college.id} />;
       case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CollegeStudents collegeId={college.id} viewMode="detailed" /></PermissionGate>;
       case 'diary-approvals': return <PermissionGate permission="activity.review" showForbidden><CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} /></PermissionGate>;
+      case 'attendance': return <AttendanceTracker collegeId={college.id} role="college" />;
       case 'coordinators': return <PermissionGate permission="user.edit" showForbidden><CollegeCoordinators collegeId={college.id} /></PermissionGate>;
+      case 'memos': return <InstitutionalMemos universityId={(college as any).university_id} collegeId={college.id} senderRole="college" senderName={college.name} />;
       case 'profile': return <CollegeProfile college={college} onUpdate={setCollege} />;
       default: return null;
     }

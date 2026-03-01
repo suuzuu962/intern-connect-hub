@@ -537,6 +537,74 @@ export type Database = {
         }
         Relationships: []
       }
+      institutional_memos: {
+        Row: {
+          attachments: Json | null
+          body: string
+          college_id: string | null
+          created_at: string
+          id: string
+          parent_memo_id: string | null
+          priority: string
+          read_at: string | null
+          recipient_id: string | null
+          recipient_type: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          status: string
+          subject: string
+          university_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          body: string
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          parent_memo_id?: string | null
+          priority?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_type: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          status?: string
+          subject: string
+          university_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          body?: string
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          parent_memo_id?: string | null
+          priority?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_type?: string
+          sender_id?: string
+          sender_name?: string
+          sender_role?: string
+          status?: string
+          subject?: string
+          university_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutional_memos_parent_memo_id_fkey"
+            columns: ["parent_memo_id"]
+            isOneToOne: false
+            referencedRelation: "institutional_memos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internship_diary: {
         Row: {
           application_id: string
@@ -990,6 +1058,72 @@ export type Database = {
           visible_fields?: string[] | null
         }
         Relationships: []
+      }
+      student_attendance: {
+        Row: {
+          attendance_date: string
+          check_in_time: string | null
+          check_out_time: string | null
+          college_id: string
+          created_at: string
+          hours_logged: number | null
+          id: string
+          marked_by: string | null
+          remarks: string | null
+          session_name: string | null
+          session_type: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendance_date: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          college_id: string
+          created_at?: string
+          hours_logged?: number | null
+          id?: string
+          marked_by?: string | null
+          remarks?: string | null
+          session_name?: string | null
+          session_type?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendance_date?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          college_id?: string
+          created_at?: string
+          hours_logged?: number | null
+          id?: string
+          marked_by?: string | null
+          remarks?: string | null
+          session_name?: string | null
+          session_type?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_attendance_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {

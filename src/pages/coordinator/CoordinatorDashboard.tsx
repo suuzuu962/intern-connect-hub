@@ -3,17 +3,19 @@ import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings } from 'lucide-react';
+import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings, Mail, Calendar } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile';
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
 import { CoordinatorDiaryApproval } from '@/components/coordinator/CoordinatorDiaryApproval';
 import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChart';
+import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
+import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { cn } from '@/lib/utils';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'attendance' | 'memos' | 'profile';
 
 const CoordinatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,6 +94,8 @@ const CoordinatorDashboard = () => {
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
     { id: 'students' as const, label: 'All Students', icon: Users },
     { id: 'diary' as const, label: 'Diary Approvals', icon: BookOpen },
+    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
+    { id: 'memos' as const, label: 'Memos', icon: Mail },
     { id: 'profile' as const, label: 'Profile', icon: Settings },
   ];
 
@@ -101,6 +105,8 @@ const CoordinatorDashboard = () => {
       case 'org-chart': return <CoordinatorOrgChart coordinatorId={coordinator.id} collegeId={coordinator.college_id} />;
       case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" /></PermissionGate>;
       case 'diary': return <PermissionGate permission="activity.review" showForbidden><CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} /></PermissionGate>;
+      case 'attendance': return coordinator.college_id ? <AttendanceTracker collegeId={coordinator.college_id} role="coordinator" /> : <div className="text-muted-foreground">No college assigned</div>;
+      case 'memos': return coordinator.university_id ? <InstitutionalMemos universityId={coordinator.university_id} collegeId={coordinator.college_id || undefined} senderRole="coordinator" senderName={coordinator.name} /> : <div className="text-muted-foreground">No university assigned</div>;
       case 'profile': return <CoordinatorProfile coordinator={coordinator} onUpdate={setCoordinator} />;
       default: return null;
     }

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings } from 'lucide-react';
+import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3 } from 'lucide-react';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
 import { UniversityUsers } from '@/components/university/UniversityUsers';
@@ -11,11 +11,13 @@ import { UniversityCoordinators } from '@/components/university/UniversityCoordi
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
+import { UniversityAnalytics } from '@/components/university/UniversityAnalytics';
+import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'colleges' | 'students' | 'coordinators' | 'users' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -83,10 +85,12 @@ const UniversityDashboard = () => {
   const sidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network, visible: true },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, visible: true },
     { id: 'colleges' as const, label: 'Colleges', icon: School, visible: isTabVisible('colleges') },
     { id: 'students' as const, label: 'Students', icon: Users, visible: isTabVisible('students') },
     { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck, visible: isTabVisible('coordinators') },
     { id: 'users' as const, label: 'Users', icon: User, visible: true },
+    { id: 'memos' as const, label: 'Memos', icon: Mail, visible: true },
     { id: 'profile' as const, label: 'Profile', icon: Settings, visible: true },
   ].filter(i => i.visible);
 
@@ -94,10 +98,12 @@ const UniversityDashboard = () => {
     switch (activeSection) {
       case 'dashboard': return <UniversityStudents universityId={university.id} viewMode="summary" />;
       case 'org-chart': return <UniversityOrgChart universityId={university.id} />;
+      case 'analytics': return <UniversityAnalytics universityId={university.id} />;
       case 'colleges': return <PermissionGate permission="college.manage" showForbidden><UniversityColleges universityId={university.id} /></PermissionGate>;
       case 'students': return <PermissionGate permission="student.view" showForbidden><UniversityStudents universityId={university.id} viewMode="detailed" /></PermissionGate>;
       case 'coordinators': return <PermissionGate permission="coordinator.view" showForbidden><UniversityCoordinators universityId={university.id} /></PermissionGate>;
       case 'users': return <PermissionGate permission="user.create" showForbidden><div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div></PermissionGate>;
+      case 'memos': return <InstitutionalMemos universityId={university.id} senderRole="university" senderName={university.name} />;
       case 'profile': return <UniversityProfile university={university} onUpdate={setUniversity} />;
       default: return null;
     }
