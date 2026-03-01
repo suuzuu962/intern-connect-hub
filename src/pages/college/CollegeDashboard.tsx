@@ -23,7 +23,7 @@ interface CollegeWithStats extends College {
   coordinatorCount?: number;
 }
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'coordinators' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'attendance' | 'coordinators' | 'memos' | 'profile';
 
 const CollegeDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
