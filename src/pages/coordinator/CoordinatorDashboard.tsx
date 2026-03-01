@@ -15,7 +15,7 @@ import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { cn } from '@/lib/utils';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'attendance' | 'memos' | 'profile';
 
 const CoordinatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
