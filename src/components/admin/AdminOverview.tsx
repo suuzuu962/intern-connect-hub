@@ -233,6 +233,9 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
         </Card>
       </div>
 
+      {/* Analytics Funnel */}
+      <AnalyticsFunnel />
+
       {/* Quick Links — Super Admin Only */}
       {showDocs && (
         <>

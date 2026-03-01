@@ -98,6 +98,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Work Funnel */}
+      <WorkFunnelSection />
+
       {/* CTA Section */}
       <section className="py-16 lg:py-20">
         <div className="container mx-auto px-4">
