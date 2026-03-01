@@ -110,7 +110,9 @@ const CollegeDashboard = () => {
     { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
     { id: 'students' as const, label: 'Students', icon: Users },
     { id: 'diary-approvals' as const, label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
+    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
     { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck },
+    { id: 'memos' as const, label: 'Memos', icon: Mail },
     { id: 'profile' as const, label: 'Profile', icon: Settings },
   ];
 
