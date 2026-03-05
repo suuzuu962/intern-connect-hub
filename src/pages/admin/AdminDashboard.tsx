@@ -20,6 +20,7 @@ import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key, Lock } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection = 'overview' | 'org-chart' | 'admins' | 'companies' | 'internships' | 'students' | 'universities' | 'colleges' | 'coordinators' | 'banners' | 'permissions' | 'access-control' | 'settings' | 'payments' | 'security' | 'notifications' | 'reports';
 
