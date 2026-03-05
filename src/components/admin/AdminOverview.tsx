@@ -8,6 +8,7 @@ import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRigh
 import { AnalyticsFunnel } from '@/components/admin/AnalyticsFunnel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 
 interface Stats {
   totalCompanies: number;
