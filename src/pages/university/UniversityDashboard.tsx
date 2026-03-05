@@ -17,6 +17,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate';
 import { usePermissions } from '@/hooks/usePermissions';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
@@ -107,21 +108,13 @@ const UniversityDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      {university.logo_url ? (
-        <img src={university.logo_url} alt={university.name} className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20" />
-      ) : (
-        <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-          <GraduationCap className="h-5 w-5 text-primary" />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{university.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {university.is_verified ? '✓ Verified' : 'Pending Verification'}
-        </p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name={university.name}
+      subtitle={university.email || 'University'}
+      avatarUrl={university.logo_url}
+      avatarFallback={<GraduationCap className="h-5 w-5 text-primary" />}
+      verified={university.is_verified}
+    />
   );
 
   return (

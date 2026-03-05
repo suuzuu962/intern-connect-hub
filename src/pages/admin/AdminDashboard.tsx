@@ -20,6 +20,7 @@ import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { Shield, LayoutDashboard, Building2, Briefcase, Users, Bell, Download, GraduationCap, UserCheck, School, ShieldCheck, Network, Settings, CreditCard, FileText, Image, Key, Lock } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection = 'overview' | 'org-chart' | 'admins' | 'companies' | 'internships' | 'students' | 'universities' | 'colleges' | 'coordinators' | 'banners' | 'permissions' | 'access-control' | 'settings' | 'payments' | 'security' | 'notifications' | 'reports';
 
@@ -84,15 +85,11 @@ const AdminDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-        <Shield className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">Super Admin</p>
-        <p className="text-xs text-muted-foreground">Platform Management</p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name="Super Admin"
+      subtitle="Platform Management"
+      avatarFallback={<Shield className="h-5 w-5 text-primary" />}
+    />
   );
 
   const sidebarFooter = (

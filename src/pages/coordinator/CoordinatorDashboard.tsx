@@ -15,6 +15,7 @@ import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'attendance' | 'memos' | 'profile';
 
@@ -114,17 +115,11 @@ const CoordinatorDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-        <User className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{coordinator.name}</p>
-        <p className="text-xs text-muted-foreground truncate">
-          {coordinator.college?.name || 'Coordinator'}
-        </p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name={coordinator.name}
+      subtitle={coordinator.college?.name || 'Coordinator'}
+      avatarFallback={<User className="h-5 w-5 text-primary" />}
+    />
   );
 
   return (
