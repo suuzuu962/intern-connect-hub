@@ -181,17 +181,12 @@ const CollegeDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-        <GraduationCap className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{college.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {college.is_active ? '✓ Active' : 'Inactive'}
-        </p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name={college.name}
+      subtitle={college.is_active ? 'Active' : 'Inactive'}
+      avatarFallback={<GraduationCap className="h-5 w-5 text-primary" />}
+      verified={college.is_active ?? undefined}
+    />
   );
 
   return (
