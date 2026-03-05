@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3 } from 'lucide-react';
+import { Layout } from '@/components/layout/Layout';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
 import { UniversityUsers } from '@/components/university/UniversityUsers';
@@ -15,7 +15,8 @@ import { UniversityAnalytics } from '@/components/university/UniversityAnalytics
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import { usePermissions } from '@/hooks/usePermissions';
-import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
@@ -44,11 +45,7 @@ const UniversityDashboard = () => {
   useEffect(() => {
     const fetchUniversity = async () => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from('universities')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await supabase.from('universities').select('*').eq('user_id', user.id).single();
       if (error) console.error('Error fetching university:', error);
       else setUniversity(data);
       setLoading(false);
@@ -56,8 +53,8 @@ const UniversityDashboard = () => {
     fetchUniversity();
   }, [user]);
 
-  const handleNavigate = (value: ActiveSection) => {
-    setActiveSection(value);
+  const handleNavigate = (value: string) => {
+    setActiveSection(value as ActiveSection);
     setSearchParams({ tab: value });
   };
 
@@ -83,16 +80,16 @@ const UniversityDashboard = () => {
   }
 
   const sidebarItems = [
-    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, visible: true },
-    { id: 'org-chart' as const, label: 'Org Chart', icon: Network, visible: true },
-    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, visible: true },
-    { id: 'colleges' as const, label: 'Colleges', icon: School, visible: isTabVisible('colleges') },
-    { id: 'students' as const, label: 'Students', icon: Users, visible: isTabVisible('students') },
-    { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck, visible: isTabVisible('coordinators') },
-    { id: 'users' as const, label: 'Users', icon: User, visible: true },
-    { id: 'memos' as const, label: 'Memos', icon: Mail, visible: true },
-    { id: 'profile' as const, label: 'Profile', icon: Settings, visible: true },
-  ].filter(i => i.visible);
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
+    { id: 'org-chart', label: 'Org Chart', icon: Network, visible: true },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, visible: true },
+    { id: 'colleges', label: 'Colleges', icon: School, visible: isTabVisible('colleges') },
+    { id: 'students', label: 'Students', icon: Users, visible: isTabVisible('students') },
+    { id: 'coordinators', label: 'Coordinators', icon: UserCheck, visible: isTabVisible('coordinators') },
+    { id: 'users', label: 'Users', icon: User, visible: true },
+    { id: 'memos', label: 'Memos', icon: Mail, visible: true },
+    { id: 'profile', label: 'Profile', icon: Settings, visible: true },
+  ];
 
   const renderContent = () => {
     switch (activeSection) {
@@ -109,46 +106,37 @@ const UniversityDashboard = () => {
     }
   };
 
-  return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
-          <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-sidebar-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate text-sidebar-foreground">{university.name}</p>
-                <p className="text-xs text-sidebar-foreground/60">
-                  {university.is_verified ? '✓ Verified' : 'Pending Verification'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="p-2 space-y-1 flex-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.id)}
-                className={cn(
-                  'dashboard-sidebar-item',
-                  activeSection === item.id && 'active'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
-          {renderContent()}
-        </main>
+  const sidebarHeader = (
+    <div className="flex items-center gap-3">
+      {university.logo_url ? (
+        <img src={university.logo_url} alt={university.name} className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20" />
+      ) : (
+        <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
+          <GraduationCap className="h-5 w-5 text-primary" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold truncate text-sm">{university.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {university.is_verified ? '✓ Verified' : 'Pending Verification'}
+        </p>
       </div>
-    </Layout>
+    </div>
+  );
+
+  return (
+    <DashboardLayout
+      sidebar={
+        <DashboardSidebar
+          header={sidebarHeader}
+          items={sidebarItems}
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
+      }
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, AlertCircle, Network, LayoutDashboard, Users, BookOpen, User, Settings, Mail, Calendar } from 'lucide-react';
+import { Layout } from '@/components/layout/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CoordinatorProfile } from '@/components/coordinator/CoordinatorProfile';
 import { CoordinatorStudents } from '@/components/coordinator/CoordinatorStudents';
@@ -13,7 +13,8 @@ import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemo
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { CollegeCoordinator } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
-import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'attendance' | 'memos' | 'profile';
 
@@ -44,8 +45,8 @@ const CoordinatorDashboard = () => {
     fetchCoordinator();
   }, [user]);
 
-  const handleNavigate = (value: ActiveSection) => {
-    setActiveSection(value);
+  const handleNavigate = (value: string) => {
+    setActiveSection(value as ActiveSection);
     setSearchParams({ tab: value });
   };
 
@@ -90,13 +91,13 @@ const CoordinatorDashboard = () => {
   }
 
   const sidebarItems = [
-    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
-    { id: 'students' as const, label: 'All Students', icon: Users },
-    { id: 'diary' as const, label: 'Diary Approvals', icon: BookOpen },
-    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
-    { id: 'memos' as const, label: 'Memos', icon: Mail },
-    { id: 'profile' as const, label: 'Profile', icon: Settings },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'org-chart', label: 'Org Chart', icon: Network },
+    { id: 'students', label: 'All Students', icon: Users },
+    { id: 'diary', label: 'Diary Approvals', icon: BookOpen },
+    { id: 'attendance', label: 'Attendance', icon: Calendar },
+    { id: 'memos', label: 'Memos', icon: Mail },
+    { id: 'profile', label: 'Profile', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -112,46 +113,33 @@ const CoordinatorDashboard = () => {
     }
   };
 
-  return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
-          <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-                <User className="h-5 w-5 text-sidebar-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate text-sidebar-foreground">{coordinator.name}</p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">
-                  {coordinator.college?.name || 'Coordinator'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="p-2 space-y-1 flex-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.id)}
-                className={cn(
-                  'dashboard-sidebar-item',
-                  activeSection === item.id && 'active'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
-          {renderContent()}
-        </main>
+  const sidebarHeader = (
+    <div className="flex items-center gap-3">
+      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
+        <User className="h-5 w-5 text-primary" />
       </div>
-    </Layout>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold truncate text-sm">{coordinator.name}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {coordinator.college?.name || 'Coordinator'}
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <DashboardLayout
+      sidebar={
+        <DashboardSidebar
+          header={sidebarHeader}
+          items={sidebarItems}
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
+      }
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 
