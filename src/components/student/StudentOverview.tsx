@@ -11,6 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { InternshipRecommendations } from './InternshipRecommendations';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 import { ResumeAnalysis } from './ResumeAnalysis';
+import { NextStepsCards } from '@/components/dashboard/NextStepsCards';
+import { FileText, GraduationCap, Search } from 'lucide-react';
 
 interface StudentInfo {
   id: string;
