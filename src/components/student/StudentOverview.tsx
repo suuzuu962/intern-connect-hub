@@ -247,6 +247,10 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
 
   return (
     <div className="space-y-6 page-transition">
+      <DashboardWelcomeHeader
+        title="Welcome to Your Dashboard"
+        subtitle="Track your applications and manage your profile"
+      />
       {/* Profile Completion Card */}
       <Card>
         <CardContent className="p-6">

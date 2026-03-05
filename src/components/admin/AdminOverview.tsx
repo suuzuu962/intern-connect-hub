@@ -134,6 +134,10 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
 
   return (
     <div className="space-y-6">
+      <DashboardWelcomeHeader
+        title="Admin Dashboard"
+        subtitle="Monitor and manage the entire platform"
+      />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card 
