@@ -11,6 +11,7 @@ import { ChangePassword } from '@/components/company/ChangePassword';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 interface StudentInfo {
   id: string;
@@ -19,6 +20,8 @@ interface StudentInfo {
   degree: string | null;
   skills: string[] | null;
   interested_domains: string[] | null;
+  linkedin_url?: string | null;
+  twitter_url?: string | null;
 }
 
 type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'change-password';
@@ -31,6 +34,7 @@ const StudentDashboard = () => {
   const [student, setStudent] = useState<StudentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'change-password'].includes(sectionParam)) {
@@ -52,6 +56,7 @@ const StudentDashboard = () => {
       .eq('user_id', user?.id)
       .maybeSingle();
     if (data?.full_name) setProfileName(data.full_name);
+    if (data?.avatar_url) setAvatarUrl(data.avatar_url);
   };
 
   const fetchStudentData = async () => {
@@ -104,17 +109,14 @@ const StudentDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-        <User className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{profileName || 'Student'}</p>
-        <p className="text-xs text-muted-foreground truncate">
-          {student?.university || 'Complete your profile'}
-        </p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name={profileName || 'Student'}
+      subtitle={student?.university || 'Complete your profile'}
+      avatarUrl={avatarUrl}
+      avatarFallback={<User className="h-5 w-5 text-primary" />}
+      linkedinUrl={student?.linkedin_url}
+      twitterUrl={student?.twitter_url}
+    />
   );
 
   return (

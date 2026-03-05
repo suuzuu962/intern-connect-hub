@@ -16,6 +16,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 import { DashboardStatusBanner } from '@/components/dashboard/DashboardStatusBanner';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { NextStepsCards } from '@/components/dashboard/NextStepsCards';
 import { cn } from '@/lib/utils';
 
 interface DashboardStats {
@@ -30,6 +32,9 @@ interface CompanyInfo {
   name: string;
   logo_url: string | null;
   is_verified: boolean | null;
+  linkedin_url: string | null;
+  website: string | null;
+  twitter_url: string | null;
 }
 
 type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password';
@@ -59,7 +64,7 @@ const CompanyDashboard = () => {
     try {
       let { data: companyData, error } = await supabase
         .from('companies')
-        .select('id, name, logo_url, is_verified')
+        .select('id, name, logo_url, is_verified, linkedin_url, website, twitter_url')
         .eq('user_id', user?.id)
         .single();
 
@@ -68,7 +73,7 @@ const CompanyDashboard = () => {
         const { data: newCompany, error: createError } = await supabase
           .from('companies')
           .insert({ user_id: user?.id, name: profile?.full_name || 'My Company' })
-          .select('id, name, logo_url, is_verified')
+          .select('id, name, logo_url, is_verified, linkedin_url, website, twitter_url')
           .single();
         if (!createError) companyData = newCompany;
       }
@@ -135,21 +140,16 @@ const CompanyDashboard = () => {
   };
 
   const sidebarHeader = (
-    <div className="flex items-center gap-3">
-      {company?.logo_url ? (
-        <img src={company.logo_url} alt={company.name} className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20" />
-      ) : (
-        <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
-          <Building2 className="h-5 w-5 text-primary" />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-sm">{company?.name || 'Company'}</p>
-        <p className="text-xs text-muted-foreground">
-          {company?.is_verified ? '✓ Verified' : 'Pending Verification'}
-        </p>
-      </div>
-    </div>
+    <SidebarProfileHeader
+      name={company?.name || 'Company'}
+      subtitle={company?.is_verified ? 'Verified Company' : 'Pending Verification'}
+      avatarUrl={company?.logo_url}
+      avatarFallback={<Building2 className="h-5 w-5 text-primary" />}
+      verified={company?.is_verified ?? undefined}
+      linkedinUrl={company?.linkedin_url}
+      websiteUrl={company?.website}
+      twitterUrl={company?.twitter_url}
+    />
   );
 
   return (
@@ -189,6 +189,39 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
     );
   }
 
+  const nextSteps = [
+    {
+      id: 'profile',
+      title: 'Complete Your Profile',
+      description: 'Add company details, logo, and contact info to get verified faster',
+      icon: Building2,
+      completed: company?.is_verified || false,
+      action: onEditProfile,
+      actionLabel: 'Edit Profile',
+      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600',
+    },
+    {
+      id: 'internship',
+      title: 'Post Your First Internship',
+      description: 'Create an internship listing to start receiving applications',
+      icon: Briefcase,
+      completed: stats.totalInternships > 0,
+      action: company?.is_verified ? onCreateInternship : undefined,
+      actionLabel: 'Create Internship',
+      color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
+    },
+    {
+      id: 'applicants',
+      title: 'Review Applications',
+      description: 'Check and manage student applications for your internships',
+      icon: Users,
+      completed: stats.totalApplications > 0 && stats.pendingApplications === 0,
+      action: company?.is_verified ? () => onNavigate('applicants') : undefined,
+      actionLabel: 'View Applicants',
+      color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600',
+    },
+  ];
+
   const allStatCards = [
     { label: 'Total Internships', value: stats.totalInternships, icon: Briefcase, color: 'text-primary', onClick: () => onNavigate('internships'), requiresVerification: true },
     { label: 'Active Listings', value: stats.activeInternships, icon: Briefcase, color: 'text-green-500', onClick: () => onNavigate('internships'), requiresVerification: true },
@@ -212,6 +245,9 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
           message="Your profile is under moderation. Our admin team will take an action within 48 hours. However, your profile is not complete. Please complete your profile so that moderation process can be executed at the earliest."
         />
       )}
+
+      {/* Next Steps */}
+      <NextStepsCards steps={nextSteps} />
 
       {/* Profile Completion Card */}
       <CompanyProfileCompletion
@@ -238,36 +274,6 @@ const DashboardContent = ({ company, stats, loading, onEditProfile, onCreateInte
           ))}
         </div>
       )}
-
-      {/* Quick Actions */}
-      <Card>
-        <CardContent className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-          <div className="flex flex-wrap gap-4">
-            {company?.is_verified ? (
-              <>
-                <Button onClick={onCreateInternship} className="gradient-primary border-0">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Internship
-                </Button>
-                <Button onClick={() => onNavigate('internships')} variant="outline">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  View Internships
-                </Button>
-                <Button onClick={() => onNavigate('applicants')} variant="outline">
-                  <Users className="h-4 w-4 mr-2" />
-                  View Applicants
-                </Button>
-              </>
-            ) : (
-              <Button onClick={onEditProfile} variant="outline">
-                <UserCog className="h-4 w-4 mr-2" />
-                Complete Profile
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
