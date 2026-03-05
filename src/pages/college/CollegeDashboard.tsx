@@ -18,6 +18,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
+import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 interface CollegeWithStats extends College {
   studentCount?: number;
