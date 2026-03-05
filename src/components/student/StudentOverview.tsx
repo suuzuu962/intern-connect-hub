@@ -253,7 +253,41 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
         title="Welcome to Your Dashboard"
         subtitle="Track your applications and manage your profile"
       />
-      {/* Profile Completion Card */}
+
+      {/* Next Steps */}
+      <NextStepsCards
+        steps={[
+          {
+            id: 'profile',
+            title: 'Complete Your Profile',
+            description: 'Fill in all required fields to stand out to employers',
+            icon: User,
+            completed: profileCompletion === 100,
+            action: onEditProfile,
+            actionLabel: 'Edit Profile',
+            color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600',
+          },
+          {
+            id: 'resume',
+            title: 'Upload Your Resume',
+            description: 'Add your resume to get AI-powered analysis and recommendations',
+            icon: FileText,
+            completed: !!(studentFullData as any)?.resume_url,
+            action: onEditProfile,
+            actionLabel: 'Upload Resume',
+            color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
+          },
+          {
+            id: 'apply',
+            title: 'Apply for Internships',
+            description: 'Browse available internships and start applying today',
+            icon: Search,
+            completed: applications.length > 0,
+            actionLabel: 'Browse Internships',
+            color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600',
+          },
+        ]}
+      />
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between gap-4">
