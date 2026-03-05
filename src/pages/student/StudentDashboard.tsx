@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Layout } from '@/components/layout/Layout';
 import { LayoutDashboard, User, Briefcase, BookOpen, Settings } from 'lucide-react';
 import { StudentOverview } from '@/components/student/StudentOverview';
 import { StudentProfileForm } from '@/components/student/StudentProfileForm';
@@ -10,7 +9,8 @@ import { AppliedInternships } from '@/components/student/AppliedInternships';
 import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
-import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 
 interface StudentInfo {
   id: string;
@@ -30,6 +30,7 @@ const StudentDashboard = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>(sectionParam || 'dashboard');
   const [student, setStudent] = useState<StudentInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileName, setProfileName] = useState<string>('');
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'change-password'].includes(sectionParam)) {
@@ -40,8 +41,18 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (user) {
       fetchStudentData();
+      fetchProfileName();
     }
   }, [user]);
+
+  const fetchProfileName = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('user_id', user?.id)
+      .maybeSingle();
+    if (data?.full_name) setProfileName(data.full_name);
+  };
 
   const fetchStudentData = async () => {
     try {
@@ -92,49 +103,34 @@ const StudentDashboard = () => {
     }
   };
 
-  return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        {/* Sidebar */}
-        <aside className="w-64 dashboard-sidebar shrink-0">
-          <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-                <User className="h-5 w-5 text-sidebar-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate text-sidebar-foreground">Student Dashboard</p>
-                <p className="text-xs text-sidebar-foreground/60">
-                  {student?.university || 'Complete your profile'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="p-2 space-y-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={cn(
-                  'dashboard-sidebar-item',
-                  activeSection === item.id && 'active'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
-          {renderContent()}
-        </main>
+  const sidebarHeader = (
+    <div className="flex items-center gap-3">
+      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
+        <User className="h-5 w-5 text-primary" />
       </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold truncate text-sm">{profileName || 'Student'}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {student?.university || 'Complete your profile'}
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <DashboardLayout
+      sidebar={
+        <DashboardSidebar
+          header={sidebarHeader}
+          items={sidebarItems}
+          activeSection={activeSection}
+          onNavigate={(id) => setActiveSection(id as ActiveSection)}
+        />
+      }
+    >
+      {renderContent()}
       <CareerChatbot />
-    </Layout>
+    </DashboardLayout>
   );
 };
 

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Building, Network, LayoutDashboard, UserCheck, Settings, Mail, Calendar } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Network, LayoutDashboard, UserCheck, Settings, Mail, Calendar } from 'lucide-react';
+import { Layout } from '@/components/layout/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
 import { CollegeStudents } from '@/components/college/CollegeStudents';
 import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
@@ -16,7 +15,9 @@ import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemo
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { College } from '@/types/database';
 import { PermissionGate } from '@/components/auth/PermissionGate';
-import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 
 interface CollegeWithStats extends College {
   studentCount?: number;
@@ -74,8 +75,8 @@ const CollegeDashboard = () => {
     fetchCollege();
   }, [user]);
 
-  const handleNavigate = (value: ActiveSection) => {
-    setActiveSection(value);
+  const handleNavigate = (value: string) => {
+    setActiveSection(value as ActiveSection);
     setSearchParams({ tab: value });
   };
 
@@ -106,14 +107,14 @@ const CollegeDashboard = () => {
   }
 
   const sidebarItems = [
-    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'org-chart' as const, label: 'Org Chart', icon: Network },
-    { id: 'students' as const, label: 'Students', icon: Users },
-    { id: 'diary-approvals' as const, label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
-    { id: 'attendance' as const, label: 'Attendance', icon: Calendar },
-    { id: 'coordinators' as const, label: 'Coordinators', icon: UserCheck },
-    { id: 'memos' as const, label: 'Memos', icon: Mail },
-    { id: 'profile' as const, label: 'Profile', icon: Settings },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'org-chart', label: 'Org Chart', icon: Network },
+    { id: 'students', label: 'Students', icon: Users },
+    { id: 'diary-approvals', label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
+    { id: 'attendance', label: 'Attendance', icon: Calendar },
+    { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
+    { id: 'memos', label: 'Memos', icon: Mail },
+    { id: 'profile', label: 'Profile', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -121,31 +122,42 @@ const CollegeDashboard = () => {
       case 'dashboard':
         return (
           <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card>
+            <DashboardWelcomeHeader
+              userName={college.name}
+              title="Welcome to Your Dashboard"
+              subtitle="Manage your college internship activities"
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.students}</div>
                   <p className="text-xs text-muted-foreground">Enrolled students</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Coordinators</CardTitle>
-                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
+                    <GraduationCap className="h-4 w-4 text-green-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.coordinators}</div>
                   <p className="text-xs text-muted-foreground">Active coordinators</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Diary Entries</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                    <BookOpen className="h-4 w-4 text-purple-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.diaryEntries}</div>
@@ -167,53 +179,33 @@ const CollegeDashboard = () => {
     }
   };
 
-  return (
-    <Layout>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="w-64 dashboard-sidebar shrink-0 flex flex-col">
-          <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-sidebar-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate text-sidebar-foreground">{college.name}</p>
-                <p className="text-xs text-sidebar-foreground/60 flex items-center gap-1">
-                  <Badge variant={college.is_active ? 'default' : 'secondary'} className="text-[10px] h-4">
-                    {college.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="p-2 space-y-1 flex-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.id)}
-                className={cn(
-                  'dashboard-sidebar-item relative',
-                  activeSection === item.id && 'active'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-                {item.badge && (
-                  <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1.5">
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
-          {renderContent()}
-        </main>
+  const sidebarHeader = (
+    <div className="flex items-center gap-3">
+      <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
+        <GraduationCap className="h-5 w-5 text-primary" />
       </div>
-    </Layout>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold truncate text-sm">{college.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {college.is_active ? '✓ Active' : 'Inactive'}
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <DashboardLayout
+      sidebar={
+        <DashboardSidebar
+          header={sidebarHeader}
+          items={sidebarItems}
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
+      }
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 

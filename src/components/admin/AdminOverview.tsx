@@ -8,6 +8,7 @@ import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRigh
 import { AnalyticsFunnel } from '@/components/admin/AnalyticsFunnel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 
 interface Stats {
   totalCompanies: number;
@@ -133,6 +134,10 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
 
   return (
     <div className="space-y-6">
+      <DashboardWelcomeHeader
+        title="Admin Dashboard"
+        subtitle="Monitor and manage the entire platform"
+      />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card 

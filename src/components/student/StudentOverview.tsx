@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, Briefcase, CheckCircle, Clock, AlertCircle, UserCog } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { InternshipRecommendations } from './InternshipRecommendations';
+import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 import { ResumeAnalysis } from './ResumeAnalysis';
 
 interface StudentInfo {
@@ -246,6 +247,10 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
 
   return (
     <div className="space-y-6 page-transition">
+      <DashboardWelcomeHeader
+        title="Welcome to Your Dashboard"
+        subtitle="Track your applications and manage your profile"
+      />
       {/* Profile Completion Card */}
       <Card>
         <CardContent className="p-6">
