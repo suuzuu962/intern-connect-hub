@@ -11,7 +11,7 @@ export const DashboardLayout = ({ sidebar, children }: DashboardLayoutProps) => 
     <Layout>
       <div className="flex min-h-[calc(100vh-4rem)]">
         {sidebar}
-        <main className="flex-1 p-6 overflow-auto bg-background page-transition">
+        <main className="flex-1 p-4 md:p-6 overflow-auto bg-background page-transition">
           {children}
         </main>
       </div>
