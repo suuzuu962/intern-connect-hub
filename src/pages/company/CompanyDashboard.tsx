@@ -38,7 +38,7 @@ interface CompanyInfo {
   twitter_url: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
