@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Legend
 } from 'recharts';
+import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
 
 interface CompanyAnalyticsProps {
   companyId: string | null;
@@ -44,67 +45,112 @@ const STATUS_COLORS: Record<string, string> = {
 export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const fetchAnalytics = useCallback(async (showLoader = true) => {
+    if (!companyId) return;
+    if (showLoader) setLoading(true);
+    try {
+      // Get company internship IDs first
+      const { data: companyInternships } = await supabase
+        .from('internships')
+        .select('id, title, is_active, views_count, created_at')
+        .eq('company_id', companyId);
+
+      let internships = companyInternships || [];
+
+      // Filter internships by date range if set
+      if (dateRange.from) {
+        internships = internships.filter(i => {
+          const created = new Date(i.created_at);
+          return created >= dateRange.from! && (!dateRange.to || created <= dateRange.to);
+        });
+      }
+
+      const internshipIds = internships.map(i => i.id);
+
+      let applications: { id: string; status: string; internship_id: string; applied_at: string }[] = [];
+      if (internshipIds.length > 0) {
+        let query = supabase.from('applications').select('id, status, internship_id, applied_at').in('internship_id', internshipIds);
+        if (dateRange.from) {
+          query = query.gte('applied_at', dateRange.from.toISOString());
+        }
+        if (dateRange.to) {
+          query = query.lte('applied_at', dateRange.to.toISOString());
+        }
+        const { data: appsData } = await query;
+        applications = appsData || [];
+      }
+
+      const statusMap: Record<string, number> = {
+        applied: 0, under_review: 0, shortlisted: 0,
+        offer_released: 0, offer_accepted: 0, rejected: 0, withdrawn: 0,
+      };
+      applications.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
+
+      const appsByInternship = internships
+        .map(i => ({
+          name: i.title.length > 20 ? i.title.substring(0, 20) + '…' : i.title,
+          applications: applications.filter(a => a.internship_id === i.id).length,
+        }))
+        .sort((a, b) => b.applications - a.applications)
+        .slice(0, 8);
+
+      const statusBreakdown = [
+        { name: 'Applied', value: statusMap.applied, color: STATUS_COLORS['Applied'] },
+        { name: 'Under Review', value: statusMap.under_review, color: STATUS_COLORS['Under Review'] },
+        { name: 'Shortlisted', value: statusMap.shortlisted, color: STATUS_COLORS['Shortlisted'] },
+        { name: 'Offer Released', value: statusMap.offer_released, color: STATUS_COLORS['Offer Released'] },
+        { name: 'Offer Accepted', value: statusMap.offer_accepted, color: STATUS_COLORS['Offer Accepted'] },
+        { name: 'Rejected', value: statusMap.rejected, color: STATUS_COLORS['Rejected'] },
+        { name: 'Withdrawn', value: statusMap.withdrawn, color: STATUS_COLORS['Withdrawn'] },
+      ].filter(s => s.value > 0);
+
+      setData({
+        totalInternships: internships.length,
+        activeInternships: internships.filter(i => i.is_active).length,
+        totalApplications: applications.length,
+        pendingReview: statusMap.applied + statusMap.under_review,
+        shortlisted: statusMap.shortlisted,
+        offersReleased: statusMap.offer_released,
+        offersAccepted: statusMap.offer_accepted,
+        rejected: statusMap.rejected,
+        totalViews: internships.reduce((sum, i) => sum + (i.views_count || 0), 0),
+        applicationsByInternship: appsByInternship,
+        statusBreakdown,
+      });
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Analytics error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId, dateRange]);
+
+  // Initial fetch + re-fetch on date range change
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  // Realtime subscriptions
   useEffect(() => {
     if (!companyId) return;
-    const fetchAnalytics = async () => {
-      try {
-        const [internshipsRes, applicationsRes] = await Promise.all([
-          supabase.from('internships').select('id, title, is_active, views_count').eq('company_id', companyId),
-          supabase.from('applications').select('id, status, internship_id').in(
-            'internship_id',
-            (await supabase.from('internships').select('id').eq('company_id', companyId)).data?.map(i => i.id) || []
-          ),
-        ]);
 
-        const internships = internshipsRes.data || [];
-        const applications = applicationsRes.data || [];
+    const channel = supabase
+      .channel('company-analytics-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'applications' }, () => {
+        fetchAnalytics(false);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => {
+        fetchAnalytics(false);
+      })
+      .subscribe();
 
-        const statusMap: Record<string, number> = {
-          applied: 0, under_review: 0, shortlisted: 0,
-          offer_released: 0, offer_accepted: 0, rejected: 0, withdrawn: 0,
-        };
-        applications.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
-
-        const appsByInternship = internships
-          .map(i => ({
-            name: i.title.length > 20 ? i.title.substring(0, 20) + '…' : i.title,
-            applications: applications.filter(a => a.internship_id === i.id).length,
-          }))
-          .sort((a, b) => b.applications - a.applications)
-          .slice(0, 8);
-
-        const statusBreakdown = [
-          { name: 'Applied', value: statusMap.applied, color: STATUS_COLORS['Applied'] },
-          { name: 'Under Review', value: statusMap.under_review, color: STATUS_COLORS['Under Review'] },
-          { name: 'Shortlisted', value: statusMap.shortlisted, color: STATUS_COLORS['Shortlisted'] },
-          { name: 'Offer Released', value: statusMap.offer_released, color: STATUS_COLORS['Offer Released'] },
-          { name: 'Offer Accepted', value: statusMap.offer_accepted, color: STATUS_COLORS['Offer Accepted'] },
-          { name: 'Rejected', value: statusMap.rejected, color: STATUS_COLORS['Rejected'] },
-          { name: 'Withdrawn', value: statusMap.withdrawn, color: STATUS_COLORS['Withdrawn'] },
-        ].filter(s => s.value > 0);
-
-        setData({
-          totalInternships: internships.length,
-          activeInternships: internships.filter(i => i.is_active).length,
-          totalApplications: applications.length,
-          pendingReview: statusMap.applied + statusMap.under_review,
-          shortlisted: statusMap.shortlisted,
-          offersReleased: statusMap.offer_released,
-          offersAccepted: statusMap.offer_accepted,
-          rejected: statusMap.rejected,
-          totalViews: internships.reduce((sum, i) => sum + (i.views_count || 0), 0),
-          applicationsByInternship: appsByInternship,
-          statusBreakdown,
-        });
-      } catch (err) {
-        console.error('Analytics error:', err);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      supabase.removeChannel(channel);
     };
-    fetchAnalytics();
-  }, [companyId]);
+  }, [companyId, fetchAnalytics]);
 
   if (loading) {
     return (
@@ -134,7 +180,6 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
     { label: 'Conversion', value: `${conversionRate}%`, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ];
 
-  // Funnel stages
   const funnel = [
     { label: 'Applications', value: data.totalApplications, color: 'bg-primary' },
     { label: 'Under Review', value: data.pendingReview, color: 'bg-amber-500' },
@@ -146,9 +191,16 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">Analytics Overview</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Analytics Overview</h2>
+        </div>
+        <AnalyticsDateFilter
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          lastUpdated={lastUpdated}
+        />
       </div>
 
       {/* Metric Cards */}
@@ -209,7 +261,6 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
       </Card>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Applications by Internship Bar Chart */}
         {data.applicationsByInternship.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -235,7 +286,6 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           </Card>
         )}
 
-        {/* Status Pie Chart */}
         {data.statusBreakdown.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
