@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
-  TrendingUp, Users, Eye, Briefcase, CheckCircle, Clock,
-  BarChart3, PieChart, ArrowUpRight, ArrowDownRight
+  TrendingUp, Users, Eye, CheckCircle,
+  BarChart3, PieChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -13,21 +13,27 @@ import {
   ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Legend
 } from 'recharts';
 import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
+import { TrendBadge } from '@/components/analytics/TrendBadge';
+import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface CompanyAnalyticsProps {
   companyId: string | null;
 }
 
-interface AnalyticsData {
+interface MetricValues {
+  totalViews: number;
+  totalApplications: number;
+  offersAccepted: number;
+  conversionRate: number;
+}
+
+interface AnalyticsData extends MetricValues {
   totalInternships: number;
   activeInternships: number;
-  totalApplications: number;
   pendingReview: number;
   shortlisted: number;
   offersReleased: number;
-  offersAccepted: number;
   rejected: number;
-  totalViews: number;
   applicationsByInternship: { name: string; applications: number }[];
   statusBreakdown: { name: string; value: number; color: string }[];
 }
@@ -44,50 +50,73 @@ const STATUS_COLORS: Record<string, string> = {
 
 export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchPeriodData = useCallback(async (from?: Date, to?: Date) => {
+    if (!companyId) return null;
+
+    const { data: companyInternships } = await supabase
+      .from('internships')
+      .select('id, title, is_active, views_count, created_at')
+      .eq('company_id', companyId);
+
+    let internships = companyInternships || [];
+    if (from) {
+      internships = internships.filter(i => {
+        const created = new Date(i.created_at);
+        return created >= from && (!to || created <= to);
+      });
+    }
+
+    const internshipIds = internships.map(i => i.id);
+    let applications: { id: string; status: string; internship_id: string; applied_at: string }[] = [];
+    if (internshipIds.length > 0) {
+      let query = supabase.from('applications').select('id, status, internship_id, applied_at').in('internship_id', internshipIds);
+      if (from) query = query.gte('applied_at', from.toISOString());
+      if (to) query = query.lte('applied_at', to.toISOString());
+      const { data: appsData } = await query;
+      applications = appsData || [];
+    }
+
+    const statusMap: Record<string, number> = {
+      applied: 0, under_review: 0, shortlisted: 0,
+      offer_released: 0, offer_accepted: 0, rejected: 0, withdrawn: 0,
+    };
+    applications.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
+
+    const totalApps = applications.length;
+    const accepted = statusMap.offer_accepted;
+
+    return {
+      internships,
+      applications,
+      statusMap,
+      metricValues: {
+        totalViews: internships.reduce((sum, i) => sum + (i.views_count || 0), 0),
+        totalApplications: totalApps,
+        offersAccepted: accepted,
+        conversionRate: totalApps > 0 ? Math.round((accepted / totalApps) * 100) : 0,
+      } as MetricValues,
+    };
+  }, [companyId]);
 
   const fetchAnalytics = useCallback(async (showLoader = true) => {
     if (!companyId) return;
     if (showLoader) setLoading(true);
     try {
-      // Get company internship IDs first
-      const { data: companyInternships } = await supabase
-        .from('internships')
-        .select('id, title, is_active, views_count, created_at')
-        .eq('company_id', companyId);
+      // Fetch current period
+      const current = await fetchPeriodData(dateRange.from, dateRange.to);
+      if (!current) return;
 
-      let internships = companyInternships || [];
+      const { internships, applications, statusMap, metricValues } = current;
 
-      // Filter internships by date range if set
-      if (dateRange.from) {
-        internships = internships.filter(i => {
-          const created = new Date(i.created_at);
-          return created >= dateRange.from! && (!dateRange.to || created <= dateRange.to);
-        });
-      }
-
-      const internshipIds = internships.map(i => i.id);
-
-      let applications: { id: string; status: string; internship_id: string; applied_at: string }[] = [];
-      if (internshipIds.length > 0) {
-        let query = supabase.from('applications').select('id, status, internship_id, applied_at').in('internship_id', internshipIds);
-        if (dateRange.from) {
-          query = query.gte('applied_at', dateRange.from.toISOString());
-        }
-        if (dateRange.to) {
-          query = query.lte('applied_at', dateRange.to.toISOString());
-        }
-        const { data: appsData } = await query;
-        applications = appsData || [];
-      }
-
-      const statusMap: Record<string, number> = {
-        applied: 0, under_review: 0, shortlisted: 0,
-        offer_released: 0, offer_accepted: 0, rejected: 0, withdrawn: 0,
-      };
-      applications.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
+      // Fetch previous period
+      const prev = getPreviousPeriod(dateRange);
+      const previous = await fetchPeriodData(prev.from, prev.to);
+      setPrevMetrics(previous?.metricValues || null);
 
       const appsByInternship = internships
         .map(i => ({
@@ -108,15 +137,13 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
       ].filter(s => s.value > 0);
 
       setData({
+        ...metricValues,
         totalInternships: internships.length,
         activeInternships: internships.filter(i => i.is_active).length,
-        totalApplications: applications.length,
         pendingReview: statusMap.applied + statusMap.under_review,
         shortlisted: statusMap.shortlisted,
         offersReleased: statusMap.offer_released,
-        offersAccepted: statusMap.offer_accepted,
         rejected: statusMap.rejected,
-        totalViews: internships.reduce((sum, i) => sum + (i.views_count || 0), 0),
         applicationsByInternship: appsByInternship,
         statusBreakdown,
       });
@@ -126,30 +153,20 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
     } finally {
       setLoading(false);
     }
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, fetchPeriodData]);
 
-  // Initial fetch + re-fetch on date range change
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Realtime subscriptions
   useEffect(() => {
     if (!companyId) return;
-
     const channel = supabase
       .channel('company-analytics-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'applications' }, () => {
-        fetchAnalytics(false);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => {
-        fetchAnalytics(false);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'applications' }, () => fetchAnalytics(false))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => fetchAnalytics(false))
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [companyId, fetchAnalytics]);
 
   if (loading) {
@@ -169,15 +186,11 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
 
   if (!data) return null;
 
-  const conversionRate = data.totalApplications > 0
-    ? Math.round((data.offersAccepted / data.totalApplications) * 100)
-    : 0;
-
   const metrics = [
-    { label: 'Total Views', value: data.totalViews, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Applications', value: data.totalApplications, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { label: 'Offers Accepted', value: data.offersAccepted, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Conversion', value: `${conversionRate}%`, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Total Views', value: data.totalViews, prev: prevMetrics?.totalViews, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+    { label: 'Offers Accepted', value: data.offersAccepted, prev: prevMetrics?.offersAccepted, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Conversion', value: data.conversionRate, prev: prevMetrics?.conversionRate, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10', suffix: '%' },
   ];
 
   const funnel = [
@@ -196,14 +209,10 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Analytics Overview</h2>
         </div>
-        <AnalyticsDateFilter
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          lastUpdated={lastUpdated}
-        />
+        <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
       </div>
 
-      {/* Metric Cards */}
+      {/* Metric Cards with Trend Badges */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metrics.map(m => (
           <Card key={m.label} className="border">
@@ -212,8 +221,13 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
                 <div className={cn('p-2 rounded-lg', m.bg)}>
                   <m.icon className={cn('h-4 w-4', m.color)} />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{m.value}</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-2xl font-bold">{m.value}{m.suffix || ''}</p>
+                    {m.prev !== undefined && (
+                      <TrendBadge current={m.value} previous={m.prev} />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{m.label}</p>
                 </div>
               </div>
@@ -248,10 +262,7 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
                     </div>
                   </div>
                   <div className="h-5 rounded bg-muted overflow-hidden">
-                    <div
-                      className={cn('h-full rounded transition-all duration-700', s.color)}
-                      style={{ width: `${Math.max(pct, 2)}%` }}
-                    />
+                    <div className={cn('h-full rounded transition-all duration-700', s.color)} style={{ width: `${Math.max(pct, 2)}%` }} />
                   </div>
                 </div>
               );
@@ -275,10 +286,7 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis type="number" className="text-xs" />
                   <YAxis dataKey="name" type="category" width={100} className="text-xs" tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} labelStyle={{ color: 'hsl(var(--foreground))' }} />
                   <Bar dataKey="applications" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -297,22 +305,10 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <RechartsPie>
-                  <Pie
-                    data={data.statusBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {data.statusBreakdown.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
+                  <Pie data={data.statusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value">
+                    {data.statusBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                  />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                 </RechartsPie>
               </ResponsiveContainer>
