@@ -52,15 +52,24 @@ export const PlatformAnalytics = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchPrevCounts = useCallback(async (from: Date, to: Date): Promise<MetricValues> => {
-    const [students, companies, internships, applications, universities, colleges] = await Promise.all([
-      countInRange('students', 'created_at', from, to),
-      countInRange('companies', 'created_at', from, to),
-      countInRange('internships', 'created_at', from, to),
-      countInRange('applications', 'applied_at', from, to),
-      countInRange('universities', 'created_at', from, to),
-      countInRange('colleges', 'created_at', from, to),
+    const fromISO = from.toISOString();
+    const toISO = to.toISOString();
+    const [studentsRes, companiesRes, internshipsRes, appsRes, uniRes, collegesRes] = await Promise.all([
+      supabase.from('students').select('id', { count: 'exact', head: true }).gte('created_at', fromISO).lte('created_at', toISO),
+      supabase.from('companies').select('id', { count: 'exact', head: true }).gte('created_at', fromISO).lte('created_at', toISO),
+      supabase.from('internships').select('id', { count: 'exact', head: true }).gte('created_at', fromISO).lte('created_at', toISO),
+      supabase.from('applications').select('id', { count: 'exact', head: true }).gte('applied_at', fromISO).lte('applied_at', toISO),
+      supabase.from('universities').select('id', { count: 'exact', head: true }).gte('created_at', fromISO).lte('created_at', toISO),
+      supabase.from('colleges').select('id', { count: 'exact', head: true }).gte('created_at', fromISO).lte('created_at', toISO),
     ]);
-    return { totalStudents: students, totalCompanies: companies, totalInternships: internships, totalApplications: applications, totalUniversities: universities, totalColleges: colleges };
+    return {
+      totalStudents: studentsRes.count || 0,
+      totalCompanies: companiesRes.count || 0,
+      totalInternships: internshipsRes.count || 0,
+      totalApplications: appsRes.count || 0,
+      totalUniversities: uniRes.count || 0,
+      totalColleges: collegesRes.count || 0,
+    };
   }, []);
 
   const fetchData = useCallback(async (showLoader = true) => {
