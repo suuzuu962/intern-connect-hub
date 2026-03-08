@@ -19,10 +19,11 @@ import { RolePermissions } from '@/components/admin/RolePermissions';
 import { RBACRoles } from '@/components/admin/RBACRoles';
 import { RBACUserRoles } from '@/components/admin/RBACUserRoles';
 import { RBACAuditLog } from '@/components/admin/RBACAuditLog';
+import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, Key, Lock, Clock, ShieldCheck
+  CreditCard, FileText, Image, Key, Lock, Clock, ShieldCheck, BarChart3
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
