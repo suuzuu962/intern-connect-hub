@@ -132,6 +132,7 @@ const CompanyDashboard = () => {
             onNavigate={setActiveSection}
           />
         );
+      case 'analytics': return <CompanyAnalytics companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;
       case 'create-internship': return <CreateInternshipForm companyId={company?.id || null} onSuccess={() => { fetchCompanyData(); setActiveSection('internships'); }} />;
