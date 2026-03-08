@@ -44,15 +44,6 @@ const STATUS_COLORS: Record<string, string> = {
   'Withdrawn': 'hsl(var(--muted-foreground))',
 };
 
-// Helper to count rows in a date-filtered query
-async function countInRange(table: string, dateCol: string, from?: Date, to?: Date) {
-  let query = supabase.from(table).select('id', { count: 'exact', head: true });
-  if (from) query = query.gte(dateCol, from.toISOString());
-  if (to) query = query.lte(dateCol, to.toISOString());
-  const { count } = await query;
-  return count || 0;
-}
-
 export const PlatformAnalytics = () => {
   const [data, setData] = useState<PlatformStats | null>(null);
   const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
