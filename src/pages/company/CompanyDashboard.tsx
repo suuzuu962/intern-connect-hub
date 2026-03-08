@@ -12,6 +12,7 @@ import { CompanyInternships } from '@/components/company/CompanyInternships';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompanyProfileCompletion } from '@/components/company/CompanyProfileCompletion';
+import { CompanyAnalytics } from '@/components/company/CompanyAnalytics';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
