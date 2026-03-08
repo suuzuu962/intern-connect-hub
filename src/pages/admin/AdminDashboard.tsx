@@ -19,17 +19,18 @@ import { RolePermissions } from '@/components/admin/RolePermissions';
 import { RBACRoles } from '@/components/admin/RBACRoles';
 import { RBACUserRoles } from '@/components/admin/RBACUserRoles';
 import { RBACAuditLog } from '@/components/admin/RBACAuditLog';
+import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, Key, Lock, Clock, ShieldCheck
+  CreditCard, FileText, Image, Key, Lock, Clock, ShieldCheck, BarChart3
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection =
-  | 'overview' | 'org-chart' | 'admins'
+  | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
   | 'permissions' | 'rbac-roles' | 'rbac-users' | 'audit-log' | 'security'
@@ -56,6 +57,7 @@ const AdminDashboard = () => {
       label: '',
       items: [
         { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
         { id: 'org-chart', label: 'Org Chart', icon: Network },
         { id: 'admins', label: 'Admins', icon: ShieldCheck },
       ],
@@ -101,6 +103,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview': return <AdminOverview onNavigate={handleNavigate} />;
+      case 'analytics': return <PlatformAnalytics />;
       case 'org-chart': return <AdminOrgChart />;
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;

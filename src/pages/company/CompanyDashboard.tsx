@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3 } from 'lucide-react';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
@@ -12,6 +12,7 @@ import { CompanyInternships } from '@/components/company/CompanyInternships';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompanyProfileCompletion } from '@/components/company/CompanyProfileCompletion';
+import { CompanyAnalytics } from '@/components/company/CompanyAnalytics';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
@@ -37,7 +38,7 @@ interface CompanyInfo {
   twitter_url: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
@@ -109,6 +110,7 @@ const CompanyDashboard = () => {
 
   const allSidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, requiresVerification: false },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, requiresVerification: true },
     { id: 'internships' as const, label: 'Internships', icon: FolderOpen, requiresVerification: true },
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
@@ -130,6 +132,7 @@ const CompanyDashboard = () => {
             onNavigate={setActiveSection}
           />
         );
+      case 'analytics': return <CompanyAnalytics companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;
       case 'create-internship': return <CreateInternshipForm companyId={company?.id || null} onSuccess={() => { fetchCompanyData(); setActiveSection('internships'); }} />;
