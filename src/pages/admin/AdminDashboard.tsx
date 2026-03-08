@@ -57,6 +57,7 @@ const AdminDashboard = () => {
       label: '',
       items: [
         { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
         { id: 'org-chart', label: 'Org Chart', icon: Network },
         { id: 'admins', label: 'Admins', icon: ShieldCheck },
       ],
