@@ -103,6 +103,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview': return <AdminOverview onNavigate={handleNavigate} />;
+      case 'analytics': return <PlatformAnalytics />;
       case 'org-chart': return <AdminOrgChart />;
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
