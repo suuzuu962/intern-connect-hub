@@ -85,7 +85,7 @@ export const AnalyticsDateFilter = ({ dateRange, onDateRangeChange, lastUpdated 
       {/* Live indicator */}
       {lastUpdated && (
         <Badge variant="outline" className="h-7 text-xs gap-1.5 font-normal text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
           Live
         </Badge>
       )}
