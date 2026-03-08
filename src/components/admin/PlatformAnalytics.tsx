@@ -2,11 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  BarChart3, Users, Building2, Briefcase, TrendingUp, GraduationCap,
-  CheckCircle, Clock, Eye, PieChart as PieChartIcon
+  BarChart3, Users, Building2, Briefcase, TrendingUp, GraduationCap
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -15,16 +13,21 @@ import {
 import { cn } from '@/lib/utils';
 import { AnalyticsFunnel } from './AnalyticsFunnel';
 import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
+import { TrendBadge } from '@/components/analytics/TrendBadge';
+import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
-interface PlatformStats {
+interface MetricValues {
   totalStudents: number;
   totalCompanies: number;
-  verifiedCompanies: number;
   totalInternships: number;
-  activeInternships: number;
   totalApplications: number;
   totalUniversities: number;
   totalColleges: number;
+}
+
+interface PlatformStats extends MetricValues {
+  verifiedCompanies: number;
+  activeInternships: number;
   applicationsByStatus: { name: string; value: number; color: string }[];
   internshipsByType: { name: string; value: number; color: string }[];
   internshipsByMode: { name: string; value: number; color: string }[];
@@ -41,16 +44,37 @@ const STATUS_COLORS: Record<string, string> = {
   'Withdrawn': 'hsl(var(--muted-foreground))',
 };
 
+// Helper to count rows in a date-filtered query
+async function countInRange(table: string, dateCol: string, from?: Date, to?: Date) {
+  let query = supabase.from(table).select('id', { count: 'exact', head: true });
+  if (from) query = query.gte(dateCol, from.toISOString());
+  if (to) query = query.lte(dateCol, to.toISOString());
+  const { count } = await query;
+  return count || 0;
+}
+
 export const PlatformAnalytics = () => {
   const [data, setData] = useState<PlatformStats | null>(null);
+  const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const fetchPrevCounts = useCallback(async (from: Date, to: Date): Promise<MetricValues> => {
+    const [students, companies, internships, applications, universities, colleges] = await Promise.all([
+      countInRange('students', 'created_at', from, to),
+      countInRange('companies', 'created_at', from, to),
+      countInRange('internships', 'created_at', from, to),
+      countInRange('applications', 'applied_at', from, to),
+      countInRange('universities', 'created_at', from, to),
+      countInRange('colleges', 'created_at', from, to),
+    ]);
+    return { totalStudents: students, totalCompanies: companies, totalInternships: internships, totalApplications: applications, totalUniversities: universities, totalColleges: colleges };
+  }, []);
+
   const fetchData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
     try {
-      // Build queries with optional date filtering
       let studentsQuery = supabase.from('students').select('id, created_at');
       let companiesQuery = supabase.from('companies').select('id, name, is_verified, created_at');
       let internshipsQuery = supabase.from('internships').select('id, company_id, is_active, internship_type, work_mode, title, created_at');
@@ -59,33 +83,37 @@ export const PlatformAnalytics = () => {
       let collegesQuery = supabase.from('colleges').select('id, created_at');
 
       if (dateRange.from) {
-        const fromISO = dateRange.from.toISOString();
-        studentsQuery = studentsQuery.gte('created_at', fromISO);
-        companiesQuery = companiesQuery.gte('created_at', fromISO);
-        internshipsQuery = internshipsQuery.gte('created_at', fromISO);
-        appsQuery = appsQuery.gte('applied_at', fromISO);
-        uniQuery = uniQuery.gte('created_at', fromISO);
-        collegesQuery = collegesQuery.gte('created_at', fromISO);
+        const f = dateRange.from.toISOString();
+        studentsQuery = studentsQuery.gte('created_at', f);
+        companiesQuery = companiesQuery.gte('created_at', f);
+        internshipsQuery = internshipsQuery.gte('created_at', f);
+        appsQuery = appsQuery.gte('applied_at', f);
+        uniQuery = uniQuery.gte('created_at', f);
+        collegesQuery = collegesQuery.gte('created_at', f);
       }
       if (dateRange.to) {
-        const toISO = dateRange.to.toISOString();
-        studentsQuery = studentsQuery.lte('created_at', toISO);
-        companiesQuery = companiesQuery.lte('created_at', toISO);
-        internshipsQuery = internshipsQuery.lte('created_at', toISO);
-        appsQuery = appsQuery.lte('applied_at', toISO);
-        uniQuery = uniQuery.lte('created_at', toISO);
-        collegesQuery = collegesQuery.lte('created_at', toISO);
+        const t = dateRange.to.toISOString();
+        studentsQuery = studentsQuery.lte('created_at', t);
+        companiesQuery = companiesQuery.lte('created_at', t);
+        internshipsQuery = internshipsQuery.lte('created_at', t);
+        appsQuery = appsQuery.lte('applied_at', t);
+        uniQuery = uniQuery.lte('created_at', t);
+        collegesQuery = collegesQuery.lte('created_at', t);
       }
 
       const [studentsRes, companiesRes, internshipsRes, appsRes, uniRes, collegesRes] = await Promise.all([
         studentsQuery, companiesQuery, internshipsQuery, appsQuery, uniQuery, collegesQuery,
       ]);
 
+      // Previous period
+      const prev = getPreviousPeriod(dateRange);
+      const prevCounts = await fetchPrevCounts(prev.from, prev.to);
+      setPrevMetrics(prevCounts);
+
       const companies = companiesRes.data || [];
       const internships = internshipsRes.data || [];
       const apps = appsRes.data || [];
 
-      // Status breakdown
       const statusMap: Record<string, number> = {};
       apps.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
       const statusLabels: Record<string, string> = {
@@ -97,7 +125,6 @@ export const PlatformAnalytics = () => {
         .map(([k, v]) => ({ name: statusLabels[k] || k, value: v, color: STATUS_COLORS[statusLabels[k]] || 'hsl(var(--muted))' }))
         .filter(s => s.value > 0);
 
-      // Internship type breakdown
       const typeMap: Record<string, number> = {};
       internships.forEach(i => { typeMap[i.internship_type] = (typeMap[i.internship_type] || 0) + 1; });
       const internshipsByType = Object.entries(typeMap).map(([k, v]) => ({
@@ -105,7 +132,6 @@ export const PlatformAnalytics = () => {
         color: k === 'free' ? 'hsl(142 71% 45%)' : k === 'paid' ? 'hsl(221 83% 53%)' : 'hsl(45 93% 47%)',
       }));
 
-      // Work mode breakdown
       const modeMap: Record<string, number> = {};
       internships.forEach(i => { modeMap[i.work_mode] = (modeMap[i.work_mode] || 0) + 1; });
       const internshipsByMode = Object.entries(modeMap).map(([k, v]) => ({
@@ -113,12 +139,9 @@ export const PlatformAnalytics = () => {
         color: k === 'remote' ? 'hsl(142 71% 45%)' : k === 'onsite' ? 'hsl(221 83% 53%)' : 'hsl(280 67% 55%)',
       }));
 
-      // Top companies
       const companyAppCount: Record<string, { name: string; internships: number; applications: number }> = {};
       companies.forEach(c => { companyAppCount[c.id] = { name: c.name, internships: 0, applications: 0 }; });
-      internships.forEach(i => {
-        if (companyAppCount[i.company_id]) companyAppCount[i.company_id].internships++;
-      });
+      internships.forEach(i => { if (companyAppCount[i.company_id]) companyAppCount[i.company_id].internships++; });
       apps.forEach(a => {
         const intern = internships.find(i => i.id === a.internship_id);
         if (intern && companyAppCount[intern.company_id]) companyAppCount[intern.company_id].applications++;
@@ -145,13 +168,10 @@ export const PlatformAnalytics = () => {
     } finally {
       setLoading(false);
     }
-  }, [dateRange]);
+  }, [dateRange, fetchPrevCounts]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime subscriptions
   useEffect(() => {
     const channel = supabase
       .channel('platform-analytics-realtime')
@@ -160,10 +180,7 @@ export const PlatformAnalytics = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => fetchData(false))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => fetchData(false))
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
 
   if (loading) {
@@ -181,12 +198,12 @@ export const PlatformAnalytics = () => {
   if (!data) return null;
 
   const metrics = [
-    { label: 'Students', value: data.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Companies', value: `${data.verifiedCompanies}/${data.totalCompanies}`, sub: 'verified', icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Internships', value: `${data.activeInternships}/${data.totalInternships}`, sub: 'active', icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { label: 'Applications', value: data.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'Universities', value: data.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: 'Colleges', value: data.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { label: 'Students', value: data.totalStudents, prev: prevMetrics?.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Companies', value: data.totalCompanies, prev: prevMetrics?.totalCompanies, icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', display: `${data.verifiedCompanies}/${data.totalCompanies}` },
+    { label: 'Internships', value: data.totalInternships, prev: prevMetrics?.totalInternships, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', display: `${data.activeInternships}/${data.totalInternships}` },
+    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Universities', value: data.totalUniversities, prev: prevMetrics?.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: 'Colleges', value: data.totalColleges, prev: prevMetrics?.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10' },
   ];
 
   const tooltipStyle = {
@@ -201,14 +218,10 @@ export const PlatformAnalytics = () => {
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Platform Analytics</h2>
         </div>
-        <AnalyticsDateFilter
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          lastUpdated={lastUpdated}
-        />
+        <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
       </div>
 
-      {/* Metrics */}
+      {/* Metrics with Trend Badges */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {metrics.map(m => (
           <Card key={m.label} className="border">
@@ -216,14 +229,18 @@ export const PlatformAnalytics = () => {
               <div className={cn('p-2 rounded-lg w-fit mb-2', m.bg)}>
                 <m.icon className={cn('h-4 w-4', m.color)} />
               </div>
-              <p className="text-xl font-bold">{m.value}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-xl font-bold">{m.display || m.value}</p>
+                {m.prev !== undefined && (
+                  <TrendBadge current={m.value} previous={m.prev} />
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{m.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Student Funnel */}
       <AnalyticsFunnel />
 
       <Tabs defaultValue="status" className="w-full">
@@ -237,9 +254,7 @@ export const PlatformAnalytics = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {data.applicationsByStatus.length > 0 && (
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Status Distribution</CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Status Distribution</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
@@ -254,9 +269,7 @@ export const PlatformAnalytics = () => {
               </Card>
             )}
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Status Counts</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Status Counts</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={data.applicationsByStatus}>
@@ -277,9 +290,7 @@ export const PlatformAnalytics = () => {
         <TabsContent value="companies">
           {data.topCompanies.length > 0 && (
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Top Companies by Applications</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Top Companies by Applications</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={320}>
                   <BarChart data={data.topCompanies} layout="vertical" margin={{ left: 10 }}>
@@ -300,9 +311,7 @@ export const PlatformAnalytics = () => {
         <TabsContent value="types">
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">By Type</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">By Type</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -316,9 +325,7 @@ export const PlatformAnalytics = () => {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">By Work Mode</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">By Work Mode</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
