@@ -30,7 +30,7 @@ import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/Dashboard
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
 type ActiveSection =
-  | 'overview' | 'org-chart' | 'admins'
+  | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
   | 'permissions' | 'rbac-roles' | 'rbac-users' | 'audit-log' | 'security'
