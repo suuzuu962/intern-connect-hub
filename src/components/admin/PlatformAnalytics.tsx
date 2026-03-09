@@ -295,7 +295,17 @@ export const PlatformAnalytics = () => {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
-                      <Pie data={data.applicationsByStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={95} paddingAngle={3} dataKey="value">
+                      <Pie
+                        data={data.applicationsByStatus} cx="50%" cy="50%"
+                        innerRadius={50} outerRadius={95} paddingAngle={3} dataKey="value"
+                        className="cursor-pointer"
+                        onClick={(entry: any) => setDrillDown({
+                          title: `"${entry.name}" Applications`,
+                          description: `All applications with status: ${entry.name}`,
+                          type: 'applications_by_status',
+                          filterValue: entry.name,
+                        })}
+                      >
                         {data.applicationsByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                       </Pie>
                       <Tooltip {...tooltipStyle} />
