@@ -52,7 +52,7 @@ export const AnalyticsDrillDown = ({ query, onClose }: AnalyticsDrillDownProps) 
           let q = supabase
             .from('applications')
             .select('id, status, applied_at, internship_id, student_id')
-            .eq('status', statusKey)
+            .eq('status', statusKey as any)
             .order('applied_at', { ascending: false })
             .limit(50);
 
