@@ -237,27 +237,43 @@ export const PlatformAnalytics = () => {
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Platform Analytics</h2>
         </div>
-        <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <AnalyticsExportButton
+            title="Platform Analytics Report"
+            data={exportData}
+            columns={exportColumns}
+            filename="platform-analytics"
+          />
+          <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        </div>
       </div>
 
-      {/* Metrics with Trend Badges */}
+      {/* Metrics with Trend Badges & Sparklines */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {metrics.map(m => (
-          <Card key={m.label} className="border">
-            <CardContent className="p-4">
-              <div className={cn('p-2 rounded-lg w-fit mb-2', m.bg)}>
-                <m.icon className={cn('h-4 w-4', m.color)} />
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-xl font-bold">{m.display || m.value}</p>
-                {m.prev !== undefined && (
-                  <TrendBadge current={m.value} previous={m.prev} />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {metrics.map(m => {
+          const spark = m.sparkKey ? sparkData[m.sparkKey] : undefined;
+          return (
+            <Card key={m.label} className="border overflow-hidden">
+              <CardContent className="p-4 pb-1">
+                <div className={cn('p-2 rounded-lg w-fit mb-2', m.bg)}>
+                  <m.icon className={cn('h-4 w-4', m.color)} />
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xl font-bold">{m.display || m.value}</p>
+                  {m.prev !== undefined && (
+                    <TrendBadge current={m.value} previous={m.prev} />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+              </CardContent>
+              {spark && spark.length >= 2 && (
+                <div className="px-2 pb-1">
+                  <Sparkline data={spark} color={m.sparkColor} height={24} />
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       <AnalyticsFunnel />
