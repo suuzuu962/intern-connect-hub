@@ -234,6 +234,11 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           <h2 className="text-lg font-semibold">Analytics Overview</h2>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => navigate('/analytics')}>
+            <Maximize2 className="h-3 w-3" />
+            Full View
+          </Button>
+        <div className="flex items-center gap-2 flex-wrap">
           <AnalyticsExportButton
             title="Company Analytics Report"
             data={exportData}
