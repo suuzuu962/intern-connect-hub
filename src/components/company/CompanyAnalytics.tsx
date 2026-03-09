@@ -325,7 +325,19 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
                   <XAxis type="number" className="text-xs" />
                   <YAxis dataKey="name" type="category" width={100} className="text-xs" tick={{ fontSize: 11 }} />
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} labelStyle={{ color: 'hsl(var(--foreground))' }} />
-                  <Bar dataKey="applications" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar
+                    dataKey="applications"
+                    fill="hsl(var(--primary))"
+                    radius={[0, 4, 4, 0]}
+                    className="cursor-pointer"
+                    onClick={(entry: any) => setDrillDown({
+                      title: `Applications for "${entry.name}"`,
+                      description: `Showing all applications for this internship`,
+                      type: 'applications_by_internship',
+                      filterValue: entry.name,
+                      companyId: companyId || undefined,
+                    })}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
