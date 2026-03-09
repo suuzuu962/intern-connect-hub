@@ -238,7 +238,6 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
             <Maximize2 className="h-3 w-3" />
             Full View
           </Button>
-        <div className="flex items-center gap-2 flex-wrap">
           <AnalyticsExportButton
             title="Company Analytics Report"
             data={exportData}
