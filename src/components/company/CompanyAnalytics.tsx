@@ -17,6 +17,7 @@ import { TrendBadge } from '@/components/analytics/TrendBadge';
 import { Sparkline } from '@/components/analytics/Sparkline';
 import { useSparklineData } from '@/components/analytics/useSparklineData';
 import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
+import { AnalyticsDrillDown, DrillDownQuery } from '@/components/analytics/AnalyticsDrillDown';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface CompanyAnalyticsProps {
@@ -64,6 +65,7 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [drillDown, setDrillDown] = useState<DrillDownQuery | null>(null);
 
   // Sparkline data
   const sparkData = useSparklineData(dateRange, [
@@ -323,7 +325,19 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
                   <XAxis type="number" className="text-xs" />
                   <YAxis dataKey="name" type="category" width={100} className="text-xs" tick={{ fontSize: 11 }} />
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} labelStyle={{ color: 'hsl(var(--foreground))' }} />
-                  <Bar dataKey="applications" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar
+                    dataKey="applications"
+                    fill="hsl(var(--primary))"
+                    radius={[0, 4, 4, 0]}
+                    className="cursor-pointer"
+                    onClick={(entry: any) => setDrillDown({
+                      title: `Applications for "${entry.name}"`,
+                      description: `Showing all applications for this internship`,
+                      type: 'applications_by_internship',
+                      filterValue: entry.name,
+                      companyId: companyId || undefined,
+                    })}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -341,7 +355,20 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <RechartsPie>
-                  <Pie data={data.statusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value">
+                  <Pie
+                    data={data.statusBreakdown}
+                    cx="50%" cy="50%"
+                    innerRadius={50} outerRadius={90}
+                    paddingAngle={3} dataKey="value"
+                    className="cursor-pointer"
+                    onClick={(entry: any) => setDrillDown({
+                      title: `"${entry.name}" Applications`,
+                      description: `Showing all applications with status: ${entry.name}`,
+                      type: 'applications_by_status',
+                      filterValue: entry.name,
+                      companyId: companyId || undefined,
+                    })}
+                  >
                     {data.statusBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                   </Pie>
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
@@ -352,6 +379,8 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           </Card>
         )}
       </div>
+
+      <AnalyticsDrillDown query={drillDown} onClose={() => setDrillDown(null)} />
     </div>
   );
 };

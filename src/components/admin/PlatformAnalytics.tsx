@@ -17,6 +17,7 @@ import { TrendBadge } from '@/components/analytics/TrendBadge';
 import { Sparkline } from '@/components/analytics/Sparkline';
 import { useSparklineData } from '@/components/analytics/useSparklineData';
 import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
+import { AnalyticsDrillDown, DrillDownQuery } from '@/components/analytics/AnalyticsDrillDown';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface MetricValues {
@@ -53,6 +54,7 @@ export const PlatformAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [drillDown, setDrillDown] = useState<DrillDownQuery | null>(null);
 
   const sparkData = useSparklineData(dateRange, [
     { table: 'students', dateCol: 'created_at', key: 'students' },
@@ -293,7 +295,17 @@ export const PlatformAnalytics = () => {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
-                      <Pie data={data.applicationsByStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={95} paddingAngle={3} dataKey="value">
+                      <Pie
+                        data={data.applicationsByStatus} cx="50%" cy="50%"
+                        innerRadius={50} outerRadius={95} paddingAngle={3} dataKey="value"
+                        className="cursor-pointer"
+                        onClick={(entry: any) => setDrillDown({
+                          title: `"${entry.name}" Applications`,
+                          description: `All applications with status: ${entry.name}`,
+                          type: 'applications_by_status',
+                          filterValue: entry.name,
+                        })}
+                      >
                         {data.applicationsByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                       </Pie>
                       <Tooltip {...tooltipStyle} />
@@ -312,7 +324,16 @@ export const PlatformAnalytics = () => {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis />
                     <Tooltip {...tooltipStyle} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    <Bar
+                      dataKey="value" radius={[4, 4, 0, 0]}
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `"${entry.name}" Applications`,
+                        description: `All applications with status: ${entry.name}`,
+                        type: 'applications_by_status',
+                        filterValue: entry.name,
+                      })}
+                    >
                       {data.applicationsByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
                   </BarChart>
@@ -334,7 +355,16 @@ export const PlatformAnalytics = () => {
                     <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
                     <Tooltip {...tooltipStyle} />
                     <Legend />
-                    <Bar dataKey="internships" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Internships" />
+                    <Bar
+                      dataKey="internships" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Internships"
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `${entry.name} — Internships`,
+                        description: `Internships posted by ${entry.name}`,
+                        type: 'company_details',
+                        filterValue: entry.name,
+                      })}
+                    />
                     <Bar dataKey="applications" fill="hsl(142 71% 45%)" radius={[0, 4, 4, 0]} name="Applications" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -350,7 +380,16 @@ export const PlatformAnalytics = () => {
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={data.internshipsByType} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label>
+                    <Pie
+                      data={data.internshipsByType} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `${entry.name} Internships`,
+                        description: `All ${entry.name.toLowerCase()} internships`,
+                        type: 'internships_by_type',
+                        filterValue: entry.name,
+                      })}
+                    >
                       {data.internshipsByType.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Pie>
                     <Tooltip {...tooltipStyle} />
@@ -364,7 +403,16 @@ export const PlatformAnalytics = () => {
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={data.internshipsByMode} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label>
+                    <Pie
+                      data={data.internshipsByMode} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `${entry.name} Internships`,
+                        description: `All ${entry.name.toLowerCase()} internships`,
+                        type: 'internships_by_mode',
+                        filterValue: entry.name,
+                      })}
+                    >
                       {data.internshipsByMode.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Pie>
                     <Tooltip {...tooltipStyle} />
@@ -376,6 +424,8 @@ export const PlatformAnalytics = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      <AnalyticsDrillDown query={drillDown} onClose={() => setDrillDown(null)} />
     </div>
   );
 };
