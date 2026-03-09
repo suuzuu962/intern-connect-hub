@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   TrendingUp, Users, Eye, CheckCircle,
-  BarChart3, PieChart
+  BarChart3, PieChart, Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -60,6 +62,7 @@ const SPARK_COLORS = {
 };
 
 export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
+  const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
   const [loading, setLoading] = useState(true);
@@ -232,6 +235,10 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           <h2 className="text-lg font-semibold">Analytics Overview</h2>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => navigate('/analytics')}>
+            <Maximize2 className="h-3 w-3" />
+            Full View
+          </Button>
           <AnalyticsExportButton
             title="Company Analytics Report"
             data={exportData}
