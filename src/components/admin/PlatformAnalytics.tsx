@@ -17,6 +17,7 @@ import { TrendBadge } from '@/components/analytics/TrendBadge';
 import { Sparkline } from '@/components/analytics/Sparkline';
 import { useSparklineData } from '@/components/analytics/useSparklineData';
 import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
+import { AnalyticsDrillDown, DrillDownQuery } from '@/components/analytics/AnalyticsDrillDown';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface MetricValues {
