@@ -61,6 +61,7 @@ const SPARK_COLORS = {
 };
 
 export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
+  const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
   const [loading, setLoading] = useState(true);
