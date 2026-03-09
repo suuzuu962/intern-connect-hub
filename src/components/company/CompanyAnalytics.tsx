@@ -355,7 +355,20 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <RechartsPie>
-                  <Pie data={data.statusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value">
+                  <Pie
+                    data={data.statusBreakdown}
+                    cx="50%" cy="50%"
+                    innerRadius={50} outerRadius={90}
+                    paddingAngle={3} dataKey="value"
+                    className="cursor-pointer"
+                    onClick={(entry: any) => setDrillDown({
+                      title: `"${entry.name}" Applications`,
+                      description: `Showing all applications with status: ${entry.name}`,
+                      type: 'applications_by_status',
+                      filterValue: entry.name,
+                      companyId: companyId || undefined,
+                    })}
+                  >
                     {data.statusBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                   </Pie>
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
