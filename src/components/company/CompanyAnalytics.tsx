@@ -65,6 +65,7 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [drillDown, setDrillDown] = useState<DrillDownQuery | null>(null);
 
   // Sparkline data
   const sparkData = useSparklineData(dateRange, [
