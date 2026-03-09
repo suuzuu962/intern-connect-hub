@@ -504,7 +504,7 @@ const FullScreenAnalytics = () => {
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={domainData}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="domain" tick={{ fontSize: 10, angle: -35 }} height={60} />
+                          <XAxis dataKey="domain" tick={{ fontSize: 10 }} height={60} />
                           <YAxis tick={{ fontSize: 10 }} />
                           <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                           <Bar dataKey="count" fill="hsl(221 83% 53%)" radius={[4, 4, 0, 0]} />
