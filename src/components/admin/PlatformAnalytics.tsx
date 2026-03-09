@@ -424,6 +424,8 @@ export const PlatformAnalytics = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      <AnalyticsDrillDown query={drillDown} onClose={() => setDrillDown(null)} />
     </div>
   );
 };
