@@ -379,6 +379,8 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           </Card>
         )}
       </div>
+
+      <AnalyticsDrillDown query={drillDown} onClose={() => setDrillDown(null)} />
     </div>
   );
 };
