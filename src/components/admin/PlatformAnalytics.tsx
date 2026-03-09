@@ -54,6 +54,12 @@ export const PlatformAnalytics = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const sparkData = useSparklineData(dateRange, [
+    { table: 'students', dateCol: 'created_at', key: 'students' },
+    { table: 'companies', dateCol: 'created_at', key: 'companies' },
+    { table: 'internships', dateCol: 'created_at', key: 'internships' },
+    { table: 'applications', dateCol: 'applied_at', key: 'applications' },
+  ]);
   const fetchPrevCounts = useCallback(async (from: Date, to: Date): Promise<MetricValues> => {
     const fromISO = from.toISOString();
     const toISO = to.toISOString();
