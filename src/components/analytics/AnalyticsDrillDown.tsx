@@ -137,7 +137,7 @@ export const AnalyticsDrillDown = ({ query, onClose }: AnalyticsDrillDownProps) 
           const { data: internships } = await supabase
             .from('internships')
             .select('id, title, company_id, is_active, created_at, internship_type, work_mode, location')
-            .eq(field, query.filterValue.toLowerCase())
+            .eq(field, query.filterValue.toLowerCase() as any)
             .order('created_at', { ascending: false })
             .limit(50);
 
