@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils';
 import { AnalyticsFunnel } from './AnalyticsFunnel';
 import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
 import { TrendBadge } from '@/components/analytics/TrendBadge';
+import { Sparkline } from '@/components/analytics/Sparkline';
+import { useSparklineData } from '@/components/analytics/useSparklineData';
+import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface MetricValues {
@@ -51,6 +54,12 @@ export const PlatformAnalytics = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const sparkData = useSparklineData(dateRange, [
+    { table: 'students', dateCol: 'created_at', key: 'students' },
+    { table: 'companies', dateCol: 'created_at', key: 'companies' },
+    { table: 'internships', dateCol: 'created_at', key: 'internships' },
+    { table: 'applications', dateCol: 'applied_at', key: 'applications' },
+  ]);
   const fetchPrevCounts = useCallback(async (from: Date, to: Date): Promise<MetricValues> => {
     const fromISO = from.toISOString();
     const toISO = to.toISOString();
@@ -198,12 +207,22 @@ export const PlatformAnalytics = () => {
   if (!data) return null;
 
   const metrics = [
-    { label: 'Students', value: data.totalStudents, prev: prevMetrics?.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Companies', value: data.totalCompanies, prev: prevMetrics?.totalCompanies, icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', display: `${data.verifiedCompanies}/${data.totalCompanies}` },
-    { label: 'Internships', value: data.totalInternships, prev: prevMetrics?.totalInternships, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', display: `${data.activeInternships}/${data.totalInternships}` },
-    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'Universities', value: data.totalUniversities, prev: prevMetrics?.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: 'Colleges', value: data.totalColleges, prev: prevMetrics?.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { label: 'Students', value: data.totalStudents, prev: prevMetrics?.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10', sparkKey: 'students', sparkColor: '#3b82f6' },
+    { label: 'Companies', value: data.totalCompanies, prev: prevMetrics?.totalCompanies, icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', display: `${data.verifiedCompanies}/${data.totalCompanies}`, sparkKey: 'companies', sparkColor: '#10b981' },
+    { label: 'Internships', value: data.totalInternships, prev: prevMetrics?.totalInternships, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', display: `${data.activeInternships}/${data.totalInternships}`, sparkKey: 'internships', sparkColor: '#6366f1' },
+    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10', sparkKey: 'applications', sparkColor: '#f59e0b' },
+    { label: 'Universities', value: data.totalUniversities, prev: prevMetrics?.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10', sparkKey: null as string | null, sparkColor: '#a855f7' },
+    { label: 'Colleges', value: data.totalColleges, prev: prevMetrics?.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10', sparkKey: null as string | null, sparkColor: '#ec4899' },
+  ];
+
+  // Export data
+  const exportData = [
+    ...metrics.map(m => ({ metric: m.label, value: m.display || m.value })),
+    ...data.applicationsByStatus.map(s => ({ metric: `Status: ${s.name}`, value: s.value })),
+  ];
+  const exportColumns = [
+    { header: 'Metric', accessor: 'metric' },
+    { header: 'Value', accessor: 'value', format: (v: any) => String(v) },
   ];
 
   const tooltipStyle = {
@@ -218,27 +237,43 @@ export const PlatformAnalytics = () => {
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Platform Analytics</h2>
         </div>
-        <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <AnalyticsExportButton
+            title="Platform Analytics Report"
+            data={exportData}
+            columns={exportColumns}
+            filename="platform-analytics"
+          />
+          <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        </div>
       </div>
 
-      {/* Metrics with Trend Badges */}
+      {/* Metrics with Trend Badges & Sparklines */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {metrics.map(m => (
-          <Card key={m.label} className="border">
-            <CardContent className="p-4">
-              <div className={cn('p-2 rounded-lg w-fit mb-2', m.bg)}>
-                <m.icon className={cn('h-4 w-4', m.color)} />
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-xl font-bold">{m.display || m.value}</p>
-                {m.prev !== undefined && (
-                  <TrendBadge current={m.value} previous={m.prev} />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {metrics.map(m => {
+          const spark = m.sparkKey ? sparkData[m.sparkKey] : undefined;
+          return (
+            <Card key={m.label} className="border overflow-hidden">
+              <CardContent className="p-4 pb-1">
+                <div className={cn('p-2 rounded-lg w-fit mb-2', m.bg)}>
+                  <m.icon className={cn('h-4 w-4', m.color)} />
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xl font-bold">{m.display || m.value}</p>
+                  {m.prev !== undefined && (
+                    <TrendBadge current={m.value} previous={m.prev} />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+              </CardContent>
+              {spark && spark.length >= 2 && (
+                <div className="px-2 pb-1">
+                  <Sparkline data={spark} color={m.sparkColor} height={24} />
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       <AnalyticsFunnel />
