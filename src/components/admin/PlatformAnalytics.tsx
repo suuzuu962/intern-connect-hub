@@ -54,6 +54,7 @@ export const PlatformAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [drillDown, setDrillDown] = useState<DrillDownQuery | null>(null);
 
   const sparkData = useSparklineData(dateRange, [
     { table: 'students', dateCol: 'created_at', key: 'students' },
