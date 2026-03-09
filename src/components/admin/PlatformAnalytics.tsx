@@ -355,7 +355,16 @@ export const PlatformAnalytics = () => {
                     <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
                     <Tooltip {...tooltipStyle} />
                     <Legend />
-                    <Bar dataKey="internships" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Internships" />
+                    <Bar
+                      dataKey="internships" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Internships"
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `${entry.name} — Internships`,
+                        description: `Internships posted by ${entry.name}`,
+                        type: 'company_details',
+                        filterValue: entry.name,
+                      })}
+                    />
                     <Bar dataKey="applications" fill="hsl(142 71% 45%)" radius={[0, 4, 4, 0]} name="Applications" />
                   </BarChart>
                 </ResponsiveContainer>
