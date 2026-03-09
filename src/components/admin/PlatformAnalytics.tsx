@@ -403,7 +403,16 @@ export const PlatformAnalytics = () => {
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={data.internshipsByMode} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label>
+                    <Pie
+                      data={data.internshipsByMode} cx="50%" cy="50%" outerRadius={85} paddingAngle={4} dataKey="value" label
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `${entry.name} Internships`,
+                        description: `All ${entry.name.toLowerCase()} internships`,
+                        type: 'internships_by_mode',
+                        filterValue: entry.name,
+                      })}
+                    >
                       {data.internshipsByMode.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Pie>
                     <Tooltip {...tooltipStyle} />
