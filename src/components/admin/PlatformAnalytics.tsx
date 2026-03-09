@@ -207,12 +207,22 @@ export const PlatformAnalytics = () => {
   if (!data) return null;
 
   const metrics = [
-    { label: 'Students', value: data.totalStudents, prev: prevMetrics?.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Companies', value: data.totalCompanies, prev: prevMetrics?.totalCompanies, icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', display: `${data.verifiedCompanies}/${data.totalCompanies}` },
-    { label: 'Internships', value: data.totalInternships, prev: prevMetrics?.totalInternships, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', display: `${data.activeInternships}/${data.totalInternships}` },
-    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'Universities', value: data.totalUniversities, prev: prevMetrics?.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: 'Colleges', value: data.totalColleges, prev: prevMetrics?.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { label: 'Students', value: data.totalStudents, prev: prevMetrics?.totalStudents, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10', sparkKey: 'students', sparkColor: '#3b82f6' },
+    { label: 'Companies', value: data.totalCompanies, prev: prevMetrics?.totalCompanies, icon: Building2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', display: `${data.verifiedCompanies}/${data.totalCompanies}`, sparkKey: 'companies', sparkColor: '#10b981' },
+    { label: 'Internships', value: data.totalInternships, prev: prevMetrics?.totalInternships, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', display: `${data.activeInternships}/${data.totalInternships}`, sparkKey: 'internships', sparkColor: '#6366f1' },
+    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10', sparkKey: 'applications', sparkColor: '#f59e0b' },
+    { label: 'Universities', value: data.totalUniversities, prev: prevMetrics?.totalUniversities, icon: GraduationCap, color: 'text-purple-500', bg: 'bg-purple-500/10', sparkKey: null as string | null, sparkColor: '#a855f7' },
+    { label: 'Colleges', value: data.totalColleges, prev: prevMetrics?.totalColleges, icon: Building2, color: 'text-pink-500', bg: 'bg-pink-500/10', sparkKey: null as string | null, sparkColor: '#ec4899' },
+  ];
+
+  // Export data
+  const exportData = [
+    ...metrics.map(m => ({ metric: m.label, value: m.display || m.value })),
+    ...data.applicationsByStatus.map(s => ({ metric: `Status: ${s.name}`, value: s.value })),
+  ];
+  const exportColumns = [
+    { header: 'Metric', accessor: 'metric' },
+    { header: 'Value', accessor: 'value', format: (v: any) => String(v) },
   ];
 
   const tooltipStyle = {
