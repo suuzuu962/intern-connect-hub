@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils';
 import { AnalyticsFunnel } from './AnalyticsFunnel';
 import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
 import { TrendBadge } from '@/components/analytics/TrendBadge';
+import { Sparkline } from '@/components/analytics/Sparkline';
+import { useSparklineData } from '@/components/analytics/useSparklineData';
+import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface MetricValues {

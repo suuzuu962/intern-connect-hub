@@ -14,6 +14,9 @@ import {
 } from 'recharts';
 import { AnalyticsDateFilter, DateRange } from '@/components/analytics/AnalyticsDateFilter';
 import { TrendBadge } from '@/components/analytics/TrendBadge';
+import { Sparkline } from '@/components/analytics/Sparkline';
+import { useSparklineData } from '@/components/analytics/useSparklineData';
+import { AnalyticsExportButton } from '@/components/analytics/AnalyticsExportButton';
 import { getPreviousPeriod } from '@/components/analytics/period-utils';
 
 interface CompanyAnalyticsProps {
@@ -48,12 +51,24 @@ const STATUS_COLORS: Record<string, string> = {
   'Withdrawn': 'hsl(var(--muted-foreground))',
 };
 
+const SPARK_COLORS = {
+  views: '#3b82f6',
+  applications: '#6366f1',
+  accepted: '#10b981',
+  conversion: '#f59e0b',
+};
+
 export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [prevMetrics, setPrevMetrics] = useState<MetricValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Sparkline data
+  const sparkData = useSparklineData(dateRange, [
+    { table: 'applications', dateCol: 'applied_at', key: 'applications' },
+  ], [companyId]);
 
   const fetchPeriodData = useCallback(async (from?: Date, to?: Date) => {
     if (!companyId) return null;
@@ -107,13 +122,11 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
     if (!companyId) return;
     if (showLoader) setLoading(true);
     try {
-      // Fetch current period
       const current = await fetchPeriodData(dateRange.from, dateRange.to);
       if (!current) return;
 
       const { internships, applications, statusMap, metricValues } = current;
 
-      // Fetch previous period
       const prev = getPreviousPeriod(dateRange);
       const previous = await fetchPeriodData(prev.from, prev.to);
       setPrevMetrics(previous?.metricValues || null);
@@ -187,10 +200,17 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
   if (!data) return null;
 
   const metrics = [
-    { label: 'Total Views', value: data.totalViews, prev: prevMetrics?.totalViews, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { label: 'Offers Accepted', value: data.offersAccepted, prev: prevMetrics?.offersAccepted, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Conversion', value: data.conversionRate, prev: prevMetrics?.conversionRate, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10', suffix: '%' },
+    { label: 'Total Views', value: data.totalViews, prev: prevMetrics?.totalViews, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-500/10', sparkColor: SPARK_COLORS.views, sparkKey: null as string | null },
+    { label: 'Applications', value: data.totalApplications, prev: prevMetrics?.totalApplications, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10', sparkColor: SPARK_COLORS.applications, sparkKey: 'applications' },
+    { label: 'Offers Accepted', value: data.offersAccepted, prev: prevMetrics?.offersAccepted, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10', sparkColor: SPARK_COLORS.accepted, sparkKey: null as string | null },
+    { label: 'Conversion', value: data.conversionRate, prev: prevMetrics?.conversionRate, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10', suffix: '%', sparkColor: SPARK_COLORS.conversion, sparkKey: null as string | null },
+  ];
+
+  // Export data
+  const exportData = data.statusBreakdown.map(s => ({ status: s.name, count: s.value }));
+  const exportColumns = [
+    { header: 'Status', accessor: 'status' },
+    { header: 'Count', accessor: 'count', format: (v: any) => String(v) },
   ];
 
   const funnel = [
@@ -209,31 +229,47 @@ export const CompanyAnalytics = ({ companyId }: CompanyAnalyticsProps) => {
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Analytics Overview</h2>
         </div>
-        <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <AnalyticsExportButton
+            title="Company Analytics Report"
+            data={exportData}
+            columns={exportColumns}
+            filename="company-analytics"
+          />
+          <AnalyticsDateFilter dateRange={dateRange} onDateRangeChange={setDateRange} lastUpdated={lastUpdated} />
+        </div>
       </div>
 
-      {/* Metric Cards with Trend Badges */}
+      {/* Metric Cards with Trend Badges & Sparklines */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metrics.map(m => (
-          <Card key={m.label} className="border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={cn('p-2 rounded-lg', m.bg)}>
-                  <m.icon className={cn('h-4 w-4', m.color)} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-2xl font-bold">{m.value}{m.suffix || ''}</p>
-                    {m.prev !== undefined && (
-                      <TrendBadge current={m.value} previous={m.prev} />
-                    )}
+        {metrics.map(m => {
+          const spark = m.sparkKey ? sparkData[m.sparkKey] : undefined;
+          return (
+            <Card key={m.label} className="border overflow-hidden">
+              <CardContent className="p-4 pb-1">
+                <div className="flex items-center gap-3">
+                  <div className={cn('p-2 rounded-lg', m.bg)}>
+                    <m.icon className={cn('h-4 w-4', m.color)} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{m.label}</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-2xl font-bold">{m.value}{m.suffix || ''}</p>
+                      {m.prev !== undefined && (
+                        <TrendBadge current={m.value} previous={m.prev} />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{m.label}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+              {spark && spark.length >= 2 && (
+                <div className="px-2 pb-1">
+                  <Sparkline data={spark} color={m.sparkColor} height={28} />
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       {/* Hiring Funnel */}
