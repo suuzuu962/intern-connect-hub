@@ -136,6 +136,14 @@ const AnimatedRoutes = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/analytics" 
+          element={
+            <ProtectedRoute allowedRoles={['company', 'admin']}>
+              <PageTransition><FullScreenAnalytics /></PageTransition>
+            </ProtectedRoute>
+          } 
+        />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
