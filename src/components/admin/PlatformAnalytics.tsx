@@ -324,7 +324,16 @@ export const PlatformAnalytics = () => {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis />
                     <Tooltip {...tooltipStyle} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    <Bar
+                      dataKey="value" radius={[4, 4, 0, 0]}
+                      className="cursor-pointer"
+                      onClick={(entry: any) => setDrillDown({
+                        title: `"${entry.name}" Applications`,
+                        description: `All applications with status: ${entry.name}`,
+                        type: 'applications_by_status',
+                        filterValue: entry.name,
+                      })}
+                    >
                       {data.applicationsByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
                   </BarChart>
