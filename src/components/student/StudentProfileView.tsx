@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SignedLink } from '@/components/ui/signed-link';
 
 interface StudentData {
   fullName: string;
