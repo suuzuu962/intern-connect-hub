@@ -426,12 +426,12 @@ export const CompanyProfile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <Label>Company Profile Document</Label>
-              {company.company_profile_url && <a href={company.company_profile_url} target="_blank" className="text-primary underline text-sm">View uploaded file</a>}
+              {company.company_profile_url && <SignedLink href={company.company_profile_url} className="text-primary underline text-sm">View uploaded file</SignedLink>}
               <Input type="file" accept=".pdf,.doc,.docx" disabled={uploading === 'company_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'company_profile_url')} />
             </div>
             <div className="space-y-3">
               <Label>Registration Profile</Label>
-              {company.registration_profile_url && <a href={company.registration_profile_url} target="_blank" className="text-primary underline text-sm">View uploaded file</a>}
+              {company.registration_profile_url && <SignedLink href={company.registration_profile_url} className="text-primary underline text-sm">View uploaded file</SignedLink>}
               <Input type="file" accept=".pdf,.doc,.docx" disabled={uploading === 'registration_profile_url'} onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'registration_profile_url')} />
             </div>
           </div>
