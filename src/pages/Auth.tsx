@@ -47,6 +47,11 @@ const Auth = () => {
   const [forgotPasswordStep, setForgotPasswordStep] = useState<ForgotPasswordStep>('email');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+
+  useEffect(() => {
+    recordFormLoad('auth-form');
+  }, []);
   const startResendCooldown = () => {
     setResendCooldown(60);
     const interval = setInterval(() => {
