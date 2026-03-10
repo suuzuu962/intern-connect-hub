@@ -13,6 +13,7 @@ import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { recordFormLoad, validateNotBot } from '@/lib/bot-prevention';
+import { PasswordStrength, getPasswordStrength } from '@/components/ui/password-strength';
 const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
@@ -122,6 +123,13 @@ const Auth = () => {
     const botError = validateNotBot('auth-form', honeypot);
     if (botError) {
       toast({ title: 'Error', description: botError, variant: 'destructive' });
+      return;
+    }
+
+    // Enforce minimum password strength (score >= 3)
+    const strength = getPasswordStrength(password);
+    if (strength.score < 3) {
+      toast({ title: 'Weak Password', description: 'Please choose a stronger password that meets at least 3 of the requirements.', variant: 'destructive' });
       return;
     }
 
@@ -720,12 +728,13 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              <PasswordStrength password={newPassword} className="mt-2" />
             </div>
             <div>
               <Label>Confirm Password <span className="text-destructive">*</span></Label>
               <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             </div>
-            <Button onClick={handleResetPassword} className="w-full gradient-primary border-0" disabled={loading}>
+            <Button onClick={handleResetPassword} className="w-full gradient-primary border-0" disabled={loading || getPasswordStrength(newPassword).score < 3}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</> : 'Update Password'}
             </Button>
           </div>;
@@ -817,7 +826,7 @@ const Auth = () => {
                     <Label className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
                     <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5 h-11" />
                   </div>
-                  <div>
+                    <div>
                     <Label className="text-sm font-medium">Password <span className="text-destructive">*</span></Label>
                     <div className="relative mt-1.5">
                       <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="h-11 pr-10" />
@@ -825,6 +834,7 @@ const Auth = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
+                    {mode === 'signup' && <PasswordStrength password={password} className="mt-2" />}
                   </div>
 
                   {/* Honeypot field - hidden from real users */}
@@ -845,7 +855,7 @@ const Auth = () => {
                       </button>
                     </div>}
 
-                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
+                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading || (mode === 'signup' && getPasswordStrength(password).score < 3)}>
                     {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Please wait...</> : mode === 'login' ? 'Sign In' : 'Create Account'}
                   </Button>
                 </form>

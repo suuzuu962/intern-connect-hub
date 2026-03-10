@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Lock, Loader2, Shield, AlertTriangle, Mail, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PasswordStrength, getPasswordStrength } from '@/components/ui/password-strength';
 
 export const ChangePassword = () => {
   const { user } = useAuth();
@@ -166,6 +167,7 @@ export const ChangePassword = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password (min 6 characters)"
               />
+              <PasswordStrength password={newPassword} />
             </div>
 
             <div className="space-y-2">
@@ -189,7 +191,7 @@ export const ChangePassword = () => {
               </Button>
               <Button
                 onClick={handleChangePassword}
-                disabled={saving}
+                disabled={saving || getPasswordStrength(newPassword).score < 3}
                 className="flex-1 gradient-primary border-0"
               >
                 {saving ? (
