@@ -367,16 +367,14 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
     try {
       const fileName = `${user?.id}/resume_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
-        .from('company-files')
-        .upload(fileName, file);
+        .from('resume-storage')
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('company-files')
-        .getPublicUrl(fileName);
-
-      setResumeUrl(publicUrl);
+      // Store path for signed URL access
+      const storagePath = `resume://${fileName}`;
+      setResumeUrl(storagePath);
       toast.success('Resume uploaded successfully');
     } catch (error) {
       console.error('Error uploading resume:', error);

@@ -43,7 +43,7 @@ export const UniversityProfile = ({ university, onUpdate }: UniversityProfilePro
     const filePath = `university-logos/${university.id}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('company-files')
+      .from('public-assets')
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
@@ -57,7 +57,7 @@ export const UniversityProfile = ({ university, onUpdate }: UniversityProfilePro
     }
 
     const { data: publicUrl } = supabase.storage
-      .from('company-files')
+      .from('public-assets')
       .getPublicUrl(filePath);
 
     setFormData((prev) => ({ ...prev, logo_url: publicUrl.publicUrl }));

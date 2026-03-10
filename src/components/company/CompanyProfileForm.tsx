@@ -187,8 +187,11 @@ export const CompanyProfileForm = () => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user?.id}/${field}-${Date.now()}.${fileExt}`;
 
+    const isImageField = field === 'logo_url' || field === 'cover_image_url';
+    const bucket = isImageField ? 'public-assets' : 'private-documents';
+
     const { error: uploadError } = await supabase.storage
-      .from('company-files')
+      .from(bucket)
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
@@ -197,9 +200,14 @@ export const CompanyProfileForm = () => {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('company-files')
-      .getPublicUrl(fileName);
+    if (isImageField) {
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+      handleChange(field, publicUrl);
+    } else {
+      handleChange(field, `private://${fileName}`);
+    }
 
     handleChange(field, publicUrl);
     setUploading(null);
