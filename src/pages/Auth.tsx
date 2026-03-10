@@ -838,6 +838,8 @@ const Auth = () => {
                       autoComplete="off"
                     />
                   </div>
+
+                  {mode === 'login' && <div className="text-right">
                       <button type="button" onClick={() => setMode('forgot-password')} className="text-sm text-primary hover:underline font-medium">
                         Forgot password?
                       </button>
