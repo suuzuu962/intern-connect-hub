@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Lock, Loader2, Shield, AlertTriangle, Mail, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PasswordStrength, getPasswordStrength } from '@/components/ui/password-strength';
 
 export const ChangePassword = () => {
   const { user } = useAuth();
