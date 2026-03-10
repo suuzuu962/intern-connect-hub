@@ -598,14 +598,14 @@ export const StudentManagement = () => {
                         </a>
                       )}
                       {student.resume_url && (
-                        <a href={student.resume_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 rounded-full text-sm text-green-700 dark:text-green-300">
+                        <SignedLink href={student.resume_url} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 rounded-full text-sm text-green-700 dark:text-green-300">
                           <FileText className="h-4 w-4" /> Resume
-                        </a>
+                        </SignedLink>
                       )}
                       {student.college_id_url && (
-                        <a href={student.college_id_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 rounded-full text-sm text-purple-700 dark:text-purple-300">
+                        <SignedLink href={student.college_id_url} className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 rounded-full text-sm text-purple-700 dark:text-purple-300">
                           <BookOpen className="h-4 w-4" /> College ID
-                        </a>
+                        </SignedLink>
                       )}
                       {!student.linkedin_url && !student.github_url && !student.resume_url && !student.college_id_url && (
                         <p className="text-sm text-muted-foreground">No links available</p>
