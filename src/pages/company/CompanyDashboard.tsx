@@ -115,10 +115,15 @@ const CompanyDashboard = () => {
   const allSidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, requiresVerification: false },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, requiresVerification: true },
+    { id: 'internship-analytics' as const, label: 'Internship Analytics', icon: PieChart, requiresVerification: true },
+    { id: 'application-funnel' as const, label: 'Application Funnel', icon: GitBranch, requiresVerification: true },
     { id: 'internships' as const, label: 'Internships', icon: FolderOpen, requiresVerification: true },
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
+    { id: 'shortlist-tool' as const, label: 'Shortlist Tool', icon: UserCheck, requiresVerification: true },
+    { id: 'bulk-message' as const, label: 'Bulk Message', icon: MessageSquare, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
     { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
+    { id: 'subscription' as const, label: 'Subscription Plan', icon: Crown, requiresVerification: false },
     { id: 'change-password' as const, label: 'Change Password', icon: Settings, requiresVerification: false },
   ];
 
