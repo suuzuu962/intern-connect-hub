@@ -119,7 +119,6 @@ export const CompanyProfile = () => {
       handleChange(field, `private://${fileName}`);
     }
 
-    handleChange(field, publicUrl);
     setUploading(null);
     toast.success('File uploaded successfully');
   };

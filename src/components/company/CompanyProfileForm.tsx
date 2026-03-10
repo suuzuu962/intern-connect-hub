@@ -209,7 +209,6 @@ export const CompanyProfileForm = () => {
       handleChange(field, `private://${fileName}`);
     }
 
-    handleChange(field, publicUrl);
     setUploading(null);
     toast.success('File uploaded successfully');
   };
