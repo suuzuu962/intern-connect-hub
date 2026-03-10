@@ -221,14 +221,12 @@ export const ApplyModal = ({ internship, open, onOpenChange, onSuccess }: ApplyM
                     Resume attached from your profile
                   </p>
                 </div>
-                <a
+                <SignedLink
                   href={resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline"
                 >
                   View
-                </a>
+                </SignedLink>
               </div>
 
               {/* Cover Letter */}
