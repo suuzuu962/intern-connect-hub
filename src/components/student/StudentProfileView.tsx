@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, GraduationCap, MapPin, Link, FileText, Edit, CheckCircle, ExternalLink, Home, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SignedLink } from '@/components/ui/signed-link';
 
 interface StudentData {
   fullName: string;
@@ -296,16 +297,14 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           <div>
             <p className="text-sm text-muted-foreground mb-1">Resume</p>
             {data.resumeUrl ? (
-              <a
+              <SignedLink
                 href={data.resumeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="text-primary hover:underline flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
                 View Resume
                 <ExternalLink className="h-4 w-4" />
-              </a>
+              </SignedLink>
             ) : (
               <p className="text-muted-foreground">No resume uploaded</p>
             )}
@@ -313,16 +312,14 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           <div>
             <p className="text-sm text-muted-foreground mb-1">College ID</p>
             {data.collegeIdUrl ? (
-              <a
+              <SignedLink
                 href={data.collegeIdUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="text-primary hover:underline flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
                 View College ID
                 <ExternalLink className="h-4 w-4" />
-              </a>
+              </SignedLink>
             ) : (
               <p className="text-muted-foreground">No college ID uploaded</p>
             )}

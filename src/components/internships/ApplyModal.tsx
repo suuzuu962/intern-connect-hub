@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Loader2, CheckCircle, AlertCircle, FileText, LogIn } from 'lucide-react';
 import { Internship } from '@/types/database';
 import { DialogSkeleton } from '@/components/ui/dialog-skeleton';
+import { SignedLink } from '@/components/ui/signed-link';
 
 interface ApplyModalProps {
   internship: Internship;
@@ -220,14 +221,12 @@ export const ApplyModal = ({ internship, open, onOpenChange, onSuccess }: ApplyM
                     Resume attached from your profile
                   </p>
                 </div>
-                <a
+                <SignedLink
                   href={resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline"
                 >
                   View
-                </a>
+                </SignedLink>
               </div>
 
               {/* Cover Letter */}
