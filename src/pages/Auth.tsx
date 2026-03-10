@@ -827,7 +827,17 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  {mode === 'login' && <div className="text-right">
+                  {/* Honeypot field - hidden from real users */}
+                  <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <Input
+                      type="text"
+                      name="website_url"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
                       <button type="button" onClick={() => setMode('forgot-password')} className="text-sm text-primary hover:underline font-medium">
                         Forgot password?
                       </button>
