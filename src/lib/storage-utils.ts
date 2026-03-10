@@ -73,19 +73,45 @@ export function getPublicUrl(bucket: 'public-assets', path: string) {
 }
 
 /**
- * Extract storage path from a full Supabase storage URL
- * Handles both public URLs and signed URLs
+ * Parse a storage URL with protocol prefix (resume://, private://)
+ * Returns bucket and path, or null if it's a regular URL
  */
-export function extractStoragePath(url: string): { bucket: string; path: string } | null {
+export function parseStorageUrl(url: string): { bucket: StorageBucket; path: string } | null {
+  if (url.startsWith('resume://')) {
+    return { bucket: 'resume-storage', path: url.replace('resume://', '') };
+  }
+  if (url.startsWith('private://')) {
+    return { bucket: 'private-documents', path: url.replace('private://', '') };
+  }
+  return null;
+}
+
+/**
+ * Resolve a storage URL to a viewable URL.
+ * - Public URLs (https://) are returned as-is
+ * - Private URLs (resume://, private://) are resolved to signed URLs
+ */
+export async function resolveStorageUrl(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  
+  const parsed = parseStorageUrl(url);
+  if (!parsed) {
+    // Regular URL (legacy public URL or external URL)
+    return url;
+  }
+  
   try {
-    const urlObj = new URL(url);
-    // Pattern: /storage/v1/object/public/bucket-name/path
-    const match = urlObj.pathname.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/);
-    if (match) {
-      return { bucket: match[1], path: match[2] };
-    }
-    return null;
-  } catch {
+    return await getSignedUrl(parsed.bucket, parsed.path);
+  } catch (error) {
+    console.error('Failed to get signed URL:', error);
     return null;
   }
+}
+
+/**
+ * Check if a URL is a private storage URL
+ */
+export function isPrivateStorageUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.startsWith('resume://') || url.startsWith('private://');
 }
