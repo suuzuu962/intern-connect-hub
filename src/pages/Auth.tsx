@@ -854,7 +854,7 @@ const Auth = () => {
                       </button>
                     </div>}
 
-                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
+                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading || (mode === 'signup' && getPasswordStrength(password).score < 3)}>
                     {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Please wait...</> : mode === 'login' ? 'Sign In' : 'Create Account'}
                   </Button>
                 </form>
