@@ -14,6 +14,7 @@ import {
   Users, Trash2, Search, GraduationCap, MapPin, Plus, School, ChevronDown, ChevronUp,
   Mail, Phone, Calendar, Briefcase, Globe, Github, Linkedin, BookOpen, User, FileText, Shield
 } from 'lucide-react';
+import { SignedLink } from '@/components/ui/signed-link';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
