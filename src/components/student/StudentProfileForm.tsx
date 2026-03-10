@@ -404,16 +404,14 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
       const ext = file.name.split('.').pop();
       const fileName = `${user?.id}/college_id_${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('company-files')
-        .upload(fileName, file);
+        .from('private-documents')
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('company-files')
-        .getPublicUrl(fileName);
-
-      setCollegeIdUrl(publicUrl);
+      // Store path for private document
+      const storagePath = `private://${fileName}`;
+      setCollegeIdUrl(storagePath);
       toast.success('College ID uploaded successfully');
     } catch (error) {
       console.error('Error uploading college ID:', error);
