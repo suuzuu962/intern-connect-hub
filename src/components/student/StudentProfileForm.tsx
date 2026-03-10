@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy, Calendar } from 'lucide-react';
+import { FileUpload } from '@/components/ui/file-upload';
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { ProfilePictureUpload } from './ProfilePictureUpload';
@@ -1301,52 +1302,32 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Resume (PDF, max 5MB) <span className="text-destructive">*</span></Label>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={handleResumeUpload}
-                disabled={uploading}
-                className="max-w-xs"
-              />
-              {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {resumeUrl && (
-                <a
-                  href={resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  View Resume
-                </a>
-              )}
-            </div>
+            <FileUpload
+              accept=".pdf"
+              maxSizeMB={5}
+              fileType="resume"
+              bucket="resume-storage"
+              userId={user?.id || ''}
+              onUploadComplete={(path) => setResumeUrl(path)}
+              disabled={!isEditMode}
+              currentFileUrl={resumeUrl}
+              label="Upload Resume"
+            />
           </div>
 
           <div className="space-y-2">
             <Label>College ID (JPG, PNG, or PDF, max 5MB) <span className="text-destructive">*</span></Label>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleCollegeIdUpload}
-                disabled={uploadingCollegeId}
-                className="max-w-xs"
-              />
-              {uploadingCollegeId && <Loader2 className="h-4 w-4 animate-spin" />}
-              {collegeIdUrl && (
-                <a
-                  href={collegeIdUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  View College ID
-                </a>
-              )}
-            </div>
+            <FileUpload
+              accept=".jpg,.jpeg,.png,.pdf"
+              maxSizeMB={5}
+              fileType="college-id"
+              bucket="private-documents"
+              userId={user?.id || ''}
+              onUploadComplete={(path) => setCollegeIdUrl(path)}
+              disabled={!isEditMode}
+              currentFileUrl={collegeIdUrl}
+              label="Upload College ID"
+            />
           </div>
 
           <div className="space-y-4 pt-4 border-t">
