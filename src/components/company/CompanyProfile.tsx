@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Upload, Building2, Globe, MapPin, User, Award, FileText, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { SignedLink } from '@/components/ui/signed-link';
 
 const domainCategories = [
   'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
