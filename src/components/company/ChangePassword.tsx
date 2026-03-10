@@ -167,6 +167,7 @@ export const ChangePassword = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password (min 6 characters)"
               />
+              <PasswordStrength password={newPassword} />
             </div>
 
             <div className="space-y-2">
