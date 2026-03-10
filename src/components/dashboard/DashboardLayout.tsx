@@ -8,8 +8,8 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ sidebar, children }: DashboardLayoutProps) => {
   return (
-    <Layout hideFooter>
-      <div className="flex h-[calc(100vh-4rem)]">
+    <Layout>
+      <div className="flex min-h-[calc(100vh-4rem)]">
         {sidebar}
         <main className="flex-1 p-4 md:p-6 overflow-auto bg-background page-transition">
           {children}
