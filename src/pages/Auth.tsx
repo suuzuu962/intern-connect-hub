@@ -825,7 +825,7 @@ const Auth = () => {
                     <Label className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
                     <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5 h-11" />
                   </div>
-                  <div>
+                    <div>
                     <Label className="text-sm font-medium">Password <span className="text-destructive">*</span></Label>
                     <div className="relative mt-1.5">
                       <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="h-11 pr-10" />
@@ -833,6 +833,7 @@ const Auth = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
+                    {mode === 'signup' && <PasswordStrength password={password} className="mt-2" />}
                   </div>
 
                   {/* Honeypot field - hidden from real users */}
