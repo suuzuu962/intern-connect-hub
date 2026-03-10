@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, User, GraduationCap, MapPin, Link, FileText, CheckCircle, Sparkles, Copy, Calendar } from 'lucide-react';
+import { FileUpload } from '@/components/ui/file-upload';
 import { StudentProfileView } from './StudentProfileView';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { ProfilePictureUpload } from './ProfilePictureUpload';
