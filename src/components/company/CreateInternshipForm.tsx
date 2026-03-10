@@ -57,6 +57,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [honeypot, setHoneypot] = useState('');
   const [limits, setLimits] = useState<CompanyLimits | null>(null);
   const [totalInternships, setTotalInternships] = useState(0);
   const [activeInternships, setActiveInternships] = useState(0);
