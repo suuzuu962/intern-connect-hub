@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3 } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3, GitBranch, UserCheck, MessageSquare, Crown, PieChart } from 'lucide-react';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
@@ -13,6 +13,10 @@ import { ChangePassword } from '@/components/company/ChangePassword';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompanyProfileCompletion } from '@/components/company/CompanyProfileCompletion';
 import { CompanyAnalytics } from '@/components/company/CompanyAnalytics';
+import { ApplicationFunnel } from '@/components/company/ApplicationFunnel';
+import { ShortlistTool } from '@/components/company/ShortlistTool';
+import { BulkMessageApplicants } from '@/components/company/BulkMessageApplicants';
+import { SubscriptionPlanDetails } from '@/components/company/SubscriptionPlanDetails';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
@@ -38,7 +42,7 @@ interface CompanyInfo {
   twitter_url: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics' | 'internship-analytics' | 'application-funnel' | 'shortlist-tool' | 'bulk-message' | 'subscription';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
@@ -111,10 +115,15 @@ const CompanyDashboard = () => {
   const allSidebarItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, requiresVerification: false },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3, requiresVerification: true },
+    { id: 'internship-analytics' as const, label: 'Internship Analytics', icon: PieChart, requiresVerification: true },
+    { id: 'application-funnel' as const, label: 'Application Funnel', icon: GitBranch, requiresVerification: true },
     { id: 'internships' as const, label: 'Internships', icon: FolderOpen, requiresVerification: true },
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
+    { id: 'shortlist-tool' as const, label: 'Shortlist Tool', icon: UserCheck, requiresVerification: true },
+    { id: 'bulk-message' as const, label: 'Bulk Message', icon: MessageSquare, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
     { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
+    { id: 'subscription' as const, label: 'Subscription Plan', icon: Crown, requiresVerification: false },
     { id: 'change-password' as const, label: 'Change Password', icon: Settings, requiresVerification: false },
   ];
 
@@ -133,6 +142,11 @@ const CompanyDashboard = () => {
           />
         );
       case 'analytics': return <CompanyAnalytics companyId={company?.id || null} />;
+      case 'internship-analytics': return <CompanyAnalytics companyId={company?.id || null} />;
+      case 'application-funnel': return <ApplicationFunnel companyId={company?.id || null} />;
+      case 'shortlist-tool': return <ShortlistTool companyId={company?.id || null} />;
+      case 'bulk-message': return <BulkMessageApplicants companyId={company?.id || null} />;
+      case 'subscription': return <SubscriptionPlanDetails companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;
       case 'create-internship': return <CreateInternshipForm companyId={company?.id || null} onSuccess={() => { fetchCompanyData(); setActiveSection('internships'); }} />;
