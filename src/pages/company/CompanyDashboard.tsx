@@ -142,6 +142,11 @@ const CompanyDashboard = () => {
           />
         );
       case 'analytics': return <CompanyAnalytics companyId={company?.id || null} />;
+      case 'internship-analytics': return <CompanyAnalytics companyId={company?.id || null} />;
+      case 'application-funnel': return <ApplicationFunnel companyId={company?.id || null} />;
+      case 'shortlist-tool': return <ShortlistTool companyId={company?.id || null} />;
+      case 'bulk-message': return <BulkMessageApplicants companyId={company?.id || null} />;
+      case 'subscription': return <SubscriptionPlanDetails companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;
       case 'create-internship': return <CreateInternshipForm companyId={company?.id || null} onSuccess={() => { fetchCompanyData(); setActiveSection('internships'); }} />;
