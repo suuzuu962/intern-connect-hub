@@ -83,6 +83,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   });
 
   useEffect(() => {
+    recordFormLoad('create-internship');
     if (companyId) fetchLimits();
   }, [companyId]);
 
