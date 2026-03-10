@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Loader2, CheckCircle, AlertCircle, FileText, LogIn } from 'lucide-react';
 import { Internship } from '@/types/database';
 import { DialogSkeleton } from '@/components/ui/dialog-skeleton';
+import { SignedLink } from '@/components/ui/signed-link';
 
 interface ApplyModalProps {
   internship: Internship;
