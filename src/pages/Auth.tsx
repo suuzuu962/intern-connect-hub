@@ -13,6 +13,7 @@ import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { recordFormLoad, validateNotBot } from '@/lib/bot-prevention';
+import { PasswordStrength, getPasswordStrength } from '@/components/ui/password-strength';
 const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
