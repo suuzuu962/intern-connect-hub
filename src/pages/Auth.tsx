@@ -118,6 +118,13 @@ const Auth = () => {
     setLoading(false);
   };
   const handleSignupSubmit = async () => {
+    // Bot prevention check
+    const botError = validateNotBot('auth-form', honeypot);
+    if (botError) {
+      toast({ title: 'Error', description: botError, variant: 'destructive' });
+      return;
+    }
+
     // Validate inputs
     try {
       emailSchema.parse(email);
