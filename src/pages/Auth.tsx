@@ -126,6 +126,13 @@ const Auth = () => {
       return;
     }
 
+    // Enforce minimum password strength (score >= 3)
+    const strength = getPasswordStrength(password);
+    if (strength.score < 3) {
+      toast({ title: 'Weak Password', description: 'Please choose a stronger password that meets at least 3 of the requirements.', variant: 'destructive' });
+      return;
+    }
+
     // Validate inputs
     try {
       emailSchema.parse(email);
