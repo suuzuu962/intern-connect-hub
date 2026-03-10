@@ -169,6 +169,13 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   };
 
   const handleSubmit = async () => {
+    // Bot/spam prevention
+    const botError = validateNotBot('create-internship', honeypot);
+    if (botError) {
+      toast.error(botError);
+      return;
+    }
+
     if (!companyId) {
       toast.error('Company not found');
       return;
