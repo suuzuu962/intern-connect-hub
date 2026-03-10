@@ -191,7 +191,7 @@ export const ChangePassword = () => {
               </Button>
               <Button
                 onClick={handleChangePassword}
-                disabled={saving}
+                disabled={saving || getPasswordStrength(newPassword).score < 3}
                 className="flex-1 gradient-primary border-0"
               >
                 {saving ? (

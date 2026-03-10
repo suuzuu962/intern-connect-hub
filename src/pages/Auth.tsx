@@ -728,12 +728,13 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              <PasswordStrength password={newPassword} className="mt-2" />
             </div>
             <div>
               <Label>Confirm Password <span className="text-destructive">*</span></Label>
               <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             </div>
-            <Button onClick={handleResetPassword} className="w-full gradient-primary border-0" disabled={loading}>
+            <Button onClick={handleResetPassword} className="w-full gradient-primary border-0" disabled={loading || getPasswordStrength(newPassword).score < 3}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</> : 'Update Password'}
             </Button>
           </div>;
