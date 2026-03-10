@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Building2, GraduationCap, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { recordFormLoad, validateNotBot } from '@/lib/bot-prevention';
 const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
@@ -46,6 +47,11 @@ const Auth = () => {
   const [forgotPasswordStep, setForgotPasswordStep] = useState<ForgotPasswordStep>('email');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+
+  useEffect(() => {
+    recordFormLoad('auth-form');
+  }, []);
   const startResendCooldown = () => {
     setResendCooldown(60);
     const interval = setInterval(() => {
@@ -112,6 +118,13 @@ const Auth = () => {
     setLoading(false);
   };
   const handleSignupSubmit = async () => {
+    // Bot prevention check
+    const botError = validateNotBot('auth-form', honeypot);
+    if (botError) {
+      toast({ title: 'Error', description: botError, variant: 'destructive' });
+      return;
+    }
+
     // Validate inputs
     try {
       emailSchema.parse(email);
@@ -812,6 +825,18 @@ const Auth = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Honeypot field - hidden from real users */}
+                  <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <Input
+                      type="text"
+                      name="website_url"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
                   </div>
 
                   {mode === 'login' && <div className="text-right">

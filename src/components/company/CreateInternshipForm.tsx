@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { recordFormLoad, validateNotBot } from '@/lib/bot-prevention';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   const [skillInput, setSkillInput] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [honeypot, setHoneypot] = useState('');
   const [limits, setLimits] = useState<CompanyLimits | null>(null);
   const [totalInternships, setTotalInternships] = useState(0);
   const [activeInternships, setActiveInternships] = useState(0);
@@ -81,6 +83,7 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   });
 
   useEffect(() => {
+    recordFormLoad('create-internship');
     if (companyId) fetchLimits();
   }, [companyId]);
 
@@ -166,6 +169,13 @@ export const CreateInternshipForm = ({ companyId, onSuccess }: Props) => {
   };
 
   const handleSubmit = async () => {
+    // Bot/spam prevention
+    const botError = validateNotBot('create-internship', honeypot);
+    if (botError) {
+      toast.error(botError);
+      return;
+    }
+
     if (!companyId) {
       toast.error('Company not found');
       return;

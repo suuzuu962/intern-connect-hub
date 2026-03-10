@@ -70,7 +70,7 @@ export const CoverImagePicker = ({
       const fileName = `${userId}/cover_${Date.now()}.${ext}`;
       
       const { error: uploadError } = await supabase.storage
-        .from('company-files')
+        .from('public-assets')
         .upload(fileName, file, {
           contentType: file.type,
           upsert: true,
@@ -79,7 +79,7 @@ export const CoverImagePicker = ({
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('company-files')
+        .from('public-assets')
         .getPublicUrl(fileName);
 
       onCoverChange(publicUrl);

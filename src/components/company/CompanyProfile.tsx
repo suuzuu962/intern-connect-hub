@@ -96,8 +96,11 @@ export const CompanyProfile = () => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user?.id}/${field}-${Date.now()}.${fileExt}`;
 
-    const { error: uploadError, data } = await supabase.storage
-      .from('company-files')
+    const isImageField = field === 'logo_url' || field === 'cover_image_url';
+    const bucket = isImageField ? 'public-assets' : 'private-documents';
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
@@ -106,11 +109,16 @@ export const CompanyProfile = () => {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('company-files')
-      .getPublicUrl(fileName);
+    if (isImageField) {
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+      handleChange(field, publicUrl);
+    } else {
+      // Store the path for private documents - use signed URLs to access
+      handleChange(field, `private://${fileName}`);
+    }
 
-    handleChange(field, publicUrl);
     setUploading(null);
     toast.success('File uploaded successfully');
   };

@@ -987,6 +987,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          attempted_at: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          action: string
+          attempted_at?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          action?: string
+          attempted_at?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       rbac_audit_logs: {
         Row: {
           action: string
@@ -1484,6 +1505,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

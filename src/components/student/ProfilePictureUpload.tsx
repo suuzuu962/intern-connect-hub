@@ -137,7 +137,7 @@ export const ProfilePictureUpload = ({
       const fileName = `${userId}/profile_${Date.now()}.jpg`;
       
       const { error: uploadError } = await supabase.storage
-        .from('company-files')
+        .from('public-assets')
         .upload(fileName, croppedBlob, {
           contentType: 'image/jpeg',
           upsert: true,
@@ -146,7 +146,7 @@ export const ProfilePictureUpload = ({
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('company-files')
+        .from('public-assets')
         .getPublicUrl(fileName);
 
       onUploadComplete(publicUrl);
