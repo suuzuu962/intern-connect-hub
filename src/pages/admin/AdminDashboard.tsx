@@ -26,7 +26,7 @@ import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
   CreditCard, FileText, Image, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart
+  Plug, Target, FileBarChart, Map
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
