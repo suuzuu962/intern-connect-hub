@@ -14,7 +14,7 @@ import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { College } from '@/types/database';
-import { PermissionGate } from '@/components/auth/PermissionGate';
+
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
