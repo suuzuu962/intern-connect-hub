@@ -545,32 +545,6 @@ export const CoordinatorManagement = () => {
                             {coordinator.is_approved ? 'Approved' : 'Pending'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {availableRoles.length > 0 ? (
-                            <Select
-                              value={coordinatorRoles[coordinator.id]?.roleId || ''}
-                              onValueChange={(val) => handleChangeCoordinatorRole(coordinator.id, coordinator.user_id, val)}
-                            >
-                              <SelectTrigger className="w-[140px] h-8 text-xs">
-                                <SelectValue placeholder="Assign role">
-                                  {coordinatorRoles[coordinator.id] ? (
-                                    <span className="flex items-center gap-1">
-                                      <Shield className="h-3 w-3" />
-                                      {coordinatorRoles[coordinator.id].roleName}
-                                    </span>
-                                  ) : 'Assign role'}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableRoles.map(role => (
-                                  <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No roles</span>
-                          )}
-                        </TableCell>
                         <TableCell>{new Date(coordinator.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
