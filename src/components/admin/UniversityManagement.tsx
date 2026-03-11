@@ -85,8 +85,6 @@ export const UniversityManagement = () => {
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [unassignedColleges, setUnassignedColleges] = useState<College[]>([]);
   const [universityColleges, setUniversityColleges] = useState<College[]>([]);
-  const [universityRoles, setUniversityRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
-  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,33 +108,6 @@ export const UniversityManagement = () => {
       setColleges(collegeResult.data || []);
     }
 
-    // Fetch university roles
-    const uniUserIds = (uniResult.data || []).map(u => u.user_id);
-    if (uniUserIds.length > 0) {
-      const { data: roleData } = await supabase
-        .from('user_custom_roles')
-        .select('user_id, role_id, custom_roles(id, name)')
-        .in('user_id', uniUserIds);
-
-      if (roleData) {
-        const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-        for (const item of roleData as any[]) {
-          const uni = (uniResult.data || []).find(u => u.user_id === item.user_id);
-          if (uni && item.custom_roles) {
-            roleMap[uni.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-          }
-        }
-        setUniversityRoles(roleMap);
-      }
-    }
-
-    // Fetch available university-scoped roles
-    const { data: rolesData } = await supabase
-      .from('custom_roles')
-      .select('id, name')
-      .eq('scope', 'university')
-      .order('name');
-    setAvailableRoles(rolesData || []);
 
     setLoading(false);
   };
@@ -360,40 +331,6 @@ export const UniversityManagement = () => {
       toast({ title: 'Success', description: 'College reassigned successfully' });
       await fetchData();
       openCollegeManageDialog(selectedUniversity);
-    }
-  };
-
-  const handleChangeUniversityRole = async (universityId: string, userId: string, newRoleId: string) => {
-    try {
-      // Verify the user still exists in the auth system before attempting role assignment
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!profileData) {
-        toast({ 
-          title: 'Error', 
-          description: 'Cannot assign role: this university\'s user account no longer exists. The account may have been deleted.', 
-          variant: 'destructive' 
-        });
-        return;
-      }
-
-      await supabase.from('user_custom_roles').delete().eq('user_id', userId);
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('user_custom_roles').insert({
-        user_id: userId,
-        role_id: newRoleId,
-        assigned_by: user?.id,
-      });
-      if (error) throw error;
-      const roleName = availableRoles.find(r => r.id === newRoleId)?.name || '';
-      toast({ title: 'Success', description: `Role updated to "${roleName}"` });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: 'Error', description: 'Failed to change role: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -688,7 +625,7 @@ export const UniversityManagement = () => {
                       <TableHead>Contact</TableHead>
                       <TableHead>Colleges</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Role</TableHead>
+                      
                       <TableHead>Registered</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -728,32 +665,6 @@ export const UniversityManagement = () => {
                               {university.is_active ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {availableRoles.length > 0 ? (
-                            <Select
-                              value={universityRoles[university.id]?.roleId || ''}
-                              onValueChange={(val) => handleChangeUniversityRole(university.id, university.user_id, val)}
-                            >
-                              <SelectTrigger className="w-[140px] h-8 text-xs">
-                                <SelectValue placeholder="Assign role">
-                                  {universityRoles[university.id] ? (
-                                    <span className="flex items-center gap-1">
-                                      <Shield className="h-3 w-3" />
-                                      {universityRoles[university.id].roleName}
-                                    </span>
-                                  ) : 'Assign role'}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableRoles.map(role => (
-                                  <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No roles</span>
-                          )}
                         </TableCell>
                         <TableCell>{new Date(university.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>

@@ -37,7 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CompanyApprovalDialog } from './CompanyApprovalDialog';
-import { CompanyRoleAssignmentDialog } from './CompanyRoleAssignmentDialog';
+
 
 interface Company {
   id: string;
@@ -106,10 +106,7 @@ export const CompanyApprovalManagement = () => {
   const [addingCompany, setAddingCompany] = useState(false);
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
-  const [roleAssignCompany, setRoleAssignCompany] = useState<Company | null>(null);
-  const [companyRoles, setCompanyRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
-  const [bulkRoleDialogOpen, setBulkRoleDialogOpen] = useState(false);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
@@ -120,26 +117,6 @@ export const CompanyApprovalManagement = () => {
     description: '',
   });
 
-  const fetchCompanyRoles = async (companiesList: Company[]) => {
-    const userIds = companiesList.map(c => c.user_id);
-    if (userIds.length === 0) return;
-
-    const { data } = await supabase
-      .from('user_custom_roles')
-      .select('user_id, role_id, custom_roles(id, name)')
-      .in('user_id', userIds);
-
-    if (data) {
-      const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-      for (const item of data as any[]) {
-        const companyEntry = companiesList.find(c => c.user_id === item.user_id);
-        if (companyEntry && item.custom_roles) {
-          roleMap[companyEntry.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-        }
-      }
-      setCompanyRoles(roleMap);
-    }
-  };
 
   const fetchCompanies = async () => {
     try {
@@ -150,7 +127,7 @@ export const CompanyApprovalManagement = () => {
 
       if (error) throw error;
       setCompanies(data || []);
-      await fetchCompanyRoles(data || []);
+      setCompanies(data || []);
     } catch (error: any) {
       toast.error('Failed to fetch companies');
       console.error('Error fetching companies:', error);
@@ -445,12 +422,6 @@ export const CompanyApprovalManagement = () => {
                   ) : (
                     <Badge variant="destructive">Pending</Badge>
                   )}
-                  {companyRoles[company.id] && (
-                    <Badge variant="outline" className="gap-1">
-                      <Shield className="h-3 w-3" />
-                      {companyRoles[company.id].roleName}
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {company.short_description || company.description || 'No description'}
@@ -477,17 +448,6 @@ export const CompanyApprovalManagement = () => {
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Approve
-                </Button>
-              )}
-              {!isPending && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setRoleAssignCompany(company)}
-                  className="gap-1"
-                >
-                  <Shield className="h-4 w-4" />
-                  {companyRoles[company.id] ? 'Change Role' : 'Assign Role'}
                 </Button>
               )}
               <Button 
@@ -1077,16 +1037,6 @@ export const CompanyApprovalManagement = () => {
                   }}
                 />
                 <span className="text-sm text-muted-foreground">Select All</span>
-                {selectedCompanies.size > 0 && (
-                  <Button
-                    size="sm"
-                    className="gap-1.5 ml-2"
-                    onClick={() => setBulkRoleDialogOpen(true)}
-                  >
-                    <Shield className="h-4 w-4" />
-                    Bulk Assign Role ({selectedCompanies.size})
-                  </Button>
-                )}
               </div>
             )}
           </div>
@@ -1138,32 +1088,6 @@ export const CompanyApprovalManagement = () => {
           }}
         />
       )}
-      {/* Role Assignment Dialog for approved companies */}
-      {roleAssignCompany && (
-        <CompanyRoleAssignmentDialog
-          open={!!roleAssignCompany}
-          onOpenChange={(open) => {
-            if (!open) setRoleAssignCompany(null);
-          }}
-          company={roleAssignCompany}
-          onComplete={fetchCompanies}
-        />
-      )}
-      {/* Bulk Role Assignment Dialog */}
-      <CompanyRoleAssignmentDialog
-        open={bulkRoleDialogOpen}
-        onOpenChange={(open) => {
-          setBulkRoleDialogOpen(open);
-          if (!open) setSelectedCompanies(new Set());
-        }}
-        company={null}
-        companies={approvedCompanies.filter(c => selectedCompanies.has(c.id))}
-        bulkMode={true}
-        onComplete={() => {
-          setSelectedCompanies(new Set());
-          fetchCompanies();
-        }}
-      />
     </div>
     <ScrollBar orientation="horizontal" />
     </ScrollArea>

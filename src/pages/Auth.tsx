@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Building2, GraduationCap, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Building2, GraduationCap, Mail, Loader2, ArrowLeft, KeyRound, CheckCircle, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { Input } from '@/components/ui/input';
@@ -14,45 +14,47 @@ import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { recordFormLoad, validateNotBot } from '@/lib/bot-prevention';
 import { PasswordStrength, getPasswordStrength } from '@/components/ui/password-strength';
+
 const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
-type SignupStep = 'details' | 'verify-email' | 'complete';
+
+type SignupRole = 'student' | 'company' | 'university' | 'college';
 type ForgotPasswordStep = 'email' | 'verify-otp' | 'new-password' | 'success';
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const {
-    signIn
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { signIn } = useAuth();
+  const { toast } = useToast();
+
   const initialMode = searchParams.get('mode') || 'login';
-  const initialRole = searchParams.get('role') as AppRole || 'student';
+  const initialRole = (searchParams.get('role') as SignupRole) || 'student';
+
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(initialMode as 'login' | 'signup');
-  const [role, setRole] = useState<AppRole>(initialRole);
+  const [role, setRole] = useState<SignupRole>(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [institutionName, setInstitutionName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // OTP verification state
-  const [signupStep, setSignupStep] = useState<SignupStep>('details');
-  const [otp, setOtp] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
-
   // Forgot password state
   const [forgotPasswordStep, setForgotPasswordStep] = useState<ForgotPasswordStep>('email');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [honeypot, setHoneypot] = useState('');
+
+  const isInstitutionalRole = role === 'university' || role === 'college';
 
   useEffect(() => {
     recordFormLoad('auth-form');
   }, []);
+
   const startResendCooldown = () => {
     setResendCooldown(60);
     const interval = setInterval(() => {
@@ -65,556 +67,246 @@ const Auth = () => {
       });
     }, 1000);
   };
+
+  const redirectByRole = (userRole: string) => {
+    switch (userRole) {
+      case 'admin': navigate('/admin/dashboard'); break;
+      case 'company': navigate('/company/dashboard'); break;
+      case 'student': navigate('/student/dashboard'); break;
+      case 'university': navigate('/university/dashboard'); break;
+      case 'college_coordinator': navigate('/college/dashboard'); break;
+      default: navigate('/');
+    }
+  };
+
   const handleLogin = async () => {
     try {
       emailSchema.parse(email);
       passwordSchema.parse(password);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive'
-        });
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
         return;
       }
     }
     setLoading(true);
-    const {
-      error
-    } = await signIn(email, password);
+
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast({
-        title: 'Login Failed',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
       setLoading(false);
       return;
     }
 
-    // Fetch user role to redirect appropriately
-    const {
-      data: session
-    } = await supabase.auth.getSession();
-    if (session?.session?.user) {
-      const {
-        data: roleData
-      } = await supabase.from('user_roles').select('role').eq('user_id', session.session.user.id).single();
-      toast({
-        title: 'Welcome back!'
+    if (authData.user) {
+      // Log the login
+      await supabase.from('login_logs').insert({
+        user_id: authData.user.id,
+        user_email: email,
+        role: 'unknown',
+        user_agent: navigator.userAgent,
       });
-      if (roleData?.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (roleData?.role === 'company') {
-        navigate('/company/dashboard');
-      } else if (roleData?.role === 'student') {
-        navigate('/student/dashboard');
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      toast({ title: 'Welcome back!' });
+
+      if (roleData?.role) {
+        redirectByRole(roleData.role);
       } else {
         navigate('/');
       }
-    } else {
-      navigate('/');
     }
     setLoading(false);
   };
+
   const handleSignupSubmit = async () => {
-    // Bot prevention check
     const botError = validateNotBot('auth-form', honeypot);
     if (botError) {
       toast({ title: 'Error', description: botError, variant: 'destructive' });
       return;
     }
 
-    // Enforce minimum password strength (score >= 3)
     const strength = getPasswordStrength(password);
     if (strength.score < 3) {
       toast({ title: 'Weak Password', description: 'Please choose a stronger password that meets at least 3 of the requirements.', variant: 'destructive' });
       return;
     }
 
-    // Validate inputs
     try {
       emailSchema.parse(email);
       passwordSchema.parse(password);
       phoneSchema.parse(phoneNumber);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive'
-        });
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
         return;
       }
     }
+
     if (!fullName.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter your name',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Please enter your name', variant: 'destructive' });
       return;
     }
+
+    if (isInstitutionalRole && !institutionName.trim()) {
+      toast({ title: 'Error', description: `Please enter ${role === 'university' ? 'university' : 'college'} name`, variant: 'destructive' });
+      return;
+    }
+
     setLoading(true);
 
-    // Sign up with email - auto-confirm is enabled, no OTP needed
-    const {
-      data,
-      error
-    } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: fullName,
-          phone_number: phoneNumber
-        }
-      }
-    });
-    if (error) {
-      toast({
-        title: 'Signup Failed',
-        description: error.message,
-        variant: 'destructive'
+    if (isInstitutionalRole) {
+      // Use university-signup edge function for institutional roles
+      const dbRole = role === 'college' ? 'college_coordinator' : 'university';
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('university-signup', {
+        body: {
+          email,
+          password,
+          fullName,
+          role: dbRole,
+          phoneNumber,
+          institutionName,
+          isCollegeAdmin: role === 'college',
+        },
       });
-      setLoading(false);
-      return;
-    }
 
-    // With auto-confirm enabled, user is immediately signed in
-    if (data.user && data.session) {
-      // Update profile with phone number
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          phone_number: phoneNumber
-        })
-        .eq('user_id', data.user.id);
-      
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
+      if (functionError || functionData?.error) {
+        toast({ title: 'Signup Failed', description: functionData?.error || functionError?.message || 'Failed to create account', variant: 'destructive' });
+        setLoading(false);
+        return;
       }
 
-      // Check if user role already exists
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .single();
-
-      if (!existingRole) {
-        // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: role
-          });
-        if (roleError) {
-          console.error('Error creating user role:', roleError);
-          toast({
-            title: 'Error',
-            description: 'Failed to create user role. Please try again.',
-            variant: 'destructive'
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Create company or student record if it doesn't exist
-      if (role === 'company') {
-        const { data: existingCompany } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (!existingCompany) {
-          const { error: companyError } = await supabase
-            .from('companies')
-            .insert({
-              user_id: data.user.id,
-              name: fullName,
-              contact_person_phone: phoneNumber
-            });
-          if (companyError) {
-            console.error('Error creating company:', companyError);
-            toast({
-              title: 'Error',
-              description: 'Failed to create company profile. Please try again.',
-              variant: 'destructive'
-            });
-            setLoading(false);
-            return;
-          }
-        }
-      } else {
-        const { data: existingStudent } = await supabase
-          .from('students')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (!existingStudent) {
-          const { error: studentError } = await supabase
-            .from('students')
-            .insert({
-              user_id: data.user.id
-            });
-          if (studentError) {
-            console.error('Error creating student:', studentError);
-            toast({
-              title: 'Error',
-              description: 'Failed to create student profile. Please try again.',
-              variant: 'destructive'
-            });
-            setLoading(false);
-            return;
-          }
-        }
+      // Sign in after account creation
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        toast({ title: 'Account Created', description: 'Your account was created. Please log in.' });
+        setMode('login');
+        setLoading(false);
+        return;
       }
 
       toast({
         title: 'Account Created!',
-        description: 'Your account has been created successfully'
+        description: role === 'university' ? 'Your university account is pending approval.' : 'Your college account is pending approval.',
       });
-      navigate(role === 'company' ? '/company/dashboard' : '/student/dashboard');
+      redirectByRole(dbRole);
     } else {
-      toast({
-        title: 'Error',
-        description: 'Account created but session not established. Please try logging in.',
-        variant: 'destructive'
+      // Standard student/company signup
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: { full_name: fullName, phone_number: phoneNumber },
+        },
       });
-      setMode('login');
-    }
-    setLoading(false);
-  };
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a valid 6-digit code',
-        variant: 'destructive'
-      });
-      return;
-    }
-    setLoading(true);
-    const {
-      data,
-      error
-    } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'email'
-    });
-    if (error) {
-      toast({
-        title: 'Verification Failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-      setLoading(false);
-      return;
-    }
-    if (data.user && data.session) {
-      // Update profile with phone number (profile is created by trigger, so we update it)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          phone_number: phoneNumber
-        })
-        .eq('user_id', data.user.id);
-      
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        // Don't block - profile might have been created by trigger
+
+      if (error) {
+        toast({ title: 'Signup Failed', description: error.message, variant: 'destructive' });
+        setLoading(false);
+        return;
       }
 
-      // Check if user role already exists
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .single();
+      if (data.user && data.session) {
+        await supabase.from('profiles').update({ full_name: fullName, phone_number: phoneNumber }).eq('user_id', data.user.id);
 
-      if (!existingRole) {
-        // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: role
-          });
-        if (roleError) {
-          console.error('Error creating user role:', roleError);
-          toast({
-            title: 'Error',
-            description: 'Failed to create user role. Please try again.',
-            variant: 'destructive'
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Create company or student record if it doesn't exist
-      if (role === 'company') {
-        const { data: existingCompany } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (!existingCompany) {
-          const { error: companyError } = await supabase
-            .from('companies')
-            .insert({
-              user_id: data.user.id,
-              name: fullName,
-              contact_person_phone: phoneNumber
-            });
-          if (companyError) {
-            console.error('Error creating company:', companyError);
-            toast({
-              title: 'Error',
-              description: 'Failed to create company profile. Please try again.',
-              variant: 'destructive'
-            });
+        const { data: existingRole } = await supabase.from('user_roles').select('id').eq('user_id', data.user.id).single();
+        if (!existingRole) {
+          const { error: roleError } = await supabase.from('user_roles').insert({ user_id: data.user.id, role: role as AppRole });
+          if (roleError) {
+            console.error('Error creating user role:', roleError);
+            toast({ title: 'Error', description: 'Failed to create user role.', variant: 'destructive' });
             setLoading(false);
             return;
           }
         }
+
+        if (role === 'company') {
+          const { data: existing } = await supabase.from('companies').select('id').eq('user_id', data.user.id).single();
+          if (!existing) {
+            await supabase.from('companies').insert({ user_id: data.user.id, name: fullName, contact_person_phone: phoneNumber });
+          }
+        } else {
+          const { data: existing } = await supabase.from('students').select('id').eq('user_id', data.user.id).single();
+          if (!existing) {
+            await supabase.from('students').insert({ user_id: data.user.id });
+          }
+        }
+
+        toast({ title: 'Account Created!', description: 'Your account has been created successfully' });
+        redirectByRole(role);
       } else {
-        const { data: existingStudent } = await supabase
-          .from('students')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (!existingStudent) {
-          const { error: studentError } = await supabase
-            .from('students')
-            .insert({
-              user_id: data.user.id
-            });
-          if (studentError) {
-            console.error('Error creating student:', studentError);
-            toast({
-              title: 'Error',
-              description: 'Failed to create student profile. Please try again.',
-              variant: 'destructive'
-            });
-            setLoading(false);
-            return;
-          }
-        }
+        toast({ title: 'Error', description: 'Account created but session not established. Please try logging in.', variant: 'destructive' });
+        setMode('login');
       }
-
-      toast({
-        title: 'Account Verified!',
-        description: 'Your account has been created successfully'
-      });
-      navigate(role === 'company' ? '/company/dashboard' : '/student/dashboard');
-    } else {
-      toast({
-        title: 'Error',
-        description: 'Verification successful but session not created. Please try logging in.',
-        variant: 'destructive'
-      });
-    }
-    setLoading(false);
-  };
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
-    setLoading(true);
-    const {
-      error
-    } = await supabase.auth.resend({
-      type: 'signup',
-      email
-    });
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: 'Code Resent',
-        description: 'A new verification code has been sent to your email'
-      });
-      startResendCooldown();
     }
     setLoading(false);
   };
 
   // Forgot Password Handlers
   const handleForgotPasswordRequest = async () => {
-    try {
-      emailSchema.parse(email);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive'
-        });
-        return;
-      }
+    try { emailSchema.parse(email); } catch (err) {
+      if (err instanceof z.ZodError) { toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' }); return; }
     }
     setLoading(true);
-    const {
-      error
-    } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`
-    });
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-      setLoading(false);
-      return;
-    }
-    toast({
-      title: 'Reset Code Sent',
-      description: 'Check your email for the verification code'
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth?mode=reset` });
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); setLoading(false); return; }
+    toast({ title: 'Reset Code Sent', description: 'Check your email for the verification code' });
     setForgotPasswordStep('verify-otp');
     startResendCooldown();
     setLoading(false);
   };
+
   const handleVerifyResetOtp = async () => {
-    if (otp.length !== 6) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a valid 6-digit code',
-        variant: 'destructive'
-      });
-      return;
-    }
+    if (otp.length !== 6) { toast({ title: 'Error', description: 'Please enter a valid 6-digit code', variant: 'destructive' }); return; }
     setLoading(true);
-    const {
-      data,
-      error
-    } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'recovery'
-    });
-    if (error) {
-      toast({
-        title: 'Verification Failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-      setLoading(false);
-      return;
-    }
-    if (data.session) {
-      setForgotPasswordStep('new-password');
-    }
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'recovery' });
+    if (error) { toast({ title: 'Verification Failed', description: error.message, variant: 'destructive' }); setLoading(false); return; }
+    if (data.session) setForgotPasswordStep('new-password');
     setLoading(false);
   };
+
   const handleResetPassword = async () => {
-    try {
-      passwordSchema.parse(newPassword);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive'
-        });
-        return;
-      }
+    try { passwordSchema.parse(newPassword); } catch (err) {
+      if (err instanceof z.ZodError) { toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' }); return; }
     }
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive'
-      });
-      return;
-    }
+    if (newPassword !== confirmPassword) { toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' }); return; }
     setLoading(true);
-    const {
-      error
-    } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-      setLoading(false);
-      return;
-    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); setLoading(false); return; }
     setForgotPasswordStep('success');
     setLoading(false);
   };
+
   const handleResendResetOtp = async () => {
     if (resendCooldown > 0) return;
     setLoading(true);
-    const {
-      error
-    } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`
-    });
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: 'Code Resent',
-        description: 'A new verification code has been sent to your email'
-      });
-      startResendCooldown();
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth?mode=reset` });
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
+    else { toast({ title: 'Code Resent', description: 'A new verification code has been sent to your email' }); startResendCooldown(); }
     setLoading(false);
   };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth?mode=login`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth?mode=login` },
     });
-    if (error) {
-      toast({
-        title: 'Google Sign In Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-      setLoading(false);
-    }
+    if (error) { toast({ title: 'Google Sign In Failed', description: error.message, variant: 'destructive' }); setLoading(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'login') {
-      await handleLogin();
-    } else if (mode === 'signup') {
-      await handleSignupSubmit();
-    }
+    if (mode === 'login') await handleLogin();
+    else if (mode === 'signup') await handleSignupSubmit();
   };
-  const resetToDetails = () => {
-    setSignupStep('details');
-    setOtp('');
-  };
+
   const resetToLogin = () => {
     setMode('login');
     setForgotPasswordStep('email');
@@ -622,44 +314,38 @@ const Auth = () => {
     setNewPassword('');
     setConfirmPassword('');
   };
+
   const getTitle = () => {
     if (mode === 'forgot-password') {
       switch (forgotPasswordStep) {
-        case 'email':
-          return 'Forgot Password';
-        case 'verify-otp':
-          return 'Verify Your Email';
-        case 'new-password':
-          return 'Set New Password';
-        case 'success':
-          return 'Password Reset Complete';
+        case 'email': return 'Forgot Password';
+        case 'verify-otp': return 'Verify Your Email';
+        case 'new-password': return 'Set New Password';
+        case 'success': return 'Password Reset Complete';
       }
     }
     if (mode === 'login') return 'Welcome Back';
     return 'Create Account';
   };
+
   const getDescription = () => {
     if (mode === 'forgot-password') {
       switch (forgotPasswordStep) {
-        case 'email':
-          return 'Enter your email to receive a reset code';
-        case 'verify-otp':
-          return `Enter the 6-digit code sent to ${email}`;
-        case 'new-password':
-          return 'Create a new secure password';
-        case 'success':
-          return 'Your password has been updated successfully';
+        case 'email': return 'Enter your email to receive a reset code';
+        case 'verify-otp': return `Enter the 6-digit code sent to ${email}`;
+        case 'new-password': return 'Create a new secure password';
+        case 'success': return 'Your password has been updated successfully';
       }
     }
     if (mode === 'login') return 'Sign in to your account';
     return 'Join Economic Labs today';
   };
 
-  // Render Forgot Password Flow
   const renderForgotPassword = () => {
     switch (forgotPasswordStep) {
       case 'email':
-        return <div className="space-y-4">
+        return (
+          <div className="space-y-4">
             <div className="flex justify-center mb-6">
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <KeyRound className="h-8 w-8 text-primary" />
@@ -675,32 +361,27 @@ const Auth = () => {
             <button onClick={resetToLogin} className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 w-full mt-4">
               <ArrowLeft className="h-3 w-3" /> Back to Sign In
             </button>
-          </div>;
+          </div>
+        );
       case 'verify-otp':
-        return <div className="space-y-6">
+        return (
+          <div className="space-y-6">
             <div className="flex justify-center">
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <Mail className="h-8 w-8 text-primary" />
               </div>
             </div>
-
             <div className="flex justify-center">
               <InputOTP value={otp} onChange={setOtp} maxLength={6}>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
+                  <InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} /><InputOTPSlot index={4} /><InputOTPSlot index={5} />
                 </InputOTPGroup>
               </InputOTP>
             </div>
-
             <Button onClick={handleVerifyResetOtp} className="w-full gradient-primary border-0" disabled={loading || otp.length !== 6}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
             </Button>
-
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
                 Didn't receive the code?{' '}
@@ -712,9 +393,11 @@ const Auth = () => {
                 <ArrowLeft className="h-3 w-3" /> Change email address
               </button>
             </div>
-          </div>;
+          </div>
+        );
       case 'new-password':
-        return <div className="space-y-4">
+        return (
+          <div className="space-y-4">
             <div className="flex justify-center mb-6">
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <KeyRound className="h-8 w-8 text-primary" />
@@ -737,24 +420,25 @@ const Auth = () => {
             <Button onClick={handleResetPassword} className="w-full gradient-primary border-0" disabled={loading || getPasswordStrength(newPassword).score < 3}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</> : 'Update Password'}
             </Button>
-          </div>;
+          </div>
+        );
       case 'success':
-        return <div className="space-y-6 text-center">
+        return (
+          <div className="space-y-6 text-center">
             <div className="flex justify-center">
               <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center">
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
             </div>
-            <p className="text-muted-foreground">
-              Your password has been reset successfully. You can now sign in with your new password.
-            </p>
-            <Button onClick={resetToLogin} className="w-full gradient-primary border-0">
-              Sign In
-            </Button>
-          </div>;
+            <p className="text-muted-foreground">Your password has been reset successfully. You can now sign in with your new password.</p>
+            <Button onClick={resetToLogin} className="w-full gradient-primary border-0">Sign In</Button>
+          </div>
+        );
     }
   };
-  return <div className="min-h-screen flex">
+
+  return (
+    <div className="min-h-screen flex">
       {/* Left Panel - Decorative */}
       <div className="hidden lg:flex lg:w-1/2 gradient-primary relative overflow-hidden items-center justify-center">
         <div className="absolute inset-0 opacity-10">
@@ -799,34 +483,63 @@ const Auth = () => {
           </CardHeader>
 
           <CardContent className="pt-4">
-            {mode === 'forgot-password' ? renderForgotPassword() : <>
-                {mode === 'signup' && <div className="grid grid-cols-2 gap-3 mb-6">
-                    <Button type="button" variant={role === 'student' ? 'default' : 'outline'} className={role === 'student' ? 'gradient-primary border-0 shadow-md' : ''} onClick={() => setRole('student')}>
-                      <GraduationCap className="h-4 w-4 mr-2" /> Student
+            {mode === 'forgot-password' ? renderForgotPassword() : (
+              <>
+                {mode === 'signup' && (
+                  <div className="grid grid-cols-2 gap-2 mb-6">
+                    <Button type="button" variant={role === 'student' ? 'default' : 'outline'} size="sm"
+                      className={role === 'student' ? 'gradient-primary border-0 shadow-md' : ''}
+                      onClick={() => setRole('student')}>
+                      <GraduationCap className="h-4 w-4 mr-1" /> Student
                     </Button>
-                    <Button type="button" variant={role === 'company' ? 'default' : 'outline'} className={role === 'company' ? 'gradient-primary border-0 shadow-md' : ''} onClick={() => setRole('company')}>
-                      <Building2 className="h-4 w-4 mr-2" /> Company
+                    <Button type="button" variant={role === 'company' ? 'default' : 'outline'} size="sm"
+                      className={role === 'company' ? 'gradient-primary border-0 shadow-md' : ''}
+                      onClick={() => setRole('company')}>
+                      <Building2 className="h-4 w-4 mr-1" /> Company
                     </Button>
-                  </div>}
+                    <Button type="button" variant={role === 'university' ? 'default' : 'outline'} size="sm"
+                      className={role === 'university' ? 'gradient-primary border-0 shadow-md' : ''}
+                      onClick={() => setRole('university')}>
+                      <Building className="h-4 w-4 mr-1" /> University
+                    </Button>
+                    <Button type="button" variant={role === 'college' ? 'default' : 'outline'} size="sm"
+                      className={role === 'college' ? 'gradient-primary border-0 shadow-md' : ''}
+                      onClick={() => setRole('college')}>
+                      <Users className="h-4 w-4 mr-1" /> College
+                    </Button>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {mode === 'signup' && <>
+                  {mode === 'signup' && (
+                    <>
+                      {isInstitutionalRole && (
+                        <div>
+                          <Label className="text-sm font-medium">{role === 'university' ? 'University Name' : 'College Name'} <span className="text-destructive">*</span></Label>
+                          <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)}
+                            placeholder={role === 'university' ? 'e.g., XYZ University' : 'e.g., ABC College'} className="mt-1.5 h-11" />
+                        </div>
+                      )}
                       <div>
-                        <Label className="text-sm font-medium">{role === 'company' ? 'Company Name' : 'Full Name'} <span className="text-destructive">*</span></Label>
-                        <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder={role === 'company' ? 'Acme Inc.' : 'John Doe'} className="mt-1.5 h-11" />
+                        <Label className="text-sm font-medium">
+                          {role === 'company' ? 'Company Name' : isInstitutionalRole ? 'Contact Person Name' : 'Full Name'} <span className="text-destructive">*</span>
+                        </Label>
+                        <Input value={fullName} onChange={e => setFullName(e.target.value)}
+                          placeholder={role === 'company' ? 'Acme Inc.' : 'John Doe'} className="mt-1.5 h-11" />
                       </div>
                       <div>
                         <Label className="text-sm font-medium">Phone Number <span className="text-destructive">*</span></Label>
-                        <div className="mt-1.5">
-                          <PhoneInput value={phoneNumber} onChange={setPhoneNumber} />
-                        </div>
+                        <div className="mt-1.5"><PhoneInput value={phoneNumber} onChange={setPhoneNumber} /></div>
                       </div>
-                    </>}
+                    </>
+                  )}
+
                   <div>
                     <Label className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
                     <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5 h-11" />
                   </div>
-                    <div>
+
+                  <div>
                     <Label className="text-sm font-medium">Password <span className="text-destructive">*</span></Label>
                     <div className="relative mt-1.5">
                       <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="h-11 pr-10" />
@@ -837,81 +550,59 @@ const Auth = () => {
                     {mode === 'signup' && <PasswordStrength password={password} className="mt-2" />}
                   </div>
 
-                  {/* Honeypot field - hidden from real users */}
+                  {/* Honeypot field */}
                   <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-                    <Input
-                      type="text"
-                      name="website_url"
-                      value={honeypot}
-                      onChange={(e) => setHoneypot(e.target.value)}
-                      tabIndex={-1}
-                      autoComplete="off"
-                    />
+                    <Input type="text" name="website_url" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
                   </div>
 
-                  {mode === 'login' && <div className="text-right">
+                  {mode === 'login' && (
+                    <div className="text-right">
                       <button type="button" onClick={() => setMode('forgot-password')} className="text-sm text-primary hover:underline font-medium">
                         Forgot password?
                       </button>
-                    </div>}
+                    </div>
+                  )}
 
-                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow" disabled={loading || (mode === 'signup' && getPasswordStrength(password).score < 3)}>
+                  <Button type="submit" className="w-full h-11 gradient-primary border-0 shadow-md hover:shadow-lg transition-shadow"
+                    disabled={loading || (mode === 'signup' && getPasswordStrength(password).score < 3)}>
                     {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Please wait...</> : mode === 'login' ? 'Sign In' : 'Create Account'}
                   </Button>
                 </form>
 
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-11 hover:shadow-sm transition-shadow"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                >
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  Continue with Google
-                </Button>
+                {mode === 'login' && (
+                  <>
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" className="w-full h-11 hover:shadow-sm transition-shadow" onClick={handleGoogleSignIn} disabled={loading}>
+                      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                      </svg>
+                      Continue with Google
+                    </Button>
+                  </>
+                )}
 
                 <div className="mt-6 text-center text-sm">
-                  {mode === 'login' ? <p className="text-muted-foreground">Don't have an account? <button onClick={() => setMode('signup')} className="text-primary font-semibold hover:underline">Sign up</button></p> : <p className="text-muted-foreground">Already have an account? <button onClick={() => setMode('login')} className="text-primary font-semibold hover:underline">Sign in</button></p>}
+                  {mode === 'login' ? (
+                    <p className="text-muted-foreground">Don't have an account? <button onClick={() => setMode('signup')} className="text-primary font-semibold hover:underline">Sign up</button></p>
+                  ) : (
+                    <p className="text-muted-foreground">Already have an account? <button onClick={() => setMode('login')} className="text-primary font-semibold hover:underline">Sign in</button></p>
+                  )}
                 </div>
-
-                <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="h-10 w-10 rounded-full gradient-secondary flex items-center justify-center">
-                      <GraduationCap className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">University or College?</p>
-                      <p className="text-xs text-muted-foreground">Use our dedicated institutional portal</p>
-                    </div>
-                  </div>
-                  <a 
-                    href="/university-auth" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-full mt-2 px-4 py-2.5 rounded-lg gradient-primary text-primary-foreground text-sm font-medium hover:shadow-md transition-shadow"
-                  >
-                    Go to University Login →
-                  </a>
-                </div>
-              </>}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;

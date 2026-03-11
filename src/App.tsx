@@ -11,7 +11,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import UniversityAuth from "./pages/UniversityAuth";
+
 import ForUniversities from "./pages/ForUniversities";
 import Internships from "./pages/Internships";
 import InternshipDetails from "./pages/InternshipDetails";
@@ -54,7 +54,7 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/for-universities" element={<PageTransition><ForUniversities /></PageTransition>} />
-        <Route path="/university-auth" element={<PageTransition><UniversityAuth /></PageTransition>} />
+        <Route path="/university-auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/internships" element={<PageTransition><Internships /></PageTransition>} />
         <Route path="/internships/:id" element={<PageTransition><InternshipDetails /></PageTransition>} />
         <Route path="/companies" element={<PageTransition><Companies /></PageTransition>} />

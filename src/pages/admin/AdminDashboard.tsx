@@ -16,9 +16,6 @@ import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { RolePermissions } from '@/components/admin/RolePermissions';
-import { RBACRoles } from '@/components/admin/RBACRoles';
-import { RBACUserRoles } from '@/components/admin/RBACUserRoles';
-import { RBACAuditLog } from '@/components/admin/RBACAuditLog';
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
@@ -33,7 +30,7 @@ type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
-  | 'permissions' | 'rbac-roles' | 'rbac-users' | 'audit-log' | 'security'
+  | 'permissions' | 'security'
   | 'banners' | 'settings' | 'notifications' | 'reports';
 
 const AdminDashboard = () => {
@@ -83,9 +80,6 @@ const AdminDashboard = () => {
       label: 'Security',
       items: [
         { id: 'permissions', label: 'Permissions', icon: Key },
-        { id: 'rbac-roles', label: 'RBAC Roles', icon: Shield },
-        { id: 'rbac-users', label: 'User Roles', icon: Lock },
-        { id: 'audit-log', label: 'Audit Log', icon: Clock },
         { id: 'security', label: 'Security Logs', icon: FileText },
       ],
     },
@@ -114,9 +108,6 @@ const AdminDashboard = () => {
       case 'internships': return <InternshipManagement />;
       case 'payments': return <PaymentsManagement />;
       case 'permissions': return <RolePermissions />;
-      case 'rbac-roles': return <RBACRoles />;
-      case 'rbac-users': return <RBACUserRoles />;
-      case 'audit-log': return <RBACAuditLog />;
       case 'security': return <SecurityLogs />;
       case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
