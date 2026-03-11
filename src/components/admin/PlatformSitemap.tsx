@@ -238,7 +238,7 @@ function scanSitemap(): SitemapScanResult {
   ];
 
   // Build groups
-  const groupMap = new Map<string, SitemapPage[]>();
+  const groupMap: Record<string, SitemapPage[]> = {};
   allPages.forEach(p => {
     if (!groupMap.has(p.group)) groupMap.set(p.group, []);
     groupMap.get(p.group)!.push(p);
