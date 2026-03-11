@@ -27,14 +27,6 @@ const UniversityDashboard = () => {
   const { user } = useAuth();
   
 
-  const isTabVisible = (tabKey: string) => {
-    switch (tabKey) {
-      case 'colleges': return hasPermission('college.manage') || hasPermission('feature:manage_colleges');
-      case 'students': return hasPermission('student.view') || hasPermission('feature:view_students');
-      case 'coordinators': return hasPermission('coordinator.view') || hasPermission('feature:view_coordinators');
-      default: return true;
-    }
-  };
 
   useEffect(() => {
     const tab = searchParams.get('tab') as ActiveSection;
