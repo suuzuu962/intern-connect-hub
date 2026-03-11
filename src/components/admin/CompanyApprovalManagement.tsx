@@ -450,17 +450,6 @@ export const CompanyApprovalManagement = () => {
                   Approve
                 </Button>
               )}
-              {!isPending && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setRoleAssignCompany(company)}
-                  className="gap-1"
-                >
-                  <Shield className="h-4 w-4" />
-                  {companyRoles[company.id] ? 'Change Role' : 'Assign Role'}
-                </Button>
-              )}
               <Button 
                 size="sm" 
                 variant={company.is_verified ? "outline" : "destructive"}
