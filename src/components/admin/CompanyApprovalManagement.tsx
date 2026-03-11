@@ -1098,32 +1098,6 @@ export const CompanyApprovalManagement = () => {
           }}
         />
       )}
-      {/* Role Assignment Dialog for approved companies */}
-      {roleAssignCompany && (
-        <CompanyRoleAssignmentDialog
-          open={!!roleAssignCompany}
-          onOpenChange={(open) => {
-            if (!open) setRoleAssignCompany(null);
-          }}
-          company={roleAssignCompany}
-          onComplete={fetchCompanies}
-        />
-      )}
-      {/* Bulk Role Assignment Dialog */}
-      <CompanyRoleAssignmentDialog
-        open={bulkRoleDialogOpen}
-        onOpenChange={(open) => {
-          setBulkRoleDialogOpen(open);
-          if (!open) setSelectedCompanies(new Set());
-        }}
-        company={null}
-        companies={approvedCompanies.filter(c => selectedCompanies.has(c.id))}
-        bulkMode={true}
-        onComplete={() => {
-          setSelectedCompanies(new Set());
-          fetchCompanies();
-        }}
-      />
     </div>
     <ScrollBar orientation="horizontal" />
     </ScrollArea>
