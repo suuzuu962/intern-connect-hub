@@ -14,7 +14,7 @@ import { AdminOrgChart } from '@/components/admin/AdminOrgChart';
 import { PlatformSettings } from '@/components/admin/PlatformSettings';
 import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
-import { BannerManagement } from '@/components/admin/BannerManagement';
+
 
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 
