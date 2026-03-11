@@ -17,7 +17,7 @@ import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
-import { AccessControlManager } from '@/components/admin/AccessControlManager';
+
 import { ApiIntegration } from '@/components/admin/ApiIntegration';
 import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
