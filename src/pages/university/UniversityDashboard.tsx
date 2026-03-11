@@ -95,10 +95,10 @@ const UniversityDashboard = () => {
       case 'dashboard': return <UniversityStudents universityId={university.id} viewMode="summary" />;
       case 'org-chart': return <UniversityOrgChart universityId={university.id} />;
       case 'analytics': return <UniversityAnalytics universityId={university.id} />;
-      case 'colleges': return <PermissionGate permission="college.manage" showForbidden><UniversityColleges universityId={university.id} /></PermissionGate>;
-      case 'students': return <PermissionGate permission="student.view" showForbidden><UniversityStudents universityId={university.id} viewMode="detailed" /></PermissionGate>;
-      case 'coordinators': return <PermissionGate permission="coordinator.view" showForbidden><UniversityCoordinators universityId={university.id} /></PermissionGate>;
-      case 'users': return <PermissionGate permission="user.create" showForbidden><div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div></PermissionGate>;
+      case 'colleges': return <UniversityColleges universityId={university.id} />;
+      case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
+      case 'coordinators': return <UniversityCoordinators universityId={university.id} />;
+      case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
       case 'memos': return <InstitutionalMemos universityId={university.id} senderRole="university" senderName={university.name} />;
       case 'profile': return <UniversityProfile university={university} onUpdate={setUniversity} />;
       default: return null;
