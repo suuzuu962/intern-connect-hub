@@ -386,7 +386,7 @@ const ArchitectureDoc = () => {
                 <TableSchema name="company_limits" columns={['id', 'company_id (FK→companies)', 'max_internships', 'max_active_internships', 'can_post_paid_internships', 'can_view_resumes', 'can_feature_listings']} />
                 <TableSchema name="login_logs" columns={['id', 'user_id', 'user_email', 'role', 'ip_address', 'user_agent', 'login_at']} />
                 <TableSchema name="platform_settings" columns={['id', 'key', 'value (JSONB)', 'updated_by']} />
-                <TableSchema name="advertisement_banners" columns={['id', 'title', 'image_url', 'link_url', 'position', 'is_active', 'priority', 'target_roles[]', 'target_regions[]', 'target_cities[]', 'start_date', 'end_date']} />
+                
               </div>
             )}
 

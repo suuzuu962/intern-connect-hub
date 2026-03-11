@@ -96,9 +96,9 @@ function scanSitemap(): SitemapScanResult {
     // Public Pages
     {
       path: '/', name: 'Home', icon: 'Globe', type: 'public', group: 'Public Pages',
-      description: 'Landing page with banners, work funnel highlights, and featured internships',
+      description: 'Landing page with work funnel highlights and featured internships',
       linkedPages: ['/auth', '/university-auth', '/internships', '/companies', '/about', '/for-universities'],
-      tables: ['advertisement_banners', 'internships'], edgeFunctions: [], components: ['HomeBanners', 'WorkFunnelSection', 'Header', 'Footer'],
+      tables: ['internships'], edgeFunctions: [], components: ['WorkFunnelSection', 'Header', 'Footer'],
     },
     {
       path: '/auth', name: 'Student/Company Login', icon: 'Lock', type: 'public', group: 'Public Pages',
@@ -191,9 +191,9 @@ function scanSitemap(): SitemapScanResult {
       path: '/admin/dashboard', name: 'Admin Dashboard', icon: 'Shield', type: 'protected', role: 'admin', group: 'Admin Dashboard',
       description: 'Super admin platform management with 20+ management sections',
       linkedPages: ['/admin/architecture-doc', '/admin/flowchart-documentation', '/analytics'],
-      tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'colleges', 'college_coordinators', 'internships', 'applications', 'payment_transactions', 'platform_settings', 'login_logs', 'advertisement_banners', 'notifications'],
+      tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'colleges', 'college_coordinators', 'internships', 'applications', 'payment_transactions', 'platform_settings', 'login_logs', 'notifications'],
       edgeFunctions: ['admin-create-user'],
-      components: ['AdminOverview', 'PlatformAnalytics', 'Benchmarking', 'AdminOrgChart', 'AdminManagement', 'UniversityManagement', 'CollegeManagement', 'CoordinatorManagement', 'StudentManagement', 'CompanyApprovalManagement', 'InternshipManagement', 'PaymentsManagement', 'SecurityLogs', 'ApiIntegration', 'CustomReports', 'PlatformFeatureMap', 'PlatformSitemap', 'BannerManagement', 'NotificationManagement', 'DataExport', 'PlatformSettings'],
+      components: ['AdminOverview', 'PlatformAnalytics', 'Benchmarking', 'AdminOrgChart', 'AdminManagement', 'UniversityManagement', 'CollegeManagement', 'CoordinatorManagement', 'StudentManagement', 'CompanyApprovalManagement', 'InternshipManagement', 'PaymentsManagement', 'SecurityLogs', 'ApiIntegration', 'CustomReports', 'PlatformFeatureMap', 'PlatformSitemap', 'NotificationManagement', 'DataExport', 'PlatformSettings'],
     },
 
     // University Dashboard

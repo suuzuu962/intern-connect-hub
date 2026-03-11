@@ -392,18 +392,6 @@ function scanAllFeatures(): Feature[] {
       edgeFunctions: [],
     },
     {
-      id: 'banner-management',
-      name: 'Banner Management',
-      description: 'Admin manages advertisement banners with targeting and scheduling',
-      category: 'system',
-      icon: 'Image',
-      status: 'active',
-      connections: ['admin-dashboard', 'home-page'],
-      tables: ['advertisement_banners'],
-      routes: ['/admin/dashboard'],
-      edgeFunctions: [],
-    },
-    {
       id: 'platform-settings',
       name: 'Platform Settings',
       description: 'Global platform configuration including 13+ setting categories',

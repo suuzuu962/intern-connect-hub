@@ -14,7 +14,7 @@ import { AdminOrgChart } from '@/components/admin/AdminOrgChart';
 import { PlatformSettings } from '@/components/admin/PlatformSettings';
 import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
-import { BannerManagement } from '@/components/admin/BannerManagement';
+
 
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 
@@ -26,7 +26,7 @@ import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, BarChart3, ShieldCheck,
+  CreditCard, FileText, BarChart3, ShieldCheck,
   Plug, Target, FileBarChart, Map, MapPin
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -39,7 +39,7 @@ type ActiveSection =
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
-  | 'banners' | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap';
+  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,7 +98,6 @@ const AdminDashboard = () => {
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
-        { id: 'banners', label: 'Banners', icon: Image },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'reports', label: 'Data Export', icon: Download },
         { id: 'settings', label: 'Settings', icon: Settings },
@@ -126,7 +125,6 @@ const AdminDashboard = () => {
       case 'custom-reports': return <CustomReports />;
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
-      case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
       case 'reports': return <DataExport />;
       case 'settings': return <PlatformSettings />;

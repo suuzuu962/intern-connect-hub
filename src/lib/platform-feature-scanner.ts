@@ -152,7 +152,6 @@ function scanTables() {
     { name: 'company_limits', columns: 11, relationships: ['companies'] },
     { name: 'login_logs', columns: 6, relationships: [] },
     { name: 'platform_settings', columns: 4, relationships: [] },
-    { name: 'advertisement_banners', columns: 17, relationships: [] },
     { name: 'subscriptions', columns: 3, relationships: [] },
   ];
 }

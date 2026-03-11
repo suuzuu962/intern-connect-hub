@@ -3,7 +3,7 @@ import { ArrowRight, Briefcase, Building2, Users, Target, Award } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
-import { HomeBanners } from '@/components/home/HomeBanners';
+
 import { WorkFunnelSection } from '@/components/home/WorkFunnelSection';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
@@ -57,10 +57,6 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Banners */}
-      <div className="container mx-auto px-4 pt-6">
-        <HomeBanners position="hero" />
-      </div>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 lg:py-28">
@@ -148,10 +144,6 @@ const Index = () => {
               </ScrollSection>
             </div>
 
-            {/* Sidebar Banners */}
-            <div className="hidden lg:block w-64 flex-shrink-0">
-              <HomeBanners position="sidebar" />
-            </div>
           </div>
         </div>
       </section>

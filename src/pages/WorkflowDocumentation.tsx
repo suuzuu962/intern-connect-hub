@@ -81,7 +81,7 @@ const WorkflowDocumentation = () => {
                 { phase: 'User Management', steps: ['Manage all students, companies, universities', 'Create admin accounts', 'View all user profiles'] },
                 { phase: 'RBAC Management', steps: ['Create custom roles with 76 granular permissions', 'Assign roles to users', 'Role scopes: super_admin, admin, university, college, coordinator, company, student', 'Audit log for all RBAC changes'] },
                 { phase: 'Access Control', steps: ['Feature toggles via role_permissions', 'Per-user overrides via user_permissions', 'Field-level visibility controls', 'PermissionGate component enforcement'] },
-                { phase: 'Platform Config', steps: ['Manage banners & advertisements', 'Payment transaction oversight', 'Security logs & monitoring', 'Notification management', 'Data export & reports'] },
+                { phase: 'Platform Config', steps: ['Payment transaction oversight', 'Security logs & monitoring', 'Notification management', 'Data export & reports'] },
               ]}
             />
           </TabsContent>
