@@ -117,26 +117,6 @@ export const CompanyApprovalManagement = () => {
     description: '',
   });
 
-  const fetchCompanyRoles = async (companiesList: Company[]) => {
-    const userIds = companiesList.map(c => c.user_id);
-    if (userIds.length === 0) return;
-
-    const { data } = await supabase
-      .from('user_custom_roles')
-      .select('user_id, role_id, custom_roles(id, name)')
-      .in('user_id', userIds);
-
-    if (data) {
-      const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-      for (const item of data as any[]) {
-        const companyEntry = companiesList.find(c => c.user_id === item.user_id);
-        if (companyEntry && item.custom_roles) {
-          roleMap[companyEntry.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-        }
-      }
-      setCompanyRoles(roleMap);
-    }
-  };
 
   const fetchCompanies = async () => {
     try {
