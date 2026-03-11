@@ -21,6 +21,7 @@ import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 import { ApiIntegration } from '@/components/admin/ApiIntegration';
 import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
+import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
