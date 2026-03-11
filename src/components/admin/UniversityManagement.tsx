@@ -700,32 +700,6 @@ export const UniversityManagement = () => {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {availableRoles.length > 0 ? (
-                            <Select
-                              value={universityRoles[university.id]?.roleId || ''}
-                              onValueChange={(val) => handleChangeUniversityRole(university.id, university.user_id, val)}
-                            >
-                              <SelectTrigger className="w-[140px] h-8 text-xs">
-                                <SelectValue placeholder="Assign role">
-                                  {universityRoles[university.id] ? (
-                                    <span className="flex items-center gap-1">
-                                      <Shield className="h-3 w-3" />
-                                      {universityRoles[university.id].roleName}
-                                    </span>
-                                  ) : 'Assign role'}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableRoles.map(role => (
-                                  <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No roles</span>
-                          )}
-                        </TableCell>
                         <TableCell>{new Date(university.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1">
