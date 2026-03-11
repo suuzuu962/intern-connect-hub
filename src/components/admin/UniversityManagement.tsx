@@ -625,7 +625,7 @@ export const UniversityManagement = () => {
                       <TableHead>Contact</TableHead>
                       <TableHead>Colleges</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Role</TableHead>
+                      
                       <TableHead>Registered</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
