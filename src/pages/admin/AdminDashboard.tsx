@@ -22,11 +22,12 @@ import { ApiIntegration } from '@/components/admin/ApiIntegration';
 import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
 import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
+import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
   CreditCard, FileText, Image, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map
+  Plug, Target, FileBarChart, Map, MapPin
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -38,7 +39,7 @@ type ActiveSection =
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
-  | 'banners' | 'settings' | 'notifications' | 'reports' | 'feature-map';
+  | 'banners' | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,6 +97,7 @@ const AdminDashboard = () => {
         { id: 'api-integration', label: 'API Integration', icon: Plug },
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'feature-map', label: 'Feature Map', icon: Map },
+        { id: 'sitemap', label: 'Sitemap', icon: MapPin },
         { id: 'banners', label: 'Banners', icon: Image },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'reports', label: 'Data Export', icon: Download },
@@ -123,6 +125,7 @@ const AdminDashboard = () => {
       case 'api-integration': return <ApiIntegration />;
       case 'custom-reports': return <CustomReports />;
       case 'feature-map': return <PlatformFeatureMap />;
+      case 'sitemap': return <PlatformSitemap />;
       case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
       case 'reports': return <DataExport />;
