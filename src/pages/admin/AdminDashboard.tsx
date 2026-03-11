@@ -125,7 +125,6 @@ const AdminDashboard = () => {
       case 'custom-reports': return <CustomReports />;
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
-      case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
       case 'reports': return <DataExport />;
       case 'settings': return <PlatformSettings />;
