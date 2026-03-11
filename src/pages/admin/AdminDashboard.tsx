@@ -117,7 +117,6 @@ const AdminDashboard = () => {
       case 'companies': return <CompanyApprovalManagement />;
       case 'internships': return <InternshipManagement />;
       case 'payments': return <PaymentsManagement />;
-      case 'permissions': return <RolePermissions />;
       case 'access-control': return <AccessControlManager />;
       case 'security': return <SecurityLogs />;
       case 'api-integration': return <ApiIntegration />;
