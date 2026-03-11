@@ -85,8 +85,6 @@ export const UniversityManagement = () => {
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [unassignedColleges, setUnassignedColleges] = useState<College[]>([]);
   const [universityColleges, setUniversityColleges] = useState<College[]>([]);
-  const [universityRoles, setUniversityRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
-  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
