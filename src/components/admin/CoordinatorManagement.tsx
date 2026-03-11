@@ -105,33 +105,8 @@ export const CoordinatorManagement = () => {
       setUniversities(uniResult.data || []);
     }
 
-    // Fetch coordinator roles
-    const coordUserIds = (coordResult.data || []).map(c => c.user_id);
-    if (coordUserIds.length > 0) {
-      const { data: roleData } = await supabase
-        .from('user_custom_roles')
-        .select('user_id, role_id, custom_roles(id, name)')
-        .in('user_id', coordUserIds);
 
-      if (roleData) {
-        const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-        for (const item of roleData as any[]) {
-          const coord = (coordResult.data || []).find(c => c.user_id === item.user_id);
-          if (coord && item.custom_roles) {
-            roleMap[coord.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-          }
-        }
-        setCoordinatorRoles(roleMap);
-      }
-    }
 
-    // Fetch available coordinator-scoped roles
-    const { data: rolesData } = await supabase
-      .from('custom_roles')
-      .select('id, name')
-      .eq('scope', 'coordinator')
-      .order('name');
-    setAvailableRoles(rolesData || []);
 
     setLoading(false);
   };
