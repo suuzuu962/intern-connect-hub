@@ -255,7 +255,7 @@ function scanSitemap(): SitemapScanResult {
     'Analytics': 'BarChart3',
   };
 
-  const groups: SitemapGroup[] = Array.from(groupMap.entries()).map(([name, pages]) => ({
+  const groups: SitemapGroup[] = Object.entries(groupMap).map(([name, pages]) => ({
     name,
     icon: groupIcons[name] || 'Globe',
     pages,
