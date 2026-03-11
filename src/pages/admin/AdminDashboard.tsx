@@ -80,9 +80,6 @@ const AdminDashboard = () => {
       label: 'Security',
       items: [
         { id: 'permissions', label: 'Permissions', icon: Key },
-        { id: 'rbac-roles', label: 'RBAC Roles', icon: Shield },
-        { id: 'rbac-users', label: 'User Roles', icon: Lock },
-        { id: 'audit-log', label: 'Audit Log', icon: Clock },
         { id: 'security', label: 'Security Logs', icon: FileText },
       ],
     },
