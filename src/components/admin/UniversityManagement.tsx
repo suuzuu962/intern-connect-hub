@@ -334,40 +334,6 @@ export const UniversityManagement = () => {
     }
   };
 
-  const handleChangeUniversityRole = async (universityId: string, userId: string, newRoleId: string) => {
-    try {
-      // Verify the user still exists in the auth system before attempting role assignment
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!profileData) {
-        toast({ 
-          title: 'Error', 
-          description: 'Cannot assign role: this university\'s user account no longer exists. The account may have been deleted.', 
-          variant: 'destructive' 
-        });
-        return;
-      }
-
-      await supabase.from('user_custom_roles').delete().eq('user_id', userId);
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('user_custom_roles').insert({
-        user_id: userId,
-        role_id: newRoleId,
-        assigned_by: user?.id,
-      });
-      if (error) throw error;
-      const roleName = availableRoles.find(r => r.id === newRoleId)?.name || '';
-      toast({ title: 'Success', description: `Role updated to "${roleName}"` });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: 'Error', description: 'Failed to change role: ' + error.message, variant: 'destructive' });
-    }
-  };
-
   const toggleSelectAll = () => {
     if (selectedIds.length === displayedUniversities.length) {
       setSelectedIds([]);
