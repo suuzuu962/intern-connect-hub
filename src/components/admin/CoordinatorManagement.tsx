@@ -489,7 +489,7 @@ export const CoordinatorManagement = () => {
                       <TableHead>College/University</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Approval</TableHead>
-                      <TableHead>Role</TableHead>
+                      
                       <TableHead>Registered</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
