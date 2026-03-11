@@ -35,7 +35,7 @@ type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
-  | 'permissions' | 'access-control' | 'security'
+  | 'access-control' | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'banners' | 'settings' | 'notifications' | 'reports';
 
