@@ -504,119 +504,186 @@ export const PlatformSitemap = () => {
               </div>
             </div>
 
-            {/* Detail panel */}
+            {/* Flow diagram panel */}
             <div className="lg:col-span-1">
               <div className="sticky top-4">
                 <AnimatePresence mode="wait">
                   {selectedPage ? (
-                    <motion.div key={selectedPage.path} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-2 rounded-lg ${
+                    <motion.div key={selectedPage.path} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
+                      {/* Page header card */}
+                      <Card className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`p-2 rounded-lg ${selectedPage.type === 'public' ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
+                            {iconMap[selectedPage.icon] || <Globe className="h-4 w-4" />}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm">{selectedPage.name}</h3>
+                            <code className="text-[10px] text-muted-foreground">{selectedPage.path}</code>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 mb-2">
+                          <Badge variant={selectedPage.type === 'public' ? 'secondary' : 'default'} className="text-[10px]">
+                            {selectedPage.type === 'public' ? '🌐 Public' : '🔒 Protected'}
+                          </Badge>
+                          {selectedPage.role && <Badge variant="outline" className="text-[10px]">{selectedPage.role}</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{selectedPage.description}</p>
+                      </Card>
+
+                      {/* Visual Flow Diagram */}
+                      <Card className="p-4">
+                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-4 flex items-center gap-1">
+                          <Network className="h-3 w-3" /> Connection Flow
+                        </h4>
+                        <div className="flex flex-col items-center gap-1">
+                          {/* Incoming connections */}
+                          {(() => {
+                            const incoming = result.groups.flatMap(g => g.pages).filter(p => p.linkedPages.includes(selectedPage.path));
+                            if (incoming.length === 0) return null;
+                            return (
+                              <>
+                                <div className="text-[9px] font-semibold uppercase text-muted-foreground mb-1">Incoming</div>
+                                <div className="flex flex-wrap justify-center gap-1.5 mb-1">
+                                  {incoming.map(p => (
+                                    <motion.button
+                                      key={p.path}
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      onClick={() => setSelectedPage(p)}
+                                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-blue-500/5 border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                                    >
+                                      {iconMap[p.icon] || <Globe className="h-3 w-3" />}
+                                      <span className="text-[10px] font-medium">{p.name}</span>
+                                    </motion.button>
+                                  ))}
+                                </div>
+                                <div className="flex flex-col items-center">
+                                  <div className="w-px h-4 bg-blue-500/30" />
+                                  <ArrowDown className="h-3 w-3 text-blue-500/50" />
+                                </div>
+                              </>
+                            );
+                          })()}
+
+                          {/* Center node */}
+                          <motion.div
+                            className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 shadow-md w-full max-w-[220px] ${
                               selectedPage.type === 'public'
-                                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                            }`}>
+                                ? 'bg-green-500/10 border-green-500/40'
+                                : 'bg-amber-500/10 border-amber-500/40'
+                            }`}
+                            layoutId="center-node"
+                          >
+                            <div className={`p-1.5 rounded-full ${selectedPage.type === 'public' ? 'bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'}`}>
                               {iconMap[selectedPage.icon] || <Globe className="h-4 w-4" />}
                             </div>
                             <div>
-                              <CardTitle className="text-lg">{selectedPage.name}</CardTitle>
-                              <code className="text-xs text-muted-foreground">{selectedPage.path}</code>
+                              <p className="text-xs font-bold leading-tight">{selectedPage.name}</p>
+                              <code className="text-[9px] text-muted-foreground">{selectedPage.path}</code>
                             </div>
-                          </div>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant={selectedPage.type === 'public' ? 'secondary' : 'default'} className="text-[10px]">
-                              {selectedPage.type === 'public' ? '🌐 Public' : '🔒 Protected'}
-                            </Badge>
-                            {selectedPage.role && <Badge variant="outline" className="text-[10px]">{selectedPage.role}</Badge>}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-2">{selectedPage.description}</p>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {/* Linked Pages */}
+                          </motion.div>
+
+                          {/* Outgoing connections */}
                           {selectedPage.linkedPages.length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1">
-                                <Network className="h-3 w-3" /> Links To ({selectedPage.linkedPages.length})
-                              </h4>
-                              <div className="space-y-1">
+                            <>
+                              <div className="flex flex-col items-center">
+                                <ArrowDown className="h-3 w-3 text-purple-500/50" />
+                                <div className="w-px h-4 bg-purple-500/30" />
+                              </div>
+                              <div className="text-[9px] font-semibold uppercase text-muted-foreground mb-1">Outgoing</div>
+                              <div className="flex flex-wrap justify-center gap-1.5">
                                 {selectedPage.linkedPages.map(lp => {
                                   const linked = findPage(lp);
                                   return (
-                                    <button
+                                    <motion.button
                                       key={lp}
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
                                       onClick={() => linked && setSelectedPage(linked)}
-                                      className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-muted/70 transition-colors"
+                                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-purple-500/5 border-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
                                     >
-                                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                      <div>
-                                        <span className="text-xs font-medium">{linked?.name || lp}</span>
-                                        <code className="block text-[10px] text-muted-foreground">{lp}</code>
-                                      </div>
-                                    </button>
+                                      {linked ? (iconMap[linked.icon] || <Globe className="h-3 w-3" />) : <Globe className="h-3 w-3" />}
+                                      <span className="text-[10px] font-medium">{linked?.name || lp}</span>
+                                    </motion.button>
                                   );
                                 })}
                               </div>
-                            </div>
-                          )}
-
-                          {selectedPage.tables.length > 0 && (
-                            <>
-                              <Separator />
-                              <div>
-                                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1">
-                                  <Database className="h-3 w-3" /> Database Tables
-                                </h4>
-                                <div className="flex flex-wrap gap-1">
-                                  {selectedPage.tables.map(t => (
-                                    <code key={t} className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{t}</code>
-                                  ))}
-                                </div>
-                              </div>
                             </>
                           )}
-
-                          {selectedPage.edgeFunctions.length > 0 && (
-                            <>
-                              <Separator />
-                              <div>
-                                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1">
-                                  <Server className="h-3 w-3" /> Backend Functions
-                                </h4>
-                                <div className="flex flex-wrap gap-1">
-                                  {selectedPage.edgeFunctions.map(f => (
-                                    <code key={f} className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{f}</code>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
-                          )}
-
-                          {selectedPage.components.length > 0 && (
-                            <>
-                              <Separator />
-                              <div>
-                                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1">
-                                  <Eye className="h-3 w-3" /> Components ({selectedPage.components.length})
-                                </h4>
-                                <div className="flex flex-wrap gap-1">
-                                  {selectedPage.components.map(c => (
-                                    <Badge key={c} variant="outline" className="text-[10px]">{c}</Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </CardContent>
+                        </div>
                       </Card>
+
+                      {/* Data flow */}
+                      {(selectedPage.tables.length > 0 || selectedPage.edgeFunctions.length > 0) && (
+                        <Card className="p-4">
+                          <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1">
+                            <Database className="h-3 w-3" /> Data Flow
+                          </h4>
+                          <div className="flex flex-col items-center gap-1">
+                            {/* Page node mini */}
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-card text-xs font-medium">
+                              {iconMap[selectedPage.icon] || <Globe className="h-3 w-3" />}
+                              {selectedPage.name}
+                            </div>
+
+                            {selectedPage.edgeFunctions.length > 0 && (
+                              <>
+                                <div className="flex flex-col items-center">
+                                  <ArrowDown className="h-3 w-3 text-amber-500/50" />
+                                  <div className="w-px h-2 bg-amber-500/30" />
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-1.5">
+                                  {selectedPage.edgeFunctions.map(ef => (
+                                    <div key={ef} className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                                      <Server className="h-3 w-3" />
+                                      <code className="text-[10px] font-medium">{ef}</code>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+
+                            {selectedPage.tables.length > 0 && (
+                              <>
+                                <div className="flex flex-col items-center">
+                                  <ArrowDown className="h-3 w-3 text-primary/50" />
+                                  <div className="w-px h-2 bg-primary/30" />
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-1.5">
+                                  {selectedPage.tables.map(t => (
+                                    <div key={t} className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
+                                      <Database className="h-3 w-3 text-primary" />
+                                      <code className="text-[10px] font-medium">{t}</code>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </Card>
+                      )}
+
+                      {/* Components */}
+                      {selectedPage.components.length > 0 && (
+                        <Card className="p-4">
+                          <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1">
+                            <Eye className="h-3 w-3" /> Components ({selectedPage.components.length})
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedPage.components.map(c => (
+                              <Badge key={c} variant="outline" className="text-[10px]">{c}</Badge>
+                            ))}
+                          </div>
+                        </Card>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                       <Card className="p-8 text-center">
-                        <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          Click on any page to see its details, connections, and dependencies
+                        <Network className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm font-medium mb-1">Select a page</p>
+                        <p className="text-xs text-muted-foreground">
+                          Click on any page to see its flow diagram showing incoming connections, outgoing links, and data dependencies
                         </p>
                       </Card>
                     </motion.div>
