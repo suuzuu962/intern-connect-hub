@@ -108,9 +108,6 @@ const AdminDashboard = () => {
       case 'internships': return <InternshipManagement />;
       case 'payments': return <PaymentsManagement />;
       case 'permissions': return <RolePermissions />;
-      case 'rbac-roles': return <RBACRoles />;
-      case 'rbac-users': return <RBACUserRoles />;
-      case 'audit-log': return <RBACAuditLog />;
       case 'security': return <SecurityLogs />;
       case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
