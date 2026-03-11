@@ -57,10 +57,6 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Banners */}
-      <div className="container mx-auto px-4 pt-6">
-        <HomeBanners position="hero" />
-      </div>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 lg:py-28">
