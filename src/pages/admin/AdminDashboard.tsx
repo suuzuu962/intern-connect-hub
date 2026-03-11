@@ -86,7 +86,6 @@ const AdminDashboard = () => {
     {
       label: 'Security',
       items: [
-        { id: 'access-control', label: 'Access Control', icon: Lock },
         { id: 'security', label: 'Security Logs', icon: FileText },
       ],
     },
