@@ -108,33 +108,6 @@ export const UniversityManagement = () => {
       setColleges(collegeResult.data || []);
     }
 
-    // Fetch university roles
-    const uniUserIds = (uniResult.data || []).map(u => u.user_id);
-    if (uniUserIds.length > 0) {
-      const { data: roleData } = await supabase
-        .from('user_custom_roles')
-        .select('user_id, role_id, custom_roles(id, name)')
-        .in('user_id', uniUserIds);
-
-      if (roleData) {
-        const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-        for (const item of roleData as any[]) {
-          const uni = (uniResult.data || []).find(u => u.user_id === item.user_id);
-          if (uni && item.custom_roles) {
-            roleMap[uni.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-          }
-        }
-        setUniversityRoles(roleMap);
-      }
-    }
-
-    // Fetch available university-scoped roles
-    const { data: rolesData } = await supabase
-      .from('custom_roles')
-      .select('id, name')
-      .eq('scope', 'university')
-      .order('name');
-    setAvailableRoles(rolesData || []);
 
     setLoading(false);
   };
