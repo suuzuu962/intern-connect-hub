@@ -12,7 +12,7 @@ import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChar
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { CollegeCoordinator } from '@/types/database';
-import { PermissionGate } from '@/components/auth/PermissionGate';
+
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
