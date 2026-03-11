@@ -49,7 +49,7 @@ const UniversityDashboard = () => {
     setSearchParams({ tab: value });
   };
 
-  if (loading || permLoading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
