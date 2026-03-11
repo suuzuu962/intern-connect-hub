@@ -106,10 +106,7 @@ export const CompanyApprovalManagement = () => {
   const [addingCompany, setAddingCompany] = useState(false);
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
-  const [roleAssignCompany, setRoleAssignCompany] = useState<Company | null>(null);
-  const [companyRoles, setCompanyRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
-  const [bulkRoleDialogOpen, setBulkRoleDialogOpen] = useState(false);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
