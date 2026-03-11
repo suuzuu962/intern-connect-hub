@@ -16,9 +16,6 @@ import { PaymentsManagement } from '@/components/admin/PaymentsManagement';
 import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { RolePermissions } from '@/components/admin/RolePermissions';
-import { RBACRoles } from '@/components/admin/RBACRoles';
-import { RBACUserRoles } from '@/components/admin/RBACUserRoles';
-import { RBACAuditLog } from '@/components/admin/RBACAuditLog';
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
