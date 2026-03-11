@@ -422,12 +422,6 @@ export const CompanyApprovalManagement = () => {
                   ) : (
                     <Badge variant="destructive">Pending</Badge>
                   )}
-                  {companyRoles[company.id] && (
-                    <Badge variant="outline" className="gap-1">
-                      <Shield className="h-3 w-3" />
-                      {companyRoles[company.id].roleName}
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {company.short_description || company.description || 'No description'}
