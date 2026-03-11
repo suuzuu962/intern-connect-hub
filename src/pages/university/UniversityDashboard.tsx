@@ -25,7 +25,7 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { hasPermission, loading: permLoading } = usePermissions();
+  
 
   const isTabVisible = (tabKey: string) => {
     switch (tabKey) {
