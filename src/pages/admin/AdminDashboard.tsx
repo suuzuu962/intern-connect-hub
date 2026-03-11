@@ -30,7 +30,7 @@ type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
-  | 'permissions' | 'rbac-roles' | 'rbac-users' | 'audit-log' | 'security'
+  | 'permissions' | 'security'
   | 'banners' | 'settings' | 'notifications' | 'reports';
 
 const AdminDashboard = () => {
