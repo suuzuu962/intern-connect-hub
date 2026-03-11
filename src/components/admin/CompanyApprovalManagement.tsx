@@ -127,7 +127,7 @@ export const CompanyApprovalManagement = () => {
 
       if (error) throw error;
       setCompanies(data || []);
-      await fetchCompanyRoles(data || []);
+      setCompanies(data || []);
     } catch (error: any) {
       toast.error('Failed to fetch companies');
       console.error('Error fetching companies:', error);
