@@ -13,8 +13,6 @@ import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 import { UniversityAnalytics } from '@/components/university/UniversityAnalytics';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
-import { PermissionGate } from '@/components/auth/PermissionGate';
-import { usePermissions } from '@/hooks/usePermissions';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
