@@ -24,7 +24,7 @@ import { CustomReports } from '@/components/admin/CustomReports';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, Key, Lock, BarChart3, ShieldCheck,
+  CreditCard, FileText, Image, Lock, BarChart3, ShieldCheck,
   Plug, Target, FileBarChart
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
