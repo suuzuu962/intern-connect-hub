@@ -237,23 +237,6 @@ export const CoordinatorManagement = () => {
     setSaving(false);
   };
 
-  const handleChangeCoordinatorRole = async (coordinatorId: string, userId: string, newRoleId: string) => {
-    try {
-      await supabase.from('user_custom_roles').delete().eq('user_id', userId);
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('user_custom_roles').insert({
-        user_id: userId,
-        role_id: newRoleId,
-        assigned_by: user?.id,
-      });
-      if (error) throw error;
-      const roleName = availableRoles.find(r => r.id === newRoleId)?.name || '';
-      toast({ title: 'Success', description: `Role updated to "${roleName}"` });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: 'Error', description: 'Failed to change role: ' + error.message, variant: 'destructive' });
-    }
-  };
 
   const handleRemoveMapping = async () => {
     if (!selectedCoordinator) return;
