@@ -17,10 +17,15 @@ import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 import { RolePermissions } from '@/components/admin/RolePermissions';
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
+import { AccessControlManager } from '@/components/admin/AccessControlManager';
+import { ApiIntegration } from '@/components/admin/ApiIntegration';
+import { Benchmarking } from '@/components/admin/Benchmarking';
+import { CustomReports } from '@/components/admin/CustomReports';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, Key, Lock, Clock, ShieldCheck, BarChart3
+  CreditCard, FileText, Image, Key, Lock, BarChart3, ShieldCheck,
+  Plug, Target, FileBarChart
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -30,7 +35,8 @@ type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
-  | 'permissions' | 'security'
+  | 'permissions' | 'access-control' | 'security'
+  | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'banners' | 'settings' | 'notifications' | 'reports';
 
 const AdminDashboard = () => {
@@ -55,6 +61,7 @@ const AdminDashboard = () => {
       items: [
         { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'benchmarking', label: 'Benchmarking', icon: Target },
         { id: 'org-chart', label: 'Org Chart', icon: Network },
         { id: 'admins', label: 'Admins', icon: ShieldCheck },
       ],
@@ -80,15 +87,18 @@ const AdminDashboard = () => {
       label: 'Security',
       items: [
         { id: 'permissions', label: 'Permissions', icon: Key },
+        { id: 'access-control', label: 'Access Control', icon: Lock },
         { id: 'security', label: 'Security Logs', icon: FileText },
       ],
     },
     {
       label: 'System',
       items: [
+        { id: 'api-integration', label: 'API Integration', icon: Plug },
+        { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'banners', label: 'Banners', icon: Image },
         { id: 'notifications', label: 'Notifications', icon: Bell },
-        { id: 'reports', label: 'Reports', icon: Download },
+        { id: 'reports', label: 'Data Export', icon: Download },
         { id: 'settings', label: 'Settings', icon: Settings },
       ],
     },
@@ -98,6 +108,7 @@ const AdminDashboard = () => {
     switch (activeSection) {
       case 'overview': return <AdminOverview onNavigate={handleNavigate} />;
       case 'analytics': return <PlatformAnalytics />;
+      case 'benchmarking': return <Benchmarking />;
       case 'org-chart': return <AdminOrgChart />;
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
@@ -108,7 +119,10 @@ const AdminDashboard = () => {
       case 'internships': return <InternshipManagement />;
       case 'payments': return <PaymentsManagement />;
       case 'permissions': return <RolePermissions />;
+      case 'access-control': return <AccessControlManager />;
       case 'security': return <SecurityLogs />;
+      case 'api-integration': return <ApiIntegration />;
+      case 'custom-reports': return <CustomReports />;
       case 'banners': return <BannerManagement />;
       case 'notifications': return <NotificationManagement />;
       case 'reports': return <DataExport />;
