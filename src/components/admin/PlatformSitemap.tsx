@@ -238,10 +238,10 @@ function scanSitemap(): SitemapScanResult {
   ];
 
   // Build groups
-  const groupMap: Record<string, SitemapPage[]> = {};
+  const groupMap: { [key: string]: SitemapPage[] } = {};
   allPages.forEach(p => {
-    if (!groupMap.has(p.group)) groupMap.set(p.group, []);
-    groupMap.get(p.group)!.push(p);
+    if (!groupMap[p.group]) groupMap[p.group] = [];
+    groupMap[p.group].push(p);
   });
 
   const groupIcons: Record<string, string> = {
