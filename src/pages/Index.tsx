@@ -144,10 +144,6 @@ const Index = () => {
               </ScrollSection>
             </div>
 
-            {/* Sidebar Banners */}
-            <div className="hidden lg:block w-64 flex-shrink-0">
-              <HomeBanners position="sidebar" />
-            </div>
           </div>
         </div>
       </section>
