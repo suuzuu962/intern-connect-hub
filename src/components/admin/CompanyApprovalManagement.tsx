@@ -1037,16 +1037,6 @@ export const CompanyApprovalManagement = () => {
                   }}
                 />
                 <span className="text-sm text-muted-foreground">Select All</span>
-                {selectedCompanies.size > 0 && (
-                  <Button
-                    size="sm"
-                    className="gap-1.5 ml-2"
-                    onClick={() => setBulkRoleDialogOpen(true)}
-                  >
-                    <Shield className="h-4 w-4" />
-                    Bulk Assign Role ({selectedCompanies.size})
-                  </Button>
-                )}
               </div>
             )}
           </div>
