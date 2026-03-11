@@ -11,7 +11,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import UniversityAuth from "./pages/UniversityAuth";
+
 import ForUniversities from "./pages/ForUniversities";
 import Internships from "./pages/Internships";
 import InternshipDetails from "./pages/InternshipDetails";

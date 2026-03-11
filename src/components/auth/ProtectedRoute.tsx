@@ -16,10 +16,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // Redirect to appropriate auth page based on the route being accessed
-        const isUniversityRoute = allowedRoles?.includes('university') || allowedRoles?.includes('college_coordinator');
-        const authPath = isUniversityRoute ? '/university-auth?mode=login' : '/auth?mode=login';
-        navigate(authPath, { replace: true });
+        navigate('/auth?mode=login', { replace: true });
         return;
       }
 

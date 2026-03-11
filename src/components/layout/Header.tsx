@@ -29,11 +29,8 @@ export const Header = () => {
   const { user, role, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    // Capture role before signOut clears it
-    const wasUniversityOrCollege = role === 'university' || role === 'college_coordinator';
     await signOut();
-    // Redirect university/college users to university auth page
-    navigate(wasUniversityOrCollege ? '/university-auth?mode=login' : '/');
+    navigate('/');
   };
 
   useEffect(() => {
