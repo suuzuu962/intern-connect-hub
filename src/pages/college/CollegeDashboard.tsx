@@ -14,7 +14,7 @@ import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { College } from '@/types/database';
-import { PermissionGate } from '@/components/auth/PermissionGate';
+
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
@@ -170,10 +170,10 @@ const CollegeDashboard = () => {
           </div>
         );
       case 'org-chart': return <CollegeOrgChart collegeId={college.id} />;
-      case 'students': return <PermissionGate permission="activity.view_college" showForbidden><CollegeStudents collegeId={college.id} viewMode="detailed" /></PermissionGate>;
-      case 'diary-approvals': return <PermissionGate permission="activity.review" showForbidden><CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} /></PermissionGate>;
+      case 'students': return <CollegeStudents collegeId={college.id} viewMode="detailed" />;
+      case 'diary-approvals': return <CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} />;
       case 'attendance': return <AttendanceTracker collegeId={college.id} role="college" />;
-      case 'coordinators': return <PermissionGate permission="user.edit" showForbidden><CollegeCoordinators collegeId={college.id} /></PermissionGate>;
+      case 'coordinators': return <CollegeCoordinators collegeId={college.id} />;
       case 'memos': return <InstitutionalMemos universityId={(college as any).university_id} collegeId={college.id} senderRole="college" senderName={college.name} />;
       case 'profile': return <CollegeProfile college={college} onUpdate={setCollege} />;
       default: return null;

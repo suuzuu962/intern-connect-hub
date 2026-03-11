@@ -13,8 +13,6 @@ import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 import { UniversityAnalytics } from '@/components/university/UniversityAnalytics';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
-import { PermissionGate } from '@/components/auth/PermissionGate';
-import { usePermissions } from '@/hooks/usePermissions';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
@@ -27,16 +25,8 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { hasPermission, loading: permLoading } = usePermissions();
+  
 
-  const isTabVisible = (tabKey: string) => {
-    switch (tabKey) {
-      case 'colleges': return hasPermission('college.manage') || hasPermission('feature:manage_colleges');
-      case 'students': return hasPermission('student.view') || hasPermission('feature:view_students');
-      case 'coordinators': return hasPermission('coordinator.view') || hasPermission('feature:view_coordinators');
-      default: return true;
-    }
-  };
 
   useEffect(() => {
     const tab = searchParams.get('tab') as ActiveSection;
@@ -59,7 +49,7 @@ const UniversityDashboard = () => {
     setSearchParams({ tab: value });
   };
 
-  if (loading || permLoading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -84,9 +74,9 @@ const UniversityDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'org-chart', label: 'Org Chart', icon: Network, visible: true },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, visible: true },
-    { id: 'colleges', label: 'Colleges', icon: School, visible: isTabVisible('colleges') },
-    { id: 'students', label: 'Students', icon: Users, visible: isTabVisible('students') },
-    { id: 'coordinators', label: 'Coordinators', icon: UserCheck, visible: isTabVisible('coordinators') },
+    { id: 'colleges', label: 'Colleges', icon: School, visible: true },
+    { id: 'students', label: 'Students', icon: Users, visible: true },
+    { id: 'coordinators', label: 'Coordinators', icon: UserCheck, visible: true },
     { id: 'users', label: 'Users', icon: User, visible: true },
     { id: 'memos', label: 'Memos', icon: Mail, visible: true },
     { id: 'profile', label: 'Profile', icon: Settings, visible: true },
@@ -97,10 +87,10 @@ const UniversityDashboard = () => {
       case 'dashboard': return <UniversityStudents universityId={university.id} viewMode="summary" />;
       case 'org-chart': return <UniversityOrgChart universityId={university.id} />;
       case 'analytics': return <UniversityAnalytics universityId={university.id} />;
-      case 'colleges': return <PermissionGate permission="college.manage" showForbidden><UniversityColleges universityId={university.id} /></PermissionGate>;
-      case 'students': return <PermissionGate permission="student.view" showForbidden><UniversityStudents universityId={university.id} viewMode="detailed" /></PermissionGate>;
-      case 'coordinators': return <PermissionGate permission="coordinator.view" showForbidden><UniversityCoordinators universityId={university.id} /></PermissionGate>;
-      case 'users': return <PermissionGate permission="user.create" showForbidden><div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div></PermissionGate>;
+      case 'colleges': return <UniversityColleges universityId={university.id} />;
+      case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
+      case 'coordinators': return <UniversityCoordinators universityId={university.id} />;
+      case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
       case 'memos': return <InstitutionalMemos universityId={university.id} senderRole="university" senderName={university.name} />;
       case 'profile': return <UniversityProfile university={university} onUpdate={setUniversity} />;
       default: return null;

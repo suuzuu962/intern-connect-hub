@@ -61,8 +61,6 @@ export const CoordinatorManagement = () => {
   const [selectedUniversityId, setSelectedUniversityId] = useState<string>('');
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [coordinatorRoles, setCoordinatorRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
-  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -105,33 +103,8 @@ export const CoordinatorManagement = () => {
       setUniversities(uniResult.data || []);
     }
 
-    // Fetch coordinator roles
-    const coordUserIds = (coordResult.data || []).map(c => c.user_id);
-    if (coordUserIds.length > 0) {
-      const { data: roleData } = await supabase
-        .from('user_custom_roles')
-        .select('user_id, role_id, custom_roles(id, name)')
-        .in('user_id', coordUserIds);
 
-      if (roleData) {
-        const roleMap: Record<string, { roleId: string; roleName: string }> = {};
-        for (const item of roleData as any[]) {
-          const coord = (coordResult.data || []).find(c => c.user_id === item.user_id);
-          if (coord && item.custom_roles) {
-            roleMap[coord.id] = { roleId: item.custom_roles.id, roleName: item.custom_roles.name };
-          }
-        }
-        setCoordinatorRoles(roleMap);
-      }
-    }
 
-    // Fetch available coordinator-scoped roles
-    const { data: rolesData } = await supabase
-      .from('custom_roles')
-      .select('id, name')
-      .eq('scope', 'coordinator')
-      .order('name');
-    setAvailableRoles(rolesData || []);
 
     setLoading(false);
   };
@@ -264,23 +237,6 @@ export const CoordinatorManagement = () => {
     setSaving(false);
   };
 
-  const handleChangeCoordinatorRole = async (coordinatorId: string, userId: string, newRoleId: string) => {
-    try {
-      await supabase.from('user_custom_roles').delete().eq('user_id', userId);
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('user_custom_roles').insert({
-        user_id: userId,
-        role_id: newRoleId,
-        assigned_by: user?.id,
-      });
-      if (error) throw error;
-      const roleName = availableRoles.find(r => r.id === newRoleId)?.name || '';
-      toast({ title: 'Success', description: `Role updated to "${roleName}"` });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: 'Error', description: 'Failed to change role: ' + error.message, variant: 'destructive' });
-    }
-  };
 
   const handleRemoveMapping = async () => {
     if (!selectedCoordinator) return;
@@ -489,7 +445,7 @@ export const CoordinatorManagement = () => {
                       <TableHead>College/University</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Approval</TableHead>
-                      <TableHead>Role</TableHead>
+                      
                       <TableHead>Registered</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -544,32 +500,6 @@ export const CoordinatorManagement = () => {
                           >
                             {coordinator.is_approved ? 'Approved' : 'Pending'}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {availableRoles.length > 0 ? (
-                            <Select
-                              value={coordinatorRoles[coordinator.id]?.roleId || ''}
-                              onValueChange={(val) => handleChangeCoordinatorRole(coordinator.id, coordinator.user_id, val)}
-                            >
-                              <SelectTrigger className="w-[140px] h-8 text-xs">
-                                <SelectValue placeholder="Assign role">
-                                  {coordinatorRoles[coordinator.id] ? (
-                                    <span className="flex items-center gap-1">
-                                      <Shield className="h-3 w-3" />
-                                      {coordinatorRoles[coordinator.id].roleName}
-                                    </span>
-                                  ) : 'Assign role'}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableRoles.map(role => (
-                                  <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No roles</span>
-                          )}
                         </TableCell>
                         <TableCell>{new Date(coordinator.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">

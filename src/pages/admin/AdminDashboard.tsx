@@ -17,14 +17,14 @@ import { SecurityLogs } from '@/components/admin/SecurityLogs';
 import { BannerManagement } from '@/components/admin/BannerManagement';
 
 import { PlatformAnalytics } from '@/components/admin/PlatformAnalytics';
-import { AccessControlManager } from '@/components/admin/AccessControlManager';
+
 import { ApiIntegration } from '@/components/admin/ApiIntegration';
 import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
-  CreditCard, FileText, Image, Lock, BarChart3, ShieldCheck,
+  CreditCard, FileText, Image, BarChart3, ShieldCheck,
   Plug, Target, FileBarChart
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -35,7 +35,7 @@ type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
   | 'universities' | 'colleges' | 'coordinators' | 'students'
   | 'companies' | 'internships' | 'payments'
-  | 'access-control' | 'security'
+  | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'banners' | 'settings' | 'notifications' | 'reports';
 
@@ -86,7 +86,6 @@ const AdminDashboard = () => {
     {
       label: 'Security',
       items: [
-        { id: 'access-control', label: 'Access Control', icon: Lock },
         { id: 'security', label: 'Security Logs', icon: FileText },
       ],
     },
@@ -117,7 +116,7 @@ const AdminDashboard = () => {
       case 'companies': return <CompanyApprovalManagement />;
       case 'internships': return <InternshipManagement />;
       case 'payments': return <PaymentsManagement />;
-      case 'access-control': return <AccessControlManager />;
+      
       case 'security': return <SecurityLogs />;
       case 'api-integration': return <ApiIntegration />;
       case 'custom-reports': return <CustomReports />;
