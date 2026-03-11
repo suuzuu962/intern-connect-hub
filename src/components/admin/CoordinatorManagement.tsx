@@ -61,8 +61,8 @@ export const CoordinatorManagement = () => {
   const [selectedUniversityId, setSelectedUniversityId] = useState<string>('');
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [coordinatorRoles, setCoordinatorRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
-  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
+  const [coordinatorRoles] = useState<Record<string, { roleId: string; roleName: string }>>({});
+  const [availableRoles] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
