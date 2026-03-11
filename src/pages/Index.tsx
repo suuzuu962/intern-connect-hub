@@ -3,7 +3,7 @@ import { ArrowRight, Briefcase, Building2, Users, Target, Award } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
-import { HomeBanners } from '@/components/home/HomeBanners';
+
 import { WorkFunnelSection } from '@/components/home/WorkFunnelSection';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
