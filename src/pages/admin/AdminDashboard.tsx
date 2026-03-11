@@ -98,7 +98,6 @@ const AdminDashboard = () => {
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
-        { id: 'banners', label: 'Banners', icon: Image },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'reports', label: 'Data Export', icon: Download },
         { id: 'settings', label: 'Settings', icon: Settings },
