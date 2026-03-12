@@ -435,6 +435,55 @@ export const PluginManagement = () => {
         </CardContent>
       </Card>
 
+      {/* Webhook Delivery Logs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Webhook className="h-4 w-4 text-primary" /> Webhook Delivery Logs
+          </CardTitle>
+          <CardDescription>Request/response status when webhooks fire on platform events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {webhookLogs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No webhook deliveries yet</p>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {webhookLogs.map(log => {
+                const plugin = plugins.find(p => p.id === log.plugin_id);
+                return (
+                  <div key={log.id} className="flex flex-col gap-1 py-2 px-3 rounded-lg bg-muted/30 text-xs border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${log.success ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span className="font-medium text-foreground">{plugin?.name || 'Unknown'}</span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{log.event_type}</Badge>
+                      {log.response_status && (
+                        <Badge variant={log.success ? 'secondary' : 'destructive'} className="text-[10px] px-1.5 py-0">
+                          {log.response_status}
+                        </Badge>
+                      )}
+                      {log.duration_ms != null && (
+                        <span className="text-muted-foreground">{log.duration_ms}ms</span>
+                      )}
+                      <span className="ml-auto text-muted-foreground">
+                        {new Date(log.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground font-mono truncate pl-5">
+                      {log.webhook_url}
+                    </div>
+                    {log.error_message && (
+                      <div className="text-[10px] text-destructive pl-5">
+                        ⚠️ {log.error_message}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Configure Dialog */}
       <Dialog open={configDialog} onOpenChange={setConfigDialog}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
