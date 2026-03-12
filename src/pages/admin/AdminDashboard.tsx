@@ -96,6 +96,7 @@ const AdminDashboard = () => {
       label: 'System',
       items: [
         { id: 'api-integration', label: 'API Integration', icon: Plug },
+        { id: 'plugins', label: 'Plugins', icon: Puzzle },
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
