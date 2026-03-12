@@ -885,6 +885,101 @@ export type Database = {
         }
         Relationships: []
       }
+      plugin_usage_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          plugin_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          plugin_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          plugin_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plugin_usage_logs_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: false
+            referencedRelation: "plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plugins: {
+        Row: {
+          allowed_roles: string[] | null
+          api_key_name: string | null
+          category: string
+          config: Json | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          installed_by: string | null
+          is_enabled: boolean
+          is_installed: boolean
+          name: string
+          slug: string
+          updated_at: string
+          version: string | null
+          webhook_events: string[] | null
+          webhook_url: string | null
+        }
+        Insert: {
+          allowed_roles?: string[] | null
+          api_key_name?: string | null
+          category?: string
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          installed_by?: string | null
+          is_enabled?: boolean
+          is_installed?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+          version?: string | null
+          webhook_events?: string[] | null
+          webhook_url?: string | null
+        }
+        Update: {
+          allowed_roles?: string[] | null
+          api_key_name?: string | null
+          category?: string
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          installed_by?: string | null
+          is_enabled?: boolean
+          is_installed?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+          version?: string | null
+          webhook_events?: string[] | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
