@@ -23,11 +23,12 @@ import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
 import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
 import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
+import { PluginManagement } from '@/components/admin/PluginManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
