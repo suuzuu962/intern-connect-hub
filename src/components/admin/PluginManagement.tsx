@@ -91,6 +91,7 @@ const ALL_ROLES = ['admin', 'student', 'company', 'university', 'college_coordin
 export const PluginManagement = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<WebhookDeliveryLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
