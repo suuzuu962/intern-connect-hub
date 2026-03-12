@@ -12,6 +12,7 @@ import { InternshipRecommendations } from './InternshipRecommendations';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 import { ResumeAnalysis } from './ResumeAnalysis';
 import { NextStepsCards } from '@/components/dashboard/NextStepsCards';
+import { usePluginEnabled } from '@/hooks/usePluginEnabled';
 import { FileText, GraduationCap, Search } from 'lucide-react';
 
 interface StudentInfo {
