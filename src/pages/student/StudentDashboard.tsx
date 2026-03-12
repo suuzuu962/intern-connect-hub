@@ -10,6 +10,7 @@ import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { usePluginEnabled } from '@/hooks/usePluginEnabled';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 
@@ -35,6 +36,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'change-password'].includes(sectionParam)) {
@@ -131,7 +133,7 @@ const StudentDashboard = () => {
       }
     >
       {renderContent()}
-      <CareerChatbot />
+      {chatbotEnabled && <CareerChatbot />}
     </DashboardLayout>
   );
 };

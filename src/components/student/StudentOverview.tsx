@@ -12,6 +12,7 @@ import { InternshipRecommendations } from './InternshipRecommendations';
 import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeHeader';
 import { ResumeAnalysis } from './ResumeAnalysis';
 import { NextStepsCards } from '@/components/dashboard/NextStepsCards';
+import { usePluginEnabled } from '@/hooks/usePluginEnabled';
 import { FileText, GraduationCap, Search } from 'lucide-react';
 
 interface StudentInfo {
@@ -54,6 +55,7 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [studentFullData, setStudentFullData] = useState<StudentFullData | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { enabled: resumeAnalysisEnabled } = usePluginEnabled('resume-analysis');
 
   useEffect(() => {
     if (student?.id) {
@@ -387,12 +389,14 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
         </Card>
       </div>
 
-      {/* AI Profile Analysis */}
-      <ResumeAnalysis
-        studentSkills={studentFullData?.skills || student?.skills || null}
-        interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
-        resumeUrl={null}
-      />
+      {/* AI Profile Analysis - controlled by plugin toggle */}
+      {resumeAnalysisEnabled && (
+        <ResumeAnalysis
+          studentSkills={studentFullData?.skills || student?.skills || null}
+          interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
+          resumeUrl={null}
+        />
+      )}
 
       {/* Internship Recommendations */}
       <InternshipRecommendations 

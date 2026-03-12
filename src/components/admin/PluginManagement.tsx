@@ -48,6 +48,20 @@ type UsageLog = {
   created_at: string;
 };
 
+type WebhookDeliveryLog = {
+  id: string;
+  plugin_id: string;
+  event_type: string;
+  webhook_url: string;
+  request_payload: Record<string, any>;
+  response_status: number | null;
+  response_body: string | null;
+  success: boolean;
+  error_message: string | null;
+  duration_ms: number | null;
+  created_at: string;
+};
+
 const iconMap: Record<string, React.ReactNode> = {
   'bar-chart': <BarChart3 className="h-5 w-5" />,
   'credit-card': <CreditCard className="h-5 w-5" />,
@@ -77,6 +91,7 @@ const ALL_ROLES = ['admin', 'student', 'company', 'university', 'college_coordin
 export const PluginManagement = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<WebhookDeliveryLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -113,7 +128,16 @@ export const PluginManagement = () => {
     setUsageLogs((data || []) as unknown as UsageLog[]);
   };
 
-  useEffect(() => { fetchPlugins(); fetchUsageLogs(); }, []);
+  const fetchWebhookLogs = async () => {
+    const { data } = await supabase
+      .from('webhook_delivery_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setWebhookLogs((data || []) as unknown as WebhookDeliveryLog[]);
+  };
+
+  useEffect(() => { fetchPlugins(); fetchUsageLogs(); fetchWebhookLogs(); }, []);
 
   const togglePlugin = async (plugin: Plugin) => {
     const newState = !plugin.is_enabled;
@@ -403,6 +427,55 @@ export const PluginManagement = () => {
                     <span className="ml-auto text-muted-foreground">
                       {new Date(log.created_at).toLocaleString()}
                     </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Webhook Delivery Logs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Webhook className="h-4 w-4 text-primary" /> Webhook Delivery Logs
+          </CardTitle>
+          <CardDescription>Request/response status when webhooks fire on platform events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {webhookLogs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No webhook deliveries yet</p>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {webhookLogs.map(log => {
+                const plugin = plugins.find(p => p.id === log.plugin_id);
+                return (
+                  <div key={log.id} className="flex flex-col gap-1 py-2 px-3 rounded-lg bg-muted/30 text-xs border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${log.success ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span className="font-medium text-foreground">{plugin?.name || 'Unknown'}</span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{log.event_type}</Badge>
+                      {log.response_status && (
+                        <Badge variant={log.success ? 'secondary' : 'destructive'} className="text-[10px] px-1.5 py-0">
+                          {log.response_status}
+                        </Badge>
+                      )}
+                      {log.duration_ms != null && (
+                        <span className="text-muted-foreground">{log.duration_ms}ms</span>
+                      )}
+                      <span className="ml-auto text-muted-foreground">
+                        {new Date(log.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground font-mono truncate pl-5">
+                      {log.webhook_url}
+                    </div>
+                    {log.error_message && (
+                      <div className="text-[10px] text-destructive pl-5">
+                        ⚠️ {log.error_message}
+                      </div>
+                    )}
                   </div>
                 );
               })}

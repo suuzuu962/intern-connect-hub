@@ -1526,6 +1526,56 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_delivery_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          event_type: string
+          id: string
+          plugin_id: string
+          request_payload: Json | null
+          response_body: string | null
+          response_status: number | null
+          success: boolean
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          plugin_id: string
+          request_payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          plugin_id?: string
+          request_payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_delivery_logs_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: false
+            referencedRelation: "plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
