@@ -10,6 +10,7 @@ import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { usePluginEnabled } from '@/hooks/usePluginEnabled';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 

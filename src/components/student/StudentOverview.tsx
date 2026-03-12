@@ -388,12 +388,14 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
         </Card>
       </div>
 
-      {/* AI Profile Analysis */}
-      <ResumeAnalysis
-        studentSkills={studentFullData?.skills || student?.skills || null}
-        interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
-        resumeUrl={null}
-      />
+      {/* AI Profile Analysis - controlled by plugin toggle */}
+      {resumeAnalysisEnabled && (
+        <ResumeAnalysis
+          studentSkills={studentFullData?.skills || student?.skills || null}
+          interestedDomains={studentFullData?.interested_domains || student?.interested_domains || null}
+          resumeUrl={null}
+        />
+      )}
 
       {/* Internship Recommendations */}
       <InternshipRecommendations 
