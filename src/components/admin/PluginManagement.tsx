@@ -128,7 +128,16 @@ export const PluginManagement = () => {
     setUsageLogs((data || []) as unknown as UsageLog[]);
   };
 
-  useEffect(() => { fetchPlugins(); fetchUsageLogs(); }, []);
+  const fetchWebhookLogs = async () => {
+    const { data } = await supabase
+      .from('webhook_delivery_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setWebhookLogs((data || []) as unknown as WebhookDeliveryLog[]);
+  };
+
+  useEffect(() => { fetchPlugins(); fetchUsageLogs(); fetchWebhookLogs(); }, []);
 
   const togglePlugin = async (plugin: Plugin) => {
     const newState = !plugin.is_enabled;
