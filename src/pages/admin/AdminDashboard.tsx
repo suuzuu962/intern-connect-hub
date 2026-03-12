@@ -23,11 +23,12 @@ import { Benchmarking } from '@/components/admin/Benchmarking';
 import { CustomReports } from '@/components/admin/CustomReports';
 import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
 import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
+import { PluginManagement } from '@/components/admin/PluginManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -39,7 +40,7 @@ type ActiveSection =
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
-  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap';
+  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -95,6 +96,7 @@ const AdminDashboard = () => {
       label: 'System',
       items: [
         { id: 'api-integration', label: 'API Integration', icon: Plug },
+        { id: 'plugins', label: 'Plugins', icon: Puzzle },
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
@@ -122,6 +124,7 @@ const AdminDashboard = () => {
       
       case 'security': return <SecurityLogs />;
       case 'api-integration': return <ApiIntegration />;
+      case 'plugins': return <PluginManagement />;
       case 'custom-reports': return <CustomReports />;
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
