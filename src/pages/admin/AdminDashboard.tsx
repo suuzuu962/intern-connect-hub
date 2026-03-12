@@ -124,6 +124,7 @@ const AdminDashboard = () => {
       
       case 'security': return <SecurityLogs />;
       case 'api-integration': return <ApiIntegration />;
+      case 'plugins': return <PluginManagement />;
       case 'custom-reports': return <CustomReports />;
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
