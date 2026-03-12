@@ -55,6 +55,7 @@ export const StudentOverview = ({ student, loading, onEditProfile }: StudentOver
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [studentFullData, setStudentFullData] = useState<StudentFullData | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { enabled: resumeAnalysisEnabled } = usePluginEnabled('resume-analysis');
 
   useEffect(() => {
     if (student?.id) {
