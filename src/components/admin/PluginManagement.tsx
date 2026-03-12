@@ -48,6 +48,20 @@ type UsageLog = {
   created_at: string;
 };
 
+type WebhookDeliveryLog = {
+  id: string;
+  plugin_id: string;
+  event_type: string;
+  webhook_url: string;
+  request_payload: Record<string, any>;
+  response_status: number | null;
+  response_body: string | null;
+  success: boolean;
+  error_message: string | null;
+  duration_ms: number | null;
+  created_at: string;
+};
+
 const iconMap: Record<string, React.ReactNode> = {
   'bar-chart': <BarChart3 className="h-5 w-5" />,
   'credit-card': <CreditCard className="h-5 w-5" />,
