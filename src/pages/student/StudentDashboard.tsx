@@ -133,7 +133,7 @@ const StudentDashboard = () => {
       }
     >
       {renderContent()}
-      <CareerChatbot />
+      {chatbotEnabled && <CareerChatbot />}
     </DashboardLayout>
   );
 };
