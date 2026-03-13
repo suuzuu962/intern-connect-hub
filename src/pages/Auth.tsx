@@ -502,11 +502,6 @@ const Auth = () => {
                       onClick={() => setRole('university')}>
                       <Building className="h-4 w-4 mr-1" /> University
                     </Button>
-                    <Button type="button" variant={role === 'college' ? 'default' : 'outline'} size="sm"
-                      className={role === 'college' ? 'gradient-primary border-0 shadow-md' : ''}
-                      onClick={() => setRole('college')}>
-                      <Users className="h-4 w-4 mr-1" /> College
-                    </Button>
                   </div>
                 )}
 
