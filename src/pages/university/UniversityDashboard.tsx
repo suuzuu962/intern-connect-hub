@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3, BookOpen, Calendar } from 'lucide-react';
+import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, User, Settings, Mail, BarChart3, BookOpen, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
