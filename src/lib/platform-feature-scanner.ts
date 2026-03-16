@@ -135,7 +135,7 @@ function scanTables() {
     { name: 'companies', columns: 45, relationships: [] },
     { name: 'universities', columns: 12, relationships: [] },
     { name: 'colleges', columns: 11, relationships: ['universities'] },
-    { name: 'college_coordinators', columns: 12, relationships: ['colleges', 'universities'] },
+    
     { name: 'university_users', columns: 6, relationships: ['universities'] },
     { name: 'internships', columns: 18, relationships: ['companies'] },
     { name: 'applications', columns: 7, relationships: ['internships', 'students'] },
