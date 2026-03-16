@@ -43,6 +43,7 @@ const StudentDashboard = () => {
   const [profileName, setProfileName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
+  const { isLocked, getMessage } = useFeatureAccess('student');
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'messages', 'change-password'].includes(sectionParam)) {
