@@ -12,10 +12,11 @@ import { CoordinatorOrgChart } from '@/components/coordinator/CoordinatorOrgChar
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
 import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { CollegeCoordinator } from '@/types/database';
-
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary' | 'attendance' | 'memos' | 'profile';
 
