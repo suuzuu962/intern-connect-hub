@@ -8,6 +8,7 @@ import { StudentProfileForm } from '@/components/student/StudentProfileForm';
 import { AppliedInternships } from '@/components/student/AppliedInternships';
 import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
+import { StudentMessages } from '@/components/student/StudentMessages';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { usePluginEnabled } from '@/hooks/usePluginEnabled';
