@@ -86,7 +86,7 @@ const categoryConfig: Record<string, { label: string; color: string; icon: React
   webhook: { label: 'Webhook', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: <Webhook className="h-4 w-4" /> },
 };
 
-const ALL_ROLES = ['admin', 'student', 'company', 'university', 'college_coordinator'];
+const ALL_ROLES = ['admin', 'student', 'company', 'university'];
 
 export const PluginManagement = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
