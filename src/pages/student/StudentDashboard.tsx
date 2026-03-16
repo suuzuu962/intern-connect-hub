@@ -10,10 +10,15 @@ import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { StudentMessages } from '@/components/student/StudentMessages';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
+import { ResumeAnalysis } from '@/components/student/ResumeAnalysis';
+import { InternshipRecommendations } from '@/components/student/InternshipRecommendations';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { usePluginEnabled } from '@/hooks/usePluginEnabled';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { FileSearch, Sparkles } from 'lucide-react';
 
 interface StudentInfo {
   id: string;
