@@ -41,7 +41,6 @@ export const SidebarProfileHeader = ({
 }: SidebarProfileHeaderProps) => {
   const hasSocials = linkedinUrl || websiteUrl || twitterUrl;
   const roleInfo = role ? roleConfig[role] : null;
-  const hasSocials = linkedinUrl || websiteUrl || twitterUrl;
 
   return (
     <div className={cn("space-y-3", className)}>
