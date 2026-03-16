@@ -10,10 +10,15 @@ import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
 import { StudentMessages } from '@/components/student/StudentMessages';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
+import { ResumeAnalysis } from '@/components/student/ResumeAnalysis';
+import { InternshipRecommendations } from '@/components/student/InternshipRecommendations';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { usePluginEnabled } from '@/hooks/usePluginEnabled';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { FileSearch, Sparkles } from 'lucide-react';
 
 interface StudentInfo {
   id: string;
@@ -26,7 +31,7 @@ interface StudentInfo {
   twitter_url?: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'messages' | 'change-password';
+type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'messages' | 'change-password' | 'resume-analysis' | 'internship-recommendations';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -38,6 +43,7 @@ const StudentDashboard = () => {
   const [profileName, setProfileName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
+  const { isLocked, getMessage } = useFeatureAccess('student');
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'messages', 'change-password'].includes(sectionParam)) {
@@ -85,6 +91,8 @@ const StudentDashboard = () => {
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'applied' as const, label: 'Applied Internships', icon: Briefcase },
     { id: 'diary' as const, label: 'Internship Diary', icon: BookOpen },
+    { id: 'resume-analysis' as const, label: 'Resume Analysis', icon: FileSearch },
+    { id: 'internship-recommendations' as const, label: 'Recommendations', icon: Sparkles },
     { id: 'messages' as const, label: 'Messages', icon: Mail },
     { id: 'change-password' as const, label: 'Change Password', icon: Settings },
   ];
@@ -105,6 +113,18 @@ const StudentDashboard = () => {
         return <AppliedInternships studentId={student?.id || null} onNavigateToDiary={() => setActiveSection('diary')} />;
       case 'diary':
         return <InternshipDiary studentId={student?.id || null} />;
+      case 'resume-analysis':
+        return (
+          <UpgradeGate featureLabel="Resume Analysis" featureKey="resume-analysis" message={getMessage('resume-analysis')} isLocked={isLocked('resume-analysis')}>
+            <ResumeAnalysis studentSkills={student?.skills || null} interestedDomains={student?.interested_domains || null} resumeUrl={null} />
+          </UpgradeGate>
+        );
+      case 'internship-recommendations':
+        return (
+          <UpgradeGate featureLabel="Internship Recommendations" featureKey="internship-recommendations" message={getMessage('internship-recommendations')} isLocked={isLocked('internship-recommendations')}>
+            <InternshipRecommendations studentSkills={student?.skills || null} interestedDomains={student?.interested_domains || null} />
+          </UpgradeGate>
+        );
       case 'messages':
         return <StudentMessages />;
       case 'change-password':

@@ -16,6 +16,8 @@ import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemo
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
@@ -25,7 +27,7 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  
+  const { isLocked, getMessage } = useFeatureAccess('university');
 
 
   useEffect(() => {
@@ -86,7 +88,7 @@ const UniversityDashboard = () => {
     switch (activeSection) {
       case 'dashboard': return <UniversityStudents universityId={university.id} viewMode="summary" />;
       case 'org-chart': return <UniversityOrgChart universityId={university.id} />;
-      case 'analytics': return <UniversityAnalytics universityId={university.id} />;
+      case 'analytics': return <UpgradeGate featureLabel="Analytics Dashboard" featureKey="analytics" message={getMessage('analytics')} isLocked={isLocked('analytics')}><UniversityAnalytics universityId={university.id} /></UpgradeGate>;
       case 'colleges': return <UniversityColleges universityId={university.id} />;
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
       case 'coordinators': return <UniversityCoordinators universityId={university.id} />;

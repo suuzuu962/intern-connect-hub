@@ -24,11 +24,12 @@ import { CustomReports } from '@/components/admin/CustomReports';
 import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
 import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import { PluginManagement } from '@/components/admin/PluginManagement';
+import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -40,7 +41,7 @@ type ActiveSection =
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
-  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins';
+  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,6 +102,7 @@ const AdminDashboard = () => {
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
         { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'upgrade-requests', label: 'Upgrade Requests', icon: ArrowUpCircle },
         { id: 'reports', label: 'Data Export', icon: Download },
         { id: 'settings', label: 'Settings', icon: Settings },
       ],
@@ -129,6 +131,7 @@ const AdminDashboard = () => {
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
       case 'notifications': return <NotificationManagement />;
+      case 'upgrade-requests': return <UpgradeRequestsManagement />;
       case 'reports': return <DataExport />;
       case 'settings': return <PlatformSettings />;
       default: return null;

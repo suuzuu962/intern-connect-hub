@@ -468,6 +468,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_access_config: {
+        Row: {
+          created_at: string
+          feature_key: string
+          feature_label: string
+          id: string
+          is_locked: boolean
+          role: string
+          updated_at: string
+          updated_by: string | null
+          upgrade_message: string | null
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          feature_label: string
+          id?: string
+          is_locked?: boolean
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_message?: string | null
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          feature_label?: string
+          id?: string
+          is_locked?: boolean
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_message?: string | null
+        }
+        Relationships: []
+      }
       institutional_memos: {
         Row: {
           attachments: Json | null
@@ -1436,6 +1472,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      upgrade_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          feature_requested: string | null
+          id: string
+          message: string | null
+          phone: string | null
+          preferred_date: string | null
+          preferred_time: string | null
+          status: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string
+          whatsapp_contact: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          feature_requested?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string
+          whatsapp_contact?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          feature_requested?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+          whatsapp_contact?: string | null
+        }
+        Relationships: []
       }
       user_custom_roles: {
         Row: {
