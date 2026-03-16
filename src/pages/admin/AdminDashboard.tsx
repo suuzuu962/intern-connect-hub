@@ -131,6 +131,7 @@ const AdminDashboard = () => {
       case 'feature-map': return <PlatformFeatureMap />;
       case 'sitemap': return <PlatformSitemap />;
       case 'notifications': return <NotificationManagement />;
+      case 'upgrade-requests': return <UpgradeRequestsManagement />;
       case 'reports': return <DataExport />;
       case 'settings': return <PlatformSettings />;
       default: return null;
