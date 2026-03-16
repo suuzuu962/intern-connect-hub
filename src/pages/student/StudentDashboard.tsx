@@ -85,6 +85,7 @@ const StudentDashboard = () => {
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'applied' as const, label: 'Applied Internships', icon: Briefcase },
     { id: 'diary' as const, label: 'Internship Diary', icon: BookOpen },
+    { id: 'messages' as const, label: 'Messages', icon: Mail },
     { id: 'change-password' as const, label: 'Change Password', icon: Settings },
   ];
 
