@@ -74,7 +74,6 @@ const Auth = () => {
       case 'company': navigate('/company/dashboard'); break;
       case 'student': navigate('/student/dashboard'); break;
       case 'university': navigate('/university/dashboard'); break;
-      case 'college_coordinator': navigate('/college/dashboard'); break;
       default: navigate('/');
     }
   };
