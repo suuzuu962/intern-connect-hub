@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3, BookOpen, Calendar } from 'lucide-react';
+import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, User, Settings, Mail, BarChart3, BookOpen, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
 import { UniversityUsers } from '@/components/university/UniversityUsers';
-import { UniversityCoordinators } from '@/components/university/UniversityCoordinators';
+
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
@@ -21,7 +21,7 @@ import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeade
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'users' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -94,7 +94,7 @@ const UniversityDashboard = () => {
       items: [
         { id: 'colleges', label: 'Colleges', icon: School },
         { id: 'students', label: 'Students', icon: Users },
-        { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
+        
         { id: 'users', label: 'Users', icon: User },
       ],
     },
@@ -121,7 +121,7 @@ const UniversityDashboard = () => {
       case 'analytics': return <UpgradeGate featureLabel="Analytics Dashboard" featureKey="analytics" message={getMessage('analytics')} isLocked={isLocked('analytics')}><UniversityAnalytics universityId={university.id} /></UpgradeGate>;
       case 'colleges': return <UniversityColleges universityId={university.id} />;
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
-      case 'coordinators': return <UniversityCoordinators universityId={university.id} />;
+      
       case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
       case 'diary-approvals': 
         return collegeIds.length > 0 
