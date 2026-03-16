@@ -719,6 +719,7 @@ export type Database = {
           is_read: boolean | null
           link: string | null
           message: string
+          sender_id: string | null
           target_role: string | null
           title: string
           type: string
@@ -730,6 +731,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message: string
+          sender_id?: string | null
           target_role?: string | null
           title: string
           type: string
@@ -741,6 +743,7 @@ export type Database = {
           is_read?: boolean | null
           link?: string | null
           message?: string
+          sender_id?: string | null
           target_role?: string | null
           title?: string
           type?: string
