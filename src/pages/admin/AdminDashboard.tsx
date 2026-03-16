@@ -116,7 +116,7 @@ const AdminDashboard = () => {
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
       case 'colleges': return <CollegeManagement />;
-      case 'coordinators': return <CoordinatorManagement />;
+      
       case 'students': return <StudentManagement />;
       case 'companies': return <CompanyApprovalManagement />;
       case 'internships': return <InternshipManagement />;
