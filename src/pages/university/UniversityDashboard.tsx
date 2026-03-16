@@ -21,7 +21,7 @@ import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeade
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'users' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
