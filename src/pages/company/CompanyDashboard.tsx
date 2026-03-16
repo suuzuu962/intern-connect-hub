@@ -24,6 +24,8 @@ import { DashboardWelcomeHeader } from '@/components/dashboard/DashboardWelcomeH
 import { DashboardStatusBanner } from '@/components/dashboard/DashboardStatusBanner';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 import { NextStepsCards } from '@/components/dashboard/NextStepsCards';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 import { cn } from '@/lib/utils';
 
 interface DashboardStats {
