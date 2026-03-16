@@ -69,6 +69,13 @@ export const SidebarProfileHeader = ({
         </div>
       </div>
 
+      {roleInfo && (
+        <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 gap-1 w-fit", roleInfo.className)}>
+          <roleInfo.icon className="h-3 w-3" />
+          {roleInfo.label}
+        </Badge>
+      )}
+
       {hasSocials && (
         <div className="flex items-center gap-2 pt-1">
           {linkedinUrl && (
