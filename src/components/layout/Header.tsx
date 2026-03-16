@@ -51,6 +51,7 @@ export const Header = () => {
     if (role === 'admin') return '/admin/dashboard';
     if (role === 'company') return '/company/dashboard';
     if (role === 'student') return '/student/dashboard';
+    if (role === 'university') return '/university/dashboard';
     return '/';
   };
 
