@@ -26,6 +26,7 @@ const CoordinatorDashboard = () => {
   const [coordinator, setCoordinator] = useState<CollegeCoordinator | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { isLocked, getMessage } = useFeatureAccess('college_coordinator');
 
   useEffect(() => {
     const tab = searchParams.get('tab') as ActiveSection;
