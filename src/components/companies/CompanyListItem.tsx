@@ -29,16 +29,16 @@ function getAvatarColor(name: string) {
 export const CompanyListItem = ({ company, internshipCount = 0, className }: CompanyListItemProps) => {
   return (
     <div className={cn(
-      "flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors group",
+      "flex items-center gap-4 p-4 rounded-xl border bg-card hover:shadow-sm transition-shadow group",
       className
     )}>
       {/* Company Logo */}
       <div className={cn(
-        "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-xs",
+        "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 text-white font-semibold text-xs",
         company.logo_url ? 'bg-muted' : getAvatarColor(company.name)
       )}>
         {company.logo_url ? (
-          <img src={company.logo_url} alt={company.name} className="h-full w-full object-cover rounded-lg" />
+          <img src={company.logo_url} alt={company.name} className="h-full w-full object-cover rounded-xl" />
         ) : (
           getInitials(company.name)
         )}
@@ -47,7 +47,7 @@ export const CompanyListItem = ({ company, internshipCount = 0, className }: Com
       {/* Main Content */}
       <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+          <h3 className="font-semibold text-[14px] group-hover:text-primary transition-colors truncate">
             {company.name}
           </h3>
           {company.industry && (
@@ -70,19 +70,19 @@ export const CompanyListItem = ({ company, internshipCount = 0, className }: Com
             </span>
           )}
           <span className="flex items-center gap-1">
-            <Star className="h-3 w-3 text-warning fill-warning" />
+            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
             4.5
           </span>
         </div>
       </div>
 
       {/* Internship Count */}
-      <Badge variant="secondary" className="shrink-0 text-xs text-primary bg-primary/10 border-0">
+      <Badge variant="secondary" className="shrink-0 text-xs text-primary bg-primary/10 border-0 rounded-md px-2.5">
         {internshipCount} internship{internshipCount !== 1 ? 's' : ''}
       </Badge>
 
       <Link to={`/companies/${company.id}`}>
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 shrink-0">
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 shrink-0 rounded-md font-medium">
           <Eye className="h-3.5 w-3.5" />
           View
         </Button>

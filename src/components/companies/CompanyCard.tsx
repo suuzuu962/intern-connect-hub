@@ -29,12 +29,12 @@ function getAvatarColor(name: string) {
 
 export const CompanyCard = ({ company, internshipCount = 0, className }: CompanyCardProps) => {
   return (
-    <Card className={cn("hover-lift cursor-pointer group overflow-hidden border", className)}>
+    <Card className={cn("cursor-pointer group overflow-hidden border hover:shadow-md transition-shadow duration-200", className)}>
       <CardContent className="p-5">
         {/* Header: Logo + Name */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <div className={cn(
-            "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-sm",
+            "h-11 w-11 rounded-xl flex items-center justify-center shrink-0 text-white font-semibold text-sm",
             company.logo_url ? 'bg-muted' : getAvatarColor(company.name)
           )}>
             {company.logo_url ? (
@@ -48,24 +48,24 @@ export const CompanyCard = ({ company, internshipCount = 0, className }: Company
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="font-heading font-semibold text-base group-hover:text-primary transition-colors truncate">
+            <h3 className="font-semibold text-[15px] leading-tight group-hover:text-primary transition-colors truncate">
               {company.name}
             </h3>
             {company.industry && (
-              <p className="text-xs text-muted-foreground">{company.industry}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{company.industry}</p>
             )}
           </div>
         </div>
 
         {/* Description */}
         {company.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+          <p className="text-[13px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
             {company.description}
           </p>
         )}
 
         {/* Meta Info */}
-        <div className="space-y-1.5 mb-4 text-sm text-muted-foreground">
+        <div className="space-y-1.5 mb-4 text-[13px] text-muted-foreground">
           {company.location && (
             <span className="flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
@@ -79,18 +79,18 @@ export const CompanyCard = ({ company, internshipCount = 0, className }: Company
             </span>
           )}
           <span className="flex items-center gap-2">
-            <Star className="h-3.5 w-3.5 shrink-0 text-warning fill-warning" />
-            <span className="text-foreground font-medium">4.5</span>
+            <Star className="h-3.5 w-3.5 shrink-0 text-amber-400 fill-amber-400" />
+            <span className="text-foreground font-medium text-[13px]">4.5</span>
           </span>
         </div>
 
         {/* Footer: Internship count + View */}
-        <div className="flex items-center justify-between pt-3 border-t">
-          <Badge variant="secondary" className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 border-0">
+        <div className="flex items-center justify-between pt-3 border-t border-border/60">
+          <Badge variant="secondary" className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 border-0 rounded-md px-2.5 py-0.5">
             {internshipCount} internship{internshipCount !== 1 ? 's' : ''}
           </Badge>
           <Link to={`/companies/${company.id}`}>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-md font-medium">
               <Eye className="h-3.5 w-3.5" />
               View
             </Button>
