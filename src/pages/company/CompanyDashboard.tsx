@@ -57,6 +57,7 @@ const CompanyDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const { isLocked, getMessage } = useFeatureAccess('company');
 
   useEffect(() => {
     if (sectionParam && ['dashboard', 'internships', 'applicants', 'create-internship', 'profile', 'change-password'].includes(sectionParam)) {
