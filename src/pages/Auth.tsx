@@ -153,7 +153,7 @@ const Auth = () => {
     }
 
     if (isInstitutionalRole && !institutionName.trim()) {
-      toast({ title: 'Error', description: `Please enter ${role === 'university' ? 'university' : 'college'} name`, variant: 'destructive' });
+      toast({ title: 'Error', description: 'Please enter university name', variant: 'destructive' });
       return;
     }
 
