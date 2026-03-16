@@ -216,7 +216,7 @@ const ArchitectureDoc = () => {
                       {(roles
                         ? roles.map(role => {
                             const routeData = scanResult?.routes.find(r => r.role === role);
-                            const entryMap: Record<string, string> = { admin: '/auth', student: '/auth', company: '/auth', university: '/university-auth', college_coordinator: '/university-auth' };
+                            const entryMap: Record<string, string> = { admin: '/auth', student: '/auth', company: '/auth', university: '/auth', college_coordinator: '/auth' };
                             const descMap: Record<string, string> = {
                               admin: 'Full platform control, RBAC management, user oversight',
                               student: 'Apply to internships, maintain diary, manage profile',
