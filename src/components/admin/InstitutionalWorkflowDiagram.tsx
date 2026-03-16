@@ -110,7 +110,7 @@ export const InstitutionalWorkflowDiagram = () => {
               <WorkflowStep 
                 icon={<CheckCircle className="h-4 w-4" />}
                 label="College Can Login"
-                sublabel="/university-auth → /college/dashboard"
+                sublabel="/auth → /college/dashboard"
                 success
               />
             </div>
