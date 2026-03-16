@@ -40,7 +40,7 @@ const StudentDashboard = () => {
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
 
   useEffect(() => {
-    if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'change-password'].includes(sectionParam)) {
+    if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'messages', 'change-password'].includes(sectionParam)) {
       setActiveSection(sectionParam);
     }
   }, [sectionParam]);
