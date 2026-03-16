@@ -16,6 +16,7 @@ import { CompanyAnalytics } from '@/components/company/CompanyAnalytics';
 import { ApplicationFunnel } from '@/components/company/ApplicationFunnel';
 import { ShortlistTool } from '@/components/company/ShortlistTool';
 import { BulkMessageApplicants } from '@/components/company/BulkMessageApplicants';
+import { SentMessages } from '@/components/company/SentMessages';
 import { SubscriptionPlanDetails } from '@/components/company/SubscriptionPlanDetails';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
