@@ -204,6 +204,21 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </div>
+              {stats.pendingUpgradeRequests > 0 && (
+                <div 
+                  className="flex justify-between items-center p-3 bg-primary/5 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors group"
+                  onClick={() => handleNavigate('upgrade-requests')}
+                >
+                  <span className="text-sm flex items-center gap-2">
+                    <ArrowUpCircle className="h-4 w-4 text-primary" />
+                    Pending upgrade requests
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-primary">{stats.pendingUpgradeRequests}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
