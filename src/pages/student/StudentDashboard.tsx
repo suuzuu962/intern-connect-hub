@@ -113,6 +113,18 @@ const StudentDashboard = () => {
         return <AppliedInternships studentId={student?.id || null} onNavigateToDiary={() => setActiveSection('diary')} />;
       case 'diary':
         return <InternshipDiary studentId={student?.id || null} />;
+      case 'resume-analysis':
+        return (
+          <UpgradeGate featureLabel="Resume Analysis" featureKey="resume-analysis" message={getMessage('resume-analysis')} isLocked={isLocked('resume-analysis')}>
+            <ResumeAnalysis />
+          </UpgradeGate>
+        );
+      case 'internship-recommendations':
+        return (
+          <UpgradeGate featureLabel="Internship Recommendations" featureKey="internship-recommendations" message={getMessage('internship-recommendations')} isLocked={isLocked('internship-recommendations')}>
+            <InternshipRecommendations />
+          </UpgradeGate>
+        );
       case 'messages':
         return <StudentMessages />;
       case 'change-password':
