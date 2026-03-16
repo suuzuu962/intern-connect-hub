@@ -38,6 +38,7 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     activeInternships: 0,
     totalStudents: 0,
     totalApplications: 0,
+    pendingUpgradeRequests: 0,
   });
   const [loading, setLoading] = useState(true);
 
