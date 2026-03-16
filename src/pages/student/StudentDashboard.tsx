@@ -116,13 +116,13 @@ const StudentDashboard = () => {
       case 'resume-analysis':
         return (
           <UpgradeGate featureLabel="Resume Analysis" featureKey="resume-analysis" message={getMessage('resume-analysis')} isLocked={isLocked('resume-analysis')}>
-            <ResumeAnalysis />
+            <ResumeAnalysis studentSkills={student?.skills || null} interestedDomains={student?.interested_domains || null} resumeUrl={null} />
           </UpgradeGate>
         );
       case 'internship-recommendations':
         return (
           <UpgradeGate featureLabel="Internship Recommendations" featureKey="internship-recommendations" message={getMessage('internship-recommendations')} isLocked={isLocked('internship-recommendations')}>
-            <InternshipRecommendations />
+            <InternshipRecommendations studentSkills={student?.skills || null} interestedDomains={student?.interested_domains || null} />
           </UpgradeGate>
         );
       case 'messages':
