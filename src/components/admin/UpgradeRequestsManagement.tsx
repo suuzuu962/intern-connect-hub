@@ -251,44 +251,70 @@ export const UpgradeRequestsManagement = () => {
         </TabsContent>
 
         <TabsContent value="config" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Settings2 className="h-5 w-5" />
-                Feature Access Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Feature</TableHead>
-                    <TableHead>Locked</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {featureConfigs.map(config => (
-                    <TableRow key={config.id}>
-                      <TableCell><Badge variant="outline" className="capitalize">{config.role}</Badge></TableCell>
-                      <TableCell className="font-medium">{config.feature_label}</TableCell>
-                      <TableCell>
+          {(() => {
+            const grouped = featureConfigs.reduce<Record<string, FeatureConfig[]>>((acc, config) => {
+              if (!acc[config.role]) acc[config.role] = [];
+              acc[config.role].push(config);
+              return acc;
+            }, {});
+
+            const roleLabels: Record<string, string> = {
+              student: 'Student',
+              company: 'Company',
+              university: 'University',
+              coordinator: 'Coordinator',
+              college_coordinator: 'College Coordinator',
+              admin: 'Admin',
+            };
+
+            const roleColors: Record<string, string> = {
+              student: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+              company: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+              university: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+              coordinator: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+              college_coordinator: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+              admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+            };
+
+            return Object.entries(grouped).map(([role, configs]) => (
+              <Card key={role}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-base">
+                    <Settings2 className="h-4 w-4 text-muted-foreground" />
+                    <Badge className={roleColors[role] || 'bg-muted text-muted-foreground'}>
+                      {roleLabels[role] || role}
+                    </Badge>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {configs.filter(c => c.is_locked).length} of {configs.length} locked
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="divide-y divide-border">
+                    {configs.map(config => (
+                      <div key={config.id} className="flex items-center justify-between py-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium">{config.feature_label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {config.is_locked ? 'Users will see upgrade prompt' : 'Full access granted'}
+                          </p>
+                        </div>
                         <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">
+                            {config.is_locked ? 'Locked' : 'Open'}
+                          </Label>
                           <Switch
                             checked={config.is_locked}
                             onCheckedChange={() => toggleFeatureLock(config)}
                           />
-                          <Label className="text-xs text-muted-foreground">
-                            {config.is_locked ? 'Locked' : 'Unlocked'}
-                          </Label>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ));
+          })()}
         </TabsContent>
       </Tabs>
 
