@@ -98,14 +98,6 @@ const AnimatedRoutes = () => {
           } 
         />
         <Route 
-          path="/college/dashboard" 
-          element={
-            <ProtectedRoute allowedRoles={['college_coordinator']}>
-              <PageTransition><CollegeDashboard /></PageTransition>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
           path="/admin/architecture-doc" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>

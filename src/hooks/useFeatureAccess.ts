@@ -18,7 +18,7 @@ export const useFeatureAccess = (role: string | null) => {
       return;
     }
 
-    const mappedRole = role === 'college_coordinator' ? 'coordinator' : role;
+    const mappedRole = role;
 
     const fetch = async () => {
       const { data, error } = await supabase
