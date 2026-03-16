@@ -165,7 +165,7 @@ function scanEdgeFunctions() {
 }
 
 function scanRoles() {
-  return ['admin', 'student', 'company', 'university', 'college_coordinator'];
+  return ['admin', 'student', 'company', 'university'];
 }
 
 function scanEnums() {
