@@ -248,8 +248,7 @@ const ArchitectureDoc = () => {
               <div className="mt-4">
                 <h3 className="text-sm font-semibold mb-1">Authentication Flow</h3>
                 <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-5">
-                  <li><code>/auth</code> — Standard email/password for Students & Companies (with role selection)</li>
-                  <li><code>/university-auth</code> — Dedicated entry for Universities & College Coordinators</li>
+                  <li><code>/auth</code> — Unified email/password for all roles (Students, Companies, Universities & College Coordinators)</li>
                   <li>University signup handled by <code>university-signup</code> edge function</li>
                   <li>Email verification bypassed for institutional signups for immediate access</li>
                   <li>Idle timeout configurable via Platform Settings (default: 15 min)</li>
