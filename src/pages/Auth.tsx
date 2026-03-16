@@ -19,7 +19,7 @@ const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
 
-type SignupRole = 'student' | 'company' | 'university' | 'college';
+type SignupRole = 'student' | 'company' | 'university';
 type ForgotPasswordStep = 'email' | 'verify-otp' | 'new-password' | 'success';
 
 const Auth = () => {

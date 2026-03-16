@@ -26,7 +26,7 @@ import { PluginManagement } from '@/components/admin/PluginManagement';
 import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
-  Download, GraduationCap, UserCheck, School, Network, Settings,
+  Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
   Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle
 } from 'lucide-react';
