@@ -102,6 +102,7 @@ const AdminDashboard = () => {
         { id: 'feature-map', label: 'Feature Map', icon: Map },
         { id: 'sitemap', label: 'Sitemap', icon: MapPin },
         { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'upgrade-requests', label: 'Upgrade Requests', icon: ArrowUpCircle },
         { id: 'reports', label: 'Data Export', icon: Download },
         { id: 'settings', label: 'Settings', icon: Settings },
       ],
