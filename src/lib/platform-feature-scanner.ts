@@ -121,7 +121,7 @@ function scanRoutes() {
     { path: '/student/dashboard', type: 'protected' as const, role: 'student' },
     { path: '/company/dashboard', type: 'protected' as const, role: 'company' },
     { path: '/university/dashboard', type: 'protected' as const, role: 'university' },
-    { path: '/college/dashboard', type: 'protected' as const, role: 'college_coordinator' },
+    
     { path: '/admin/architecture-doc', type: 'protected' as const, role: 'admin' },
     { path: '/admin/flowchart-documentation', type: 'protected' as const, role: 'admin' },
   ];
