@@ -191,7 +191,7 @@ const Auth = () => {
 
       toast({
         title: 'Account Created!',
-        description: role === 'university' ? 'Your university account is pending approval.' : 'Your college account is pending approval.',
+        description: 'Your university account is pending approval.',
       });
       redirectByRole(dbRole);
     } else {
