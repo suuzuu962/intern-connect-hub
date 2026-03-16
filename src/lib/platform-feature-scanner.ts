@@ -170,7 +170,7 @@ function scanRoles() {
 
 function scanEnums() {
   return [
-    { name: 'app_role', values: ['admin', 'student', 'company', 'university', 'college_coordinator'] },
+    { name: 'app_role', values: ['admin', 'student', 'company', 'university'] },
     { name: 'application_status', values: ['applied', 'under_review', 'shortlisted', 'offer_released', 'offer_accepted', 'rejected', 'withdrawn'] },
     { name: 'internship_type', values: ['free', 'paid', 'stipended'] },
     { name: 'work_mode', values: ['remote', 'onsite', 'hybrid'] },
