@@ -43,7 +43,7 @@ interface CompanyInfo {
   twitter_url: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics' | 'internship-analytics' | 'application-funnel' | 'shortlist-tool' | 'bulk-message' | 'subscription';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics' | 'internship-analytics' | 'application-funnel' | 'shortlist-tool' | 'bulk-message' | 'sent-messages' | 'subscription';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
