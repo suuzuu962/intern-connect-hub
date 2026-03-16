@@ -148,6 +148,7 @@ const CompanyDashboard = () => {
       case 'application-funnel': return <ApplicationFunnel companyId={company?.id || null} />;
       case 'shortlist-tool': return <ShortlistTool companyId={company?.id || null} />;
       case 'bulk-message': return <BulkMessageApplicants companyId={company?.id || null} />;
+      case 'sent-messages': return <SentMessages />;
       case 'subscription': return <SubscriptionPlanDetails companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;
