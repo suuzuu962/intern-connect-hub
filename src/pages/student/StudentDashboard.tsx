@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { LayoutDashboard, User, Briefcase, BookOpen, Settings } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, BookOpen, Settings, Mail } from 'lucide-react';
 import { StudentOverview } from '@/components/student/StudentOverview';
 import { StudentProfileForm } from '@/components/student/StudentProfileForm';
 import { AppliedInternships } from '@/components/student/AppliedInternships';
