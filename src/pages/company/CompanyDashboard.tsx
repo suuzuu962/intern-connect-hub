@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3, GitBranch, UserCheck, MessageSquare, Crown, PieChart } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3, GitBranch, UserCheck, MessageSquare, Crown, PieChart, Send } from 'lucide-react';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
@@ -16,6 +16,7 @@ import { CompanyAnalytics } from '@/components/company/CompanyAnalytics';
 import { ApplicationFunnel } from '@/components/company/ApplicationFunnel';
 import { ShortlistTool } from '@/components/company/ShortlistTool';
 import { BulkMessageApplicants } from '@/components/company/BulkMessageApplicants';
+import { SentMessages } from '@/components/company/SentMessages';
 import { SubscriptionPlanDetails } from '@/components/company/SubscriptionPlanDetails';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -42,7 +43,7 @@ interface CompanyInfo {
   twitter_url: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics' | 'internship-analytics' | 'application-funnel' | 'shortlist-tool' | 'bulk-message' | 'subscription';
+type ActiveSection = 'dashboard' | 'internships' | 'applicants' | 'create-internship' | 'profile' | 'change-password' | 'analytics' | 'internship-analytics' | 'application-funnel' | 'shortlist-tool' | 'bulk-message' | 'sent-messages' | 'subscription';
 
 const CompanyDashboard = () => {
   const { user } = useAuth();
@@ -121,6 +122,7 @@ const CompanyDashboard = () => {
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
     { id: 'shortlist-tool' as const, label: 'Shortlist Tool', icon: UserCheck, requiresVerification: true },
     { id: 'bulk-message' as const, label: 'Bulk Message', icon: MessageSquare, requiresVerification: true },
+    { id: 'sent-messages' as const, label: 'Sent Messages', icon: Send, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
     { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
     { id: 'subscription' as const, label: 'Subscription Plan', icon: Crown, requiresVerification: false },
@@ -146,6 +148,7 @@ const CompanyDashboard = () => {
       case 'application-funnel': return <ApplicationFunnel companyId={company?.id || null} />;
       case 'shortlist-tool': return <ShortlistTool companyId={company?.id || null} />;
       case 'bulk-message': return <BulkMessageApplicants companyId={company?.id || null} />;
+      case 'sent-messages': return <SentMessages />;
       case 'subscription': return <SubscriptionPlanDetails companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
       case 'applicants': return <CompanyApplicants companyId={company?.id || null} />;

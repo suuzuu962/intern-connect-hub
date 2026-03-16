@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { LayoutDashboard, User, Briefcase, BookOpen, Settings } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, BookOpen, Settings, Mail } from 'lucide-react';
 import { StudentOverview } from '@/components/student/StudentOverview';
 import { StudentProfileForm } from '@/components/student/StudentProfileForm';
 import { AppliedInternships } from '@/components/student/AppliedInternships';
 import { InternshipDiary } from '@/components/student/InternshipDiary';
 import { ChangePassword } from '@/components/company/ChangePassword';
+import { StudentMessages } from '@/components/student/StudentMessages';
 import { CareerChatbot } from '@/components/student/CareerChatbot';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { usePluginEnabled } from '@/hooks/usePluginEnabled';
@@ -25,7 +26,7 @@ interface StudentInfo {
   twitter_url?: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'change-password';
+type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'messages' | 'change-password';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -39,7 +40,7 @@ const StudentDashboard = () => {
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
 
   useEffect(() => {
-    if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'change-password'].includes(sectionParam)) {
+    if (sectionParam && ['dashboard', 'profile', 'applied', 'diary', 'messages', 'change-password'].includes(sectionParam)) {
       setActiveSection(sectionParam);
     }
   }, [sectionParam]);
@@ -84,6 +85,7 @@ const StudentDashboard = () => {
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'applied' as const, label: 'Applied Internships', icon: Briefcase },
     { id: 'diary' as const, label: 'Internship Diary', icon: BookOpen },
+    { id: 'messages' as const, label: 'Messages', icon: Mail },
     { id: 'change-password' as const, label: 'Change Password', icon: Settings },
   ];
 
@@ -103,6 +105,8 @@ const StudentDashboard = () => {
         return <AppliedInternships studentId={student?.id || null} onNavigateToDiary={() => setActiveSection('diary')} />;
       case 'diary':
         return <InternshipDiary studentId={student?.id || null} />;
+      case 'messages':
+        return <StudentMessages />;
       case 'change-password':
         return <ChangePassword />;
       default:
