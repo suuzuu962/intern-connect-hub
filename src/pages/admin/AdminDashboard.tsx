@@ -41,7 +41,7 @@ type ActiveSection =
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
-  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins';
+  | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
