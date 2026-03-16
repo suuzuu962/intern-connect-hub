@@ -74,7 +74,6 @@ const AdminDashboard = () => {
       items: [
         { id: 'universities', label: 'Universities', icon: GraduationCap },
         { id: 'colleges', label: 'Colleges', icon: School },
-        { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
         { id: 'students', label: 'Students', icon: Users },
       ],
     },
