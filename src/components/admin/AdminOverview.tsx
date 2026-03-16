@@ -18,6 +18,7 @@ interface Stats {
   activeInternships: number;
   totalStudents: number;
   totalApplications: number;
+  pendingUpgradeRequests: number;
 }
 
 interface AdminOverviewProps {
