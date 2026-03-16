@@ -35,7 +35,7 @@ export const InstitutionalWorkflowDiagram = () => {
             <div className="flex flex-wrap items-center gap-3 pl-4">
               <WorkflowStep 
                 icon={<LogIn className="h-4 w-4" />}
-                label="Visit /university-auth"
+                label="Visit /auth"
                 sublabel="Select 'University' role"
               />
               <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
