@@ -4,6 +4,7 @@ import { AdminOverview } from '@/components/admin/AdminOverview';
 import { CompanyApprovalManagement } from '@/components/admin/CompanyApprovalManagement';
 import { InternshipManagement } from '@/components/admin/InternshipManagement';
 import { StudentManagement } from '@/components/admin/StudentManagement';
+import { UniversityManagement } from '@/components/admin/UniversityManagement';
 import { CollegeManagement } from '@/components/admin/CollegeManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
