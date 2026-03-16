@@ -88,7 +88,7 @@ const UniversityDashboard = () => {
     switch (activeSection) {
       case 'dashboard': return <UniversityStudents universityId={university.id} viewMode="summary" />;
       case 'org-chart': return <UniversityOrgChart universityId={university.id} />;
-      case 'analytics': return <UniversityAnalytics universityId={university.id} />;
+      case 'analytics': return <UpgradeGate featureLabel="Analytics Dashboard" featureKey="analytics" message={getMessage('analytics')} isLocked={isLocked('analytics')}><UniversityAnalytics universityId={university.id} /></UpgradeGate>;
       case 'colleges': return <UniversityColleges universityId={university.id} />;
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
       case 'coordinators': return <UniversityCoordinators universityId={university.id} />;

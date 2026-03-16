@@ -109,7 +109,7 @@ const CoordinatorDashboard = () => {
       case 'org-chart': return <CoordinatorOrgChart coordinatorId={coordinator.id} collegeId={coordinator.college_id} />;
       case 'students': return <CoordinatorStudents coordinatorId={coordinator.id} collegeId={coordinator.college_id} viewMode="detailed" />;
       case 'diary': return <CoordinatorDiaryApproval coordinatorId={coordinator.id} collegeId={coordinator.college_id} />;
-      case 'attendance': return coordinator.college_id ? <AttendanceTracker collegeId={coordinator.college_id} role="coordinator" /> : <div className="text-muted-foreground">No college assigned</div>;
+      case 'attendance': return coordinator.college_id ? <UpgradeGate featureLabel="Attendance Tracker" featureKey="attendance" message={getMessage('attendance')} isLocked={isLocked('attendance')}><AttendanceTracker collegeId={coordinator.college_id} role="coordinator" /></UpgradeGate> : <div className="text-muted-foreground">No college assigned</div>;
       case 'memos': return coordinator.university_id ? <InstitutionalMemos universityId={coordinator.university_id} collegeId={coordinator.college_id || undefined} senderRole="coordinator" senderName={coordinator.name} /> : <div className="text-muted-foreground">No university assigned</div>;
       case 'profile': return <CoordinatorProfile coordinator={coordinator} onUpdate={setCoordinator} />;
       default: return null;

@@ -146,11 +146,11 @@ const CompanyDashboard = () => {
             onNavigate={setActiveSection}
           />
         );
-      case 'analytics': return <CompanyAnalytics companyId={company?.id || null} />;
+      case 'analytics': return <UpgradeGate featureLabel="Analytics Dashboard" featureKey="analytics" message={getMessage('analytics')} isLocked={isLocked('analytics')}><CompanyAnalytics companyId={company?.id || null} /></UpgradeGate>;
       case 'internship-analytics': return <CompanyAnalytics companyId={company?.id || null} />;
-      case 'application-funnel': return <ApplicationFunnel companyId={company?.id || null} />;
-      case 'shortlist-tool': return <ShortlistTool companyId={company?.id || null} />;
-      case 'bulk-message': return <BulkMessageApplicants companyId={company?.id || null} />;
+      case 'application-funnel': return <UpgradeGate featureLabel="Application Funnel" featureKey="application-funnel" message={getMessage('application-funnel')} isLocked={isLocked('application-funnel')}><ApplicationFunnel companyId={company?.id || null} /></UpgradeGate>;
+      case 'shortlist-tool': return <UpgradeGate featureLabel="Shortlist Tool" featureKey="shortlist-tool" message={getMessage('shortlist-tool')} isLocked={isLocked('shortlist-tool')}><ShortlistTool companyId={company?.id || null} /></UpgradeGate>;
+      case 'bulk-message': return <UpgradeGate featureLabel="Bulk Messaging" featureKey="bulk-message" message={getMessage('bulk-message')} isLocked={isLocked('bulk-message')}><BulkMessageApplicants companyId={company?.id || null} /></UpgradeGate>;
       case 'sent-messages': return <SentMessages />;
       case 'subscription': return <SubscriptionPlanDetails companyId={company?.id || null} />;
       case 'internships': return <CompanyInternships companyId={company?.id || null} onUpdate={fetchCompanyData} />;
