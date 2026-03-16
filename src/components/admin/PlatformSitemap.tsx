@@ -97,7 +97,7 @@ function scanSitemap(): SitemapScanResult {
     {
       path: '/', name: 'Home', icon: 'Globe', type: 'public', group: 'Public Pages',
       description: 'Landing page with work funnel highlights and featured internships',
-      linkedPages: ['/auth', '/university-auth', '/internships', '/companies', '/about', '/for-universities'],
+      linkedPages: ['/auth', '/internships', '/companies', '/about', '/for-universities'],
       tables: ['internships'], edgeFunctions: [], components: ['WorkFunnelSection', 'Header', 'Footer'],
     },
     {
