@@ -49,7 +49,7 @@ const Auth = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [honeypot, setHoneypot] = useState('');
 
-  const isInstitutionalRole = role === 'university' || role === 'college';
+  const isInstitutionalRole = role === 'university';
 
   useEffect(() => {
     recordFormLoad('auth-form');
