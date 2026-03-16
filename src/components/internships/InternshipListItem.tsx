@@ -26,14 +26,30 @@ const internshipTypeLabels = {
 };
 
 const internshipTypeBadgeStyles = {
-  free: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  paid: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-  stipended: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  free: 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300',
+  paid: 'bg-orange-50 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300',
+  stipended: 'bg-green-50 text-green-600 dark:bg-green-900/40 dark:text-green-300',
 };
+
+const avatarColors = [
+  'bg-emerald-500', 'bg-blue-500', 'bg-orange-500', 'bg-purple-500',
+  'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-rose-500',
+];
+
+function getInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
 
 export const InternshipListItem = ({ internship, className }: InternshipListItemProps) => {
   const { user, role } = useAuth();
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const companyName = internship.company?.name || 'Company';
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -45,30 +61,33 @@ export const InternshipListItem = ({ internship, className }: InternshipListItem
     <>
       <Link to={`/internships/${internship.id}`}>
         <div className={cn(
-          "flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors group",
+          "flex items-center gap-4 p-4 rounded-xl border bg-card hover:shadow-sm transition-shadow group",
           className
         )}>
           {/* Company Logo */}
-          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <div className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 text-white font-semibold text-xs",
+            internship.company?.logo_url ? 'bg-muted' : getAvatarColor(companyName)
+          )}>
             {internship.company?.logo_url ? (
               <img
                 src={internship.company.logo_url}
-                alt={internship.company.name}
-                className="h-full w-full object-cover rounded-lg"
+                alt={companyName}
+                className="h-full w-full object-cover rounded-xl"
               />
             ) : (
-              <Building2 className="h-5 w-5 text-muted-foreground" />
+              getInitials(companyName)
             )}
           </div>
 
           {/* Main Content */}
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+              <h3 className="font-semibold text-[14px] group-hover:text-primary transition-colors truncate">
                 {internship.title}
               </h3>
               <p className="text-xs text-muted-foreground truncate">
-                {internship.company?.name || 'Company'}
+                {companyName}
               </p>
             </div>
 
@@ -91,9 +110,9 @@ export const InternshipListItem = ({ internship, className }: InternshipListItem
                 </span>
               )}
               {internship.internship_type === 'stipended' && internship.stipend && (
-                <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
                   <IndianRupee className="h-3 w-3" />
-                  {internship.stipend.toLocaleString('en-IN')}
+                  ₹{internship.stipend.toLocaleString('en-IN')}
                 </span>
               )}
             </div>
@@ -102,7 +121,7 @@ export const InternshipListItem = ({ internship, className }: InternshipListItem
           {/* Type Badge */}
           <Badge
             variant="outline"
-            className={cn("border-0 shrink-0 text-xs", internshipTypeBadgeStyles[internship.internship_type])}
+            className={cn("border-0 shrink-0 text-xs font-medium rounded-md px-2.5", internshipTypeBadgeStyles[internship.internship_type])}
           >
             {internshipTypeLabels[internship.internship_type]}
           </Badge>
@@ -112,7 +131,7 @@ export const InternshipListItem = ({ internship, className }: InternshipListItem
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0 hidden sm:flex"
+              className="shrink-0 hidden sm:flex h-8 text-xs rounded-md font-medium"
               onClick={handleApplyClick}
             >
               <Send className="h-3 w-3 mr-1" />
@@ -123,19 +142,10 @@ export const InternshipListItem = ({ internship, className }: InternshipListItem
       </Link>
 
       {user && role === 'student' && (
-        <ApplyModal
-          internship={internship}
-          open={showApplyModal}
-          onOpenChange={setShowApplyModal}
-        />
+        <ApplyModal internship={internship} open={showApplyModal} onOpenChange={setShowApplyModal} />
       )}
-
       {!user && showApplyModal && (
-        <ApplyModal
-          internship={internship}
-          open={showApplyModal}
-          onOpenChange={setShowApplyModal}
-        />
+        <ApplyModal internship={internship} open={showApplyModal} onOpenChange={setShowApplyModal} />
       )}
     </>
   );
