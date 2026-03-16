@@ -40,7 +40,6 @@ const Internships = () => {
     if (filters.internshipType) query = query.eq('internship_type', filters.internshipType as 'free' | 'paid' | 'stipended');
     if (filters.workMode) query = query.eq('work_mode', filters.workMode as 'remote' | 'onsite' | 'hybrid');
     
-    // Domain filtering - check if any of the selected domains are in the domain field
     if (filters.domains.length > 0) {
       const domainFilters = filters.domains.map(d => `domain.ilike.%${d}%`).join(',');
       query = query.or(domainFilters);
@@ -66,12 +65,23 @@ const Internships = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold mb-1">Find Internships</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Discover {totalCount} opportunities waiting for you</p>
-          </div>
+      <div className="container mx-auto px-4 py-8 md:py-10">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-semibold mb-1">Find Internships</h1>
+          <p className="text-[14px] text-muted-foreground">Discover {totalCount} opportunities waiting for you</p>
+        </div>
+
+        {/* Search & Filters Card */}
+        <div className="bg-card rounded-xl border p-5 mb-6">
+          <SearchFilters filters={filters} onFilterChange={(f) => { setFilters(f); setCurrentPage(1); }} />
+        </div>
+
+        {/* Results Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <p className="text-[13px] text-muted-foreground font-medium">
+            {totalCount} internships found
+          </p>
           
           {/* View Toggle */}
           <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
@@ -79,32 +89,30 @@ const Internships = () => {
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('grid')}
-              className="h-8 px-3"
+              className="h-7 px-2.5 text-xs"
             >
-              <LayoutGrid className="h-4 w-4 mr-1" />
+              <LayoutGrid className="h-3.5 w-3.5 mr-1" />
               Grid
             </Button>
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('list')}
-              className="h-8 px-3"
+              className="h-7 px-2.5 text-xs"
             >
-              <List className="h-4 w-4 mr-1" />
+              <List className="h-3.5 w-3.5 mr-1" />
               List
             </Button>
           </div>
         </div>
 
-        <SearchFilters filters={filters} onFilterChange={(f) => { setFilters(f); setCurrentPage(1); }} />
-
         {/* Grid View */}
         {viewMode === 'grid' && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
             ) : internships.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-muted-foreground">No internships found. Try adjusting your filters.</div>
+              <div className="col-span-full text-center py-12 text-[13px] text-muted-foreground">No internships found. Try adjusting your filters.</div>
             ) : (
               internships.map((internship) => <InternshipCard key={internship.id} internship={internship} />)
             )}
@@ -113,11 +121,11 @@ const Internships = () => {
 
         {/* List View */}
         {viewMode === 'list' && (
-          <div className="mt-8 flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             {loading ? (
-              Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)
+              Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)
             ) : internships.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">No internships found. Try adjusting your filters.</div>
+              <div className="text-center py-12 text-[13px] text-muted-foreground">No internships found. Try adjusting your filters.</div>
             ) : (
               internships.map((internship) => <InternshipListItem key={internship.id} internship={internship} />)
             )}
@@ -125,8 +133,8 @@ const Internships = () => {
         )}
 
         {totalPages > 0 && (
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-5">
+            <p className="text-xs text-muted-foreground">
               Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalCount)}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount}
             </p>
             {totalPages > 1 && (

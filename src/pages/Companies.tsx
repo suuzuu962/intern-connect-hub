@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutGrid, List, Briefcase, Search, Bell } from 'lucide-react';
+import { LayoutGrid, List, Briefcase } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { CompanyCard } from '@/components/companies/CompanyCard';
 import { CompanyListItem } from '@/components/companies/CompanyListItem';
@@ -113,11 +113,11 @@ const Companies = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="container mx-auto px-4 py-8 md:py-10">
         {/* Page Header */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold mb-1">Companies</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Explore {totalCount}+ companies</p>
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-semibold mb-1">Companies</h1>
+          <p className="text-[14px] text-muted-foreground">Explore {totalCount}+ companies</p>
         </div>
 
         {/* Search & Filters Card */}
@@ -128,7 +128,7 @@ const Companies = () => {
         {/* Results Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground font-medium">
+            <p className="text-[13px] text-muted-foreground font-medium">
               {totalCount} companies found
             </p>
             <div className="flex items-center gap-2">
@@ -153,18 +153,18 @@ const Companies = () => {
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('grid')}
-              className="h-8 px-3"
+              className="h-7 px-2.5 text-xs"
             >
-              <LayoutGrid className="h-4 w-4 mr-1" />
+              <LayoutGrid className="h-3.5 w-3.5 mr-1" />
               Grid
             </Button>
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('list')}
-              className="h-8 px-3"
+              className="h-7 px-2.5 text-xs"
             >
-              <List className="h-4 w-4 mr-1" />
+              <List className="h-3.5 w-3.5 mr-1" />
               List
             </Button>
           </div>
@@ -172,9 +172,9 @@ const Companies = () => {
 
         {/* Grid View */}
         {viewMode === 'grid' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 stagger-children">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {loading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) : companies.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-muted-foreground">No companies found.</div>
+              <div className="col-span-full text-center py-12 text-[13px] text-muted-foreground">No companies found.</div>
             ) : companies.map((company) => <CompanyCard key={company.id} company={company} internshipCount={company.internshipCount} />)}
           </div>
         )}
@@ -182,15 +182,15 @@ const Companies = () => {
         {/* List View */}
         {viewMode === 'list' && (
           <div className="flex flex-col gap-3">
-            {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />) : companies.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">No companies found.</div>
+            {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />) : companies.length === 0 ? (
+              <div className="text-center py-12 text-[13px] text-muted-foreground">No companies found.</div>
             ) : companies.map((company) => <CompanyListItem key={company.id} company={company} internshipCount={company.internshipCount} />)}
           </div>
         )}
 
         {totalPages > 0 && (
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-5">
+            <p className="text-xs text-muted-foreground">
               Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalCount)}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount}
             </p>
             {totalPages > 1 && (
