@@ -24,6 +24,7 @@ import { CustomReports } from '@/components/admin/CustomReports';
 import { PlatformFeatureMap } from '@/components/admin/PlatformFeatureMap';
 import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import { PluginManagement } from '@/components/admin/PluginManagement';
+import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, UserCheck, School, Network, Settings,
