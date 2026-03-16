@@ -159,8 +159,7 @@ function scanTables() {
 function scanEdgeFunctions() {
   return [
     { name: 'university-signup', purpose: 'Creates university auth user, profile, role, and university record' },
-    { name: 'create-college-account', purpose: 'Creates college auth user with college_coordinator role' },
-    { name: 'create-coordinator-account', purpose: 'Creates coordinator auth user linked to college' },
+    { name: 'create-college-account', purpose: 'Creates college account under a university' },
     { name: 'admin-create-user', purpose: 'Admin-initiated user creation with role assignment' },
   ];
 }
