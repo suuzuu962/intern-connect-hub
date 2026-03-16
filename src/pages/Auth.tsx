@@ -19,7 +19,7 @@ const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const phoneSchema = z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Invalid phone number format');
 
-type SignupRole = 'student' | 'company' | 'university' | 'college';
+type SignupRole = 'student' | 'company' | 'university';
 type ForgotPasswordStep = 'email' | 'verify-otp' | 'new-password' | 'success';
 
 const Auth = () => {
@@ -49,7 +49,7 @@ const Auth = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [honeypot, setHoneypot] = useState('');
 
-  const isInstitutionalRole = role === 'university' || role === 'college';
+  const isInstitutionalRole = role === 'university';
 
   useEffect(() => {
     recordFormLoad('auth-form');
@@ -74,7 +74,6 @@ const Auth = () => {
       case 'company': navigate('/company/dashboard'); break;
       case 'student': navigate('/student/dashboard'); break;
       case 'university': navigate('/university/dashboard'); break;
-      case 'college_coordinator': navigate('/college/dashboard'); break;
       default: navigate('/');
     }
   };
@@ -154,7 +153,7 @@ const Auth = () => {
     }
 
     if (isInstitutionalRole && !institutionName.trim()) {
-      toast({ title: 'Error', description: `Please enter ${role === 'university' ? 'university' : 'college'} name`, variant: 'destructive' });
+      toast({ title: 'Error', description: 'Please enter university name', variant: 'destructive' });
       return;
     }
 
@@ -162,7 +161,7 @@ const Auth = () => {
 
     if (isInstitutionalRole) {
       // Use university-signup edge function for institutional roles
-      const dbRole = role === 'college' ? 'college_coordinator' : 'university';
+      const dbRole = 'university';
       const { data: functionData, error: functionError } = await supabase.functions.invoke('university-signup', {
         body: {
           email,
@@ -171,7 +170,7 @@ const Auth = () => {
           role: dbRole,
           phoneNumber,
           institutionName,
-          isCollegeAdmin: role === 'college',
+          isCollegeAdmin: false,
         },
       });
 
@@ -192,7 +191,7 @@ const Auth = () => {
 
       toast({
         title: 'Account Created!',
-        description: role === 'university' ? 'Your university account is pending approval.' : 'Your college account is pending approval.',
+        description: 'Your university account is pending approval.',
       });
       redirectByRole(dbRole);
     } else {
@@ -510,9 +509,9 @@ const Auth = () => {
                     <>
                       {isInstitutionalRole && (
                         <div>
-                          <Label className="text-sm font-medium">{role === 'university' ? 'University Name' : 'College Name'} <span className="text-destructive">*</span></Label>
+                          <Label className="text-sm font-medium">University Name <span className="text-destructive">*</span></Label>
                           <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)}
-                            placeholder={role === 'university' ? 'e.g., XYZ University' : 'e.g., ABC College'} className="mt-1.5 h-11" />
+                            placeholder="e.g., XYZ University" className="mt-1.5 h-11" />
                         </div>
                       )}
                       <div>

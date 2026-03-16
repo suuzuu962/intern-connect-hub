@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3 } from 'lucide-react';
+import { Loader2, GraduationCap, LayoutDashboard, Network, School, Users, UserCheck, User, Settings, Mail, BarChart3, BookOpen, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
@@ -13,22 +13,25 @@ import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
 import { UniversityAnalytics } from '@/components/university/UniversityAnalytics';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
+import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval';
+import { AttendanceTracker } from '@/components/institutional/AttendanceTracker';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
 
 const UniversityDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<ActiveSection>((searchParams.get('tab') as ActiveSection) || 'dashboard');
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [collegeIds, setCollegeIds] = useState<string[]>([]);
+  const [pendingDiaryCount, setPendingDiaryCount] = useState(0);
   const { user } = useAuth();
   const { isLocked, getMessage } = useFeatureAccess('university');
-
 
   useEffect(() => {
     const tab = searchParams.get('tab') as ActiveSection;
@@ -40,7 +43,12 @@ const UniversityDashboard = () => {
       if (!user) return;
       const { data, error } = await supabase.from('universities').select('*').eq('user_id', user.id).single();
       if (error) console.error('Error fetching university:', error);
-      else setUniversity(data);
+      else {
+        setUniversity(data);
+        // Fetch college IDs for this university
+        const { data: colleges } = await supabase.from('colleges').select('id').eq('university_id', data.id);
+        setCollegeIds(colleges?.map(c => c.id) || []);
+      }
       setLoading(false);
     };
     fetchUniversity();
@@ -72,16 +80,38 @@ const UniversityDashboard = () => {
     );
   }
 
-  const sidebarItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
-    { id: 'org-chart', label: 'Org Chart', icon: Network, visible: true },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, visible: true },
-    { id: 'colleges', label: 'Colleges', icon: School, visible: true },
-    { id: 'students', label: 'Students', icon: Users, visible: true },
-    { id: 'coordinators', label: 'Coordinators', icon: UserCheck, visible: true },
-    { id: 'users', label: 'Users', icon: User, visible: true },
-    { id: 'memos', label: 'Memos', icon: Mail, visible: true },
-    { id: 'profile', label: 'Profile', icon: Settings, visible: true },
+  const sidebarGroups: SidebarGroup[] = [
+    {
+      label: '',
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'org-chart', label: 'Org Chart', icon: Network },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      ],
+    },
+    {
+      label: 'Institution',
+      items: [
+        { id: 'colleges', label: 'Colleges', icon: School },
+        { id: 'students', label: 'Students', icon: Users },
+        { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
+        { id: 'users', label: 'Users', icon: User },
+      ],
+    },
+    {
+      label: 'Academic',
+      items: [
+        { id: 'diary-approvals', label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
+        { id: 'attendance', label: 'Attendance', icon: Calendar },
+        { id: 'memos', label: 'Memos', icon: Mail },
+      ],
+    },
+    {
+      label: '',
+      items: [
+        { id: 'profile', label: 'Profile', icon: Settings },
+      ],
+    },
   ];
 
   const renderContent = () => {
@@ -93,6 +123,14 @@ const UniversityDashboard = () => {
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
       case 'coordinators': return <UniversityCoordinators universityId={university.id} />;
       case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
+      case 'diary-approvals': 
+        return collegeIds.length > 0 
+          ? <CollegeDiaryApproval collegeId={collegeIds[0]} collegeName={university.name} onPendingCountChange={setPendingDiaryCount} />
+          : <div className="text-muted-foreground p-4">No colleges found. Add a college first to manage diary approvals.</div>;
+      case 'attendance':
+        return collegeIds.length > 0
+          ? <UpgradeGate featureLabel="Attendance Tracker" featureKey="attendance" message={getMessage('attendance')} isLocked={isLocked('attendance')}><AttendanceTracker collegeId={collegeIds[0]} role="college" /></UpgradeGate>
+          : <div className="text-muted-foreground p-4">No colleges found. Add a college first to track attendance.</div>;
       case 'memos': return <InstitutionalMemos universityId={university.id} senderRole="university" senderName={university.name} />;
       case 'profile': return <UniversityProfile university={university} onUpdate={setUniversity} />;
       default: return null;
@@ -115,7 +153,7 @@ const UniversityDashboard = () => {
       sidebar={
         <DashboardSidebar
           header={sidebarHeader}
-          items={sidebarItems}
+          groups={sidebarGroups}
           activeSection={activeSection}
           onNavigate={handleNavigate}
         />

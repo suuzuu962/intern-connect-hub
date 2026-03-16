@@ -121,7 +121,7 @@ function scanRoutes() {
     { path: '/student/dashboard', type: 'protected' as const, role: 'student' },
     { path: '/company/dashboard', type: 'protected' as const, role: 'company' },
     { path: '/university/dashboard', type: 'protected' as const, role: 'university' },
-    { path: '/college/dashboard', type: 'protected' as const, role: 'college_coordinator' },
+    
     { path: '/admin/architecture-doc', type: 'protected' as const, role: 'admin' },
     { path: '/admin/flowchart-documentation', type: 'protected' as const, role: 'admin' },
   ];
@@ -135,7 +135,7 @@ function scanTables() {
     { name: 'companies', columns: 45, relationships: [] },
     { name: 'universities', columns: 12, relationships: [] },
     { name: 'colleges', columns: 11, relationships: ['universities'] },
-    { name: 'college_coordinators', columns: 12, relationships: ['colleges', 'universities'] },
+    
     { name: 'university_users', columns: 6, relationships: ['universities'] },
     { name: 'internships', columns: 18, relationships: ['companies'] },
     { name: 'applications', columns: 7, relationships: ['internships', 'students'] },
@@ -159,19 +159,18 @@ function scanTables() {
 function scanEdgeFunctions() {
   return [
     { name: 'university-signup', purpose: 'Creates university auth user, profile, role, and university record' },
-    { name: 'create-college-account', purpose: 'Creates college auth user with college_coordinator role' },
-    { name: 'create-coordinator-account', purpose: 'Creates coordinator auth user linked to college' },
+    { name: 'create-college-account', purpose: 'Creates college account under a university' },
     { name: 'admin-create-user', purpose: 'Admin-initiated user creation with role assignment' },
   ];
 }
 
 function scanRoles() {
-  return ['admin', 'student', 'company', 'university', 'college_coordinator'];
+  return ['admin', 'student', 'company', 'university'];
 }
 
 function scanEnums() {
   return [
-    { name: 'app_role', values: ['admin', 'student', 'company', 'university', 'college_coordinator'] },
+    { name: 'app_role', values: ['admin', 'student', 'company', 'university'] },
     { name: 'application_status', values: ['applied', 'under_review', 'shortlisted', 'offer_released', 'offer_accepted', 'rejected', 'withdrawn'] },
     { name: 'internship_type', values: ['free', 'paid', 'stipended'] },
     { name: 'work_mode', values: ['remote', 'onsite', 'hybrid'] },

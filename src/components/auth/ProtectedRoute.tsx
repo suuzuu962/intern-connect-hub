@@ -30,8 +30,6 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
           navigate('/student/dashboard', { replace: true });
         } else if (role === 'university') {
           navigate('/university/dashboard', { replace: true });
-        } else if (role === 'college_coordinator') {
-          navigate('/coordinator/dashboard', { replace: true });
         } else {
           navigate('/', { replace: true });
         }

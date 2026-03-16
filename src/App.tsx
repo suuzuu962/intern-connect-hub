@@ -25,7 +25,6 @@ import CompanyDashboard from "./pages/company/CompanyDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UniversityDashboard from "./pages/university/UniversityDashboard";
-import CollegeDashboard from "./pages/college/CollegeDashboard";
 import UserJourneyMap from "./pages/UserJourneyMap";
 import ArchitectureDoc from "./pages/admin/ArchitectureDoc";
 import FlowchartDoc from "./pages/admin/FlowchartDoc";
@@ -95,14 +94,6 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['university']}>
               <PageTransition><UniversityDashboard /></PageTransition>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/college/dashboard" 
-          element={
-            <ProtectedRoute allowedRoles={['college_coordinator']}>
-              <PageTransition><CollegeDashboard /></PageTransition>
             </ProtectedRoute>
           } 
         />

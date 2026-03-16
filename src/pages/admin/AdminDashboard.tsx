@@ -5,7 +5,6 @@ import { CompanyApprovalManagement } from '@/components/admin/CompanyApprovalMan
 import { InternshipManagement } from '@/components/admin/InternshipManagement';
 import { StudentManagement } from '@/components/admin/StudentManagement';
 import { UniversityManagement } from '@/components/admin/UniversityManagement';
-import { CoordinatorManagement } from '@/components/admin/CoordinatorManagement';
 import { CollegeManagement } from '@/components/admin/CollegeManagement';
 import NotificationManagement from '@/components/admin/NotificationManagement';
 import { DataExport } from '@/components/admin/DataExport';
@@ -27,7 +26,7 @@ import { PluginManagement } from '@/components/admin/PluginManagement';
 import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
-  Download, GraduationCap, UserCheck, School, Network, Settings,
+  Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
   Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle
 } from 'lucide-react';
@@ -37,7 +36,7 @@ import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeade
 
 type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
-  | 'universities' | 'colleges' | 'coordinators' | 'students'
+  | 'universities' | 'colleges' | 'students'
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
@@ -75,7 +74,6 @@ const AdminDashboard = () => {
       items: [
         { id: 'universities', label: 'Universities', icon: GraduationCap },
         { id: 'colleges', label: 'Colleges', icon: School },
-        { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
         { id: 'students', label: 'Students', icon: Users },
       ],
     },
@@ -118,7 +116,7 @@ const AdminDashboard = () => {
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
       case 'colleges': return <CollegeManagement />;
-      case 'coordinators': return <CoordinatorManagement />;
+      
       case 'students': return <StudentManagement />;
       case 'companies': return <CompanyApprovalManagement />;
       case 'internships': return <InternshipManagement />;

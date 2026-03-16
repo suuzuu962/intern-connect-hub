@@ -29,8 +29,6 @@ const ForUniversities = () => {
       // Redirect to appropriate dashboard based on role
       if (role === 'university') {
         navigate('/university/dashboard', { replace: true });
-      } else if (role === 'college_coordinator') {
-        navigate('/college/dashboard', { replace: true });
       }
     }
   }, [user, role, loading, navigate]);
@@ -46,9 +44,8 @@ const ForUniversities = () => {
     );
   }
 
-  // If user is logged in as university or college, they'll be redirected
-  // Show loading briefly during redirect
-  if (user && (role === 'university' || role === 'college_coordinator')) {
+  // If user is logged in as university, they'll be redirected
+  if (user && role === 'university') {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
