@@ -101,16 +101,10 @@ function scanSitemap(): SitemapScanResult {
       tables: ['internships'], edgeFunctions: [], components: ['WorkFunnelSection', 'Header', 'Footer'],
     },
     {
-      path: '/auth', name: 'Student/Company Login', icon: 'Lock', type: 'public', group: 'Public Pages',
-      description: 'Authentication page for students and companies (signup/login)',
-      linkedPages: ['/', '/student/dashboard', '/company/dashboard'],
-      tables: ['profiles', 'user_roles', 'students', 'companies', 'login_logs'], edgeFunctions: [], components: ['Auth'],
-    },
-    {
-      path: '/university-auth', name: 'University/College Login', icon: 'Lock', type: 'public', group: 'Public Pages',
-      description: 'Authentication page for universities and college coordinators',
-      linkedPages: ['/', '/university/dashboard', '/college/dashboard'],
-      tables: ['profiles', 'user_roles', 'universities', 'login_logs'], edgeFunctions: ['university-signup'], components: ['Auth'],
+      path: '/auth', name: 'Login/Signup', icon: 'Lock', type: 'public', group: 'Public Pages',
+      description: 'Unified authentication page for all roles (students, companies, universities, college coordinators)',
+      linkedPages: ['/', '/student/dashboard', '/company/dashboard', '/university/dashboard', '/college/dashboard'],
+      tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'login_logs'], edgeFunctions: ['university-signup'], components: ['Auth'],
     },
     {
       path: '/for-universities', name: 'For Universities', icon: 'GraduationCap', type: 'public', group: 'Public Pages',
