@@ -121,7 +121,7 @@ const UniversityDashboard = () => {
       case 'analytics': return <UpgradeGate featureLabel="Analytics Dashboard" featureKey="analytics" message={getMessage('analytics')} isLocked={isLocked('analytics')}><UniversityAnalytics universityId={university.id} /></UpgradeGate>;
       case 'colleges': return <UniversityColleges universityId={university.id} />;
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
-      case 'coordinators': return <UniversityCoordinators universityId={university.id} />;
+      
       case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
       case 'diary-approvals': 
         return collegeIds.length > 0 
