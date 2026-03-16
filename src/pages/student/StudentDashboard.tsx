@@ -105,6 +105,8 @@ const StudentDashboard = () => {
         return <AppliedInternships studentId={student?.id || null} onNavigateToDiary={() => setActiveSection('diary')} />;
       case 'diary':
         return <InternshipDiary studentId={student?.id || null} />;
+      case 'messages':
+        return <StudentMessages />;
       case 'change-password':
         return <ChangePassword />;
       default:
