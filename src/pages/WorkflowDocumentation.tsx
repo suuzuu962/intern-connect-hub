@@ -62,9 +62,9 @@ const WorkflowDocumentation = () => {
             <WorkflowCard
               title="Institutional Complete Workflow"
               processes={[
-                { phase: 'University Registration', steps: ['Visit /university-auth', 'Select University role', 'Fill registration form', 'Edge Function: university-signup', 'Email verification bypassed', 'Creates: Auth User → Profile → Role → University'] },
-                { phase: 'College Creation', steps: ['University Dashboard → Colleges Tab', 'Fill college form (name, email, password)', 'Edge Function: create-college-account', 'Creates: Auth User → Role → College → Coordinator', 'College can login at /university-auth'] },
-                { phase: 'Coordinator Management', steps: ['University or College → Add Coordinator', 'Select college, fill name/email/password', 'Edge Function: create-coordinator-account', 'Links coordinator to specific college', 'Coordinator can login at /university-auth'] },
+                { phase: 'University Registration', steps: ['Visit /auth', 'Select University role', 'Fill registration form', 'Edge Function: university-signup', 'Email verification bypassed', 'Creates: Auth User → Profile → Role → University'] },
+                { phase: 'College Creation', steps: ['University Dashboard → Colleges Tab', 'Fill college form (name, email, password)', 'Edge Function: create-college-account', 'Creates: Auth User → Role → College → Coordinator', 'College can login at /auth'] },
+                { phase: 'Coordinator Management', steps: ['University or College → Add Coordinator', 'Select college, fill name/email/password', 'Edge Function: create-coordinator-account', 'Links coordinator to specific college', 'Coordinator can login at /auth'] },
                 { phase: 'Student Oversight', steps: ['Students register and select college', 'college_id FK links student to college', 'Coordinators see their college students', 'University sees all students across colleges'] },
                 { phase: 'Diary Approval', steps: ['Students submit daily diary entries', 'Coordinators review entries', 'Approve/reject with remarks', 'Track hours worked & skills learned'] },
                 { phase: 'Administration', steps: ['View org chart (University → Colleges → Coordinators/Students)', 'Login logs for all institutional users', 'Deactivate/remove coordinators', 'Manage college active status'] },

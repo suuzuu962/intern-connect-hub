@@ -216,7 +216,7 @@ const ArchitectureDoc = () => {
                       {(roles
                         ? roles.map(role => {
                             const routeData = scanResult?.routes.find(r => r.role === role);
-                            const entryMap: Record<string, string> = { admin: '/auth', student: '/auth', company: '/auth', university: '/university-auth', college_coordinator: '/university-auth' };
+                            const entryMap: Record<string, string> = { admin: '/auth', student: '/auth', company: '/auth', university: '/auth', college_coordinator: '/auth' };
                             const descMap: Record<string, string> = {
                               admin: 'Full platform control, RBAC management, user oversight',
                               student: 'Apply to internships, maintain diary, manage profile',
@@ -230,8 +230,8 @@ const ArchitectureDoc = () => {
                             ['admin', '/auth', '/admin/dashboard', 'Full platform control, RBAC management, user oversight'],
                             ['student', '/auth', '/student/dashboard', 'Apply to internships, maintain diary, manage profile'],
                             ['company', '/auth', '/company/dashboard', 'Post internships, review applicants, manage company profile'],
-                            ['university', '/university-auth', '/university/dashboard', 'Manage colleges, coordinators, students, view logs'],
-                            ['college_coordinator', '/university-auth', '/college/dashboard', 'Manage students, approve diaries, coordinate with university'],
+                            ['university', '/auth', '/university/dashboard', 'Manage colleges, coordinators, students, view logs'],
+                            ['college_coordinator', '/auth', '/college/dashboard', 'Manage students, approve diaries, coordinate with university'],
                           ]
                       ).map(([role, entry, route, desc]) => (
                         <tr key={role}>
@@ -248,8 +248,7 @@ const ArchitectureDoc = () => {
               <div className="mt-4">
                 <h3 className="text-sm font-semibold mb-1">Authentication Flow</h3>
                 <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-5">
-                  <li><code>/auth</code> — Standard email/password for Students & Companies (with role selection)</li>
-                  <li><code>/university-auth</code> — Dedicated entry for Universities & College Coordinators</li>
+                  <li><code>/auth</code> — Unified email/password for all roles (Students, Companies, Universities & College Coordinators)</li>
                   <li>University signup handled by <code>university-signup</code> edge function</li>
                   <li>Email verification bypassed for institutional signups for immediate access</li>
                   <li>Idle timeout configurable via Platform Settings (default: 15 min)</li>
@@ -266,7 +265,7 @@ const ArchitectureDoc = () => {
                 <ul className="text-xs text-muted-foreground space-y-1 font-mono">
                   {(routes
                     ? publicRoutes.map(r => r.path)
-                    : ['/', '/auth', '/university-auth', '/for-universities', '/internships', '/internships/:id', '/companies', '/companies/:id', '/about', '/terms', '/privacy', '/notifications', '/user-journey']
+                    : ['/', '/auth', '/for-universities', '/internships', '/internships/:id', '/companies', '/companies/:id', '/about', '/terms', '/privacy', '/notifications', '/user-journey']
                   ).map(r => (
                     <li key={r}>{r}</li>
                   ))}
