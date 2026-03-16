@@ -46,11 +46,12 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     const fetchStats = async () => {
       try {
         // Fetch all stats in parallel
-        const [companiesRes, internshipsRes, studentsRes, applicationsRes] = await Promise.all([
+        const [companiesRes, internshipsRes, studentsRes, applicationsRes, upgradeRes] = await Promise.all([
           supabase.from('companies').select('id, is_verified'),
           supabase.from('internships').select('id, is_active'),
           supabase.from('students').select('id'),
           supabase.from('applications').select('id'),
+          supabase.from('upgrade_requests').select('id').eq('status', 'pending'),
         ]);
 
         const companies = companiesRes.data || [];
@@ -66,6 +67,7 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
           activeInternships: internships.filter(i => i.is_active === true).length,
           totalStudents: students.length,
           totalApplications: applications.length,
+          pendingUpgradeRequests: upgradeRes.data?.length || 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
