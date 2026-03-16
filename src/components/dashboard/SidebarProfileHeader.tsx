@@ -1,6 +1,18 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { Globe, Linkedin, Twitter } from 'lucide-react';
+import { Globe, Linkedin, Twitter, GraduationCap, Building2, Shield, School, UserCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+type RoleIndicator = 'student' | 'company' | 'admin' | 'university' | 'college' | 'coordinator';
+
+const roleConfig: Record<RoleIndicator, { label: string; icon: React.ElementType; className: string }> = {
+  student: { label: 'Student', icon: GraduationCap, className: 'bg-blue-100 text-blue-700 border-blue-200' },
+  company: { label: 'Company', icon: Building2, className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  admin: { label: 'Admin', icon: Shield, className: 'bg-red-100 text-red-700 border-red-200' },
+  university: { label: 'University', icon: School, className: 'bg-purple-100 text-purple-700 border-purple-200' },
+  college: { label: 'College', icon: School, className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  coordinator: { label: 'Coordinator', icon: UserCheck, className: 'bg-teal-100 text-teal-700 border-teal-200' },
+};
 
 interface SidebarProfileHeaderProps {
   name: string;
@@ -11,6 +23,7 @@ interface SidebarProfileHeaderProps {
   linkedinUrl?: string | null;
   websiteUrl?: string | null;
   twitterUrl?: string | null;
+  role?: RoleIndicator;
   className?: string;
 }
 
