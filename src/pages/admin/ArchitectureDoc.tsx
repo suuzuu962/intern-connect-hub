@@ -265,7 +265,7 @@ const ArchitectureDoc = () => {
                 <ul className="text-xs text-muted-foreground space-y-1 font-mono">
                   {(routes
                     ? publicRoutes.map(r => r.path)
-                    : ['/', '/auth', '/university-auth', '/for-universities', '/internships', '/internships/:id', '/companies', '/companies/:id', '/about', '/terms', '/privacy', '/notifications', '/user-journey']
+                    : ['/', '/auth', '/for-universities', '/internships', '/internships/:id', '/companies', '/companies/:id', '/about', '/terms', '/privacy', '/notifications', '/user-journey']
                   ).map(r => (
                     <li key={r}>{r}</li>
                   ))}

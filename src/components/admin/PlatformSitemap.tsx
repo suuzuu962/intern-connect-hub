@@ -109,7 +109,7 @@ function scanSitemap(): SitemapScanResult {
     {
       path: '/for-universities', name: 'For Universities', icon: 'GraduationCap', type: 'public', group: 'Public Pages',
       description: 'Marketing page showcasing platform benefits for institutional partners',
-      linkedPages: ['/university-auth', '/'], tables: [], edgeFunctions: [], components: ['ForUniversities'],
+      linkedPages: ['/auth', '/'], tables: [], edgeFunctions: [], components: ['ForUniversities'],
     },
     {
       path: '/internships', name: 'Browse Internships', icon: 'Briefcase', type: 'public', group: 'Public Pages',
