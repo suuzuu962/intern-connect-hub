@@ -509,9 +509,9 @@ const Auth = () => {
                     <>
                       {isInstitutionalRole && (
                         <div>
-                          <Label className="text-sm font-medium">{role === 'university' ? 'University Name' : 'College Name'} <span className="text-destructive">*</span></Label>
+                          <Label className="text-sm font-medium">University Name <span className="text-destructive">*</span></Label>
                           <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)}
-                            placeholder={role === 'university' ? 'e.g., XYZ University' : 'e.g., ABC College'} className="mt-1.5 h-11" />
+                            placeholder="e.g., XYZ University" className="mt-1.5 h-11" />
                         </div>
                       )}
                       <div>
