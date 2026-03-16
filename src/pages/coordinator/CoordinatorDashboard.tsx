@@ -119,6 +119,7 @@ const CoordinatorDashboard = () => {
       name={coordinator.name}
       subtitle={coordinator.college?.name || 'Coordinator'}
       avatarFallback={<User className="h-5 w-5 text-primary" />}
+      role="coordinator"
     />
   );
 

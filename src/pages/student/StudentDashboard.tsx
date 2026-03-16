@@ -118,6 +118,7 @@ const StudentDashboard = () => {
       avatarFallback={<User className="h-5 w-5 text-primary" />}
       linkedinUrl={student?.linkedin_url}
       twitterUrl={student?.twitter_url}
+      role="student"
     />
   );
 

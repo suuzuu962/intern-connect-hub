@@ -186,6 +186,7 @@ const CollegeDashboard = () => {
       subtitle={college.is_active ? 'Active' : 'Inactive'}
       avatarFallback={<GraduationCap className="h-5 w-5 text-primary" />}
       verified={college.is_active ?? undefined}
+      role="college"
     />
   );
 

@@ -166,6 +166,7 @@ const CompanyDashboard = () => {
       linkedinUrl={company?.linkedin_url}
       websiteUrl={company?.website}
       twitterUrl={company?.twitter_url}
+      role="company"
     />
   );
 

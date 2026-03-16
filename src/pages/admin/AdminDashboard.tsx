@@ -140,6 +140,7 @@ const AdminDashboard = () => {
       name="Super Admin"
       subtitle="Platform Management"
       avatarFallback={<Shield className="h-5 w-5 text-primary" />}
+      role="admin"
     />
   );
 
