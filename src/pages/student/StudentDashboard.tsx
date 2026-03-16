@@ -31,7 +31,7 @@ interface StudentInfo {
   twitter_url?: string | null;
 }
 
-type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'messages' | 'change-password';
+type ActiveSection = 'dashboard' | 'profile' | 'applied' | 'diary' | 'messages' | 'change-password' | 'resume-analysis' | 'internship-recommendations';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
