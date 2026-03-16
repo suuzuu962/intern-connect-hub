@@ -230,8 +230,8 @@ const ArchitectureDoc = () => {
                             ['admin', '/auth', '/admin/dashboard', 'Full platform control, RBAC management, user oversight'],
                             ['student', '/auth', '/student/dashboard', 'Apply to internships, maintain diary, manage profile'],
                             ['company', '/auth', '/company/dashboard', 'Post internships, review applicants, manage company profile'],
-                            ['university', '/university-auth', '/university/dashboard', 'Manage colleges, coordinators, students, view logs'],
-                            ['college_coordinator', '/university-auth', '/college/dashboard', 'Manage students, approve diaries, coordinate with university'],
+                            ['university', '/auth', '/university/dashboard', 'Manage colleges, coordinators, students, view logs'],
+                            ['college_coordinator', '/auth', '/college/dashboard', 'Manage students, approve diaries, coordinate with university'],
                           ]
                       ).map(([role, entry, route, desc]) => (
                         <tr key={role}>
