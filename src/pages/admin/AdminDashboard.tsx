@@ -36,7 +36,7 @@ import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeade
 
 type ActiveSection =
   | 'overview' | 'org-chart' | 'admins' | 'analytics'
-  | 'universities' | 'colleges' | 'coordinators' | 'students'
+  | 'universities' | 'colleges' | 'students'
   | 'companies' | 'internships' | 'payments'
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
