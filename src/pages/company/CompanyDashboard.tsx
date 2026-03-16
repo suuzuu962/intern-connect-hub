@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3, GitBranch, UserCheck, MessageSquare, Crown, PieChart } from 'lucide-react';
+import { Building2, Briefcase, Users, LayoutDashboard, Plus, Settings, UserCog, FolderOpen, BarChart3, GitBranch, UserCheck, MessageSquare, Crown, PieChart, Send } from 'lucide-react';
 import { CompanyProfileForm } from '@/components/company/CompanyProfileForm';
 import { CreateInternshipForm } from '@/components/company/CreateInternshipForm';
 import { CompanyApplicants } from '@/components/company/CompanyApplicants';
