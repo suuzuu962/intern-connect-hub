@@ -29,8 +29,6 @@ const ForUniversities = () => {
       // Redirect to appropriate dashboard based on role
       if (role === 'university') {
         navigate('/university/dashboard', { replace: true });
-      } else if (role === 'college_coordinator') {
-        navigate('/college/dashboard', { replace: true });
       }
     }
   }, [user, role, loading, navigate]);
