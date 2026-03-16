@@ -122,6 +122,7 @@ const CompanyDashboard = () => {
     { id: 'applicants' as const, label: 'Applicants', icon: Users, requiresVerification: true },
     { id: 'shortlist-tool' as const, label: 'Shortlist Tool', icon: UserCheck, requiresVerification: true },
     { id: 'bulk-message' as const, label: 'Bulk Message', icon: MessageSquare, requiresVerification: true },
+    { id: 'sent-messages' as const, label: 'Sent Messages', icon: Send, requiresVerification: true },
     { id: 'create-internship' as const, label: 'Create Internship', icon: Plus, requiresVerification: true },
     { id: 'profile' as const, label: 'Company Profile', icon: Building2, requiresVerification: false },
     { id: 'subscription' as const, label: 'Subscription Plan', icon: Crown, requiresVerification: false },
