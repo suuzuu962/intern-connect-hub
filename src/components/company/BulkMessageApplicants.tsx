@@ -133,6 +133,7 @@ export const BulkMessageApplicants = ({ companyId }: BulkMessageApplicantsProps)
         message: messageBody,
         type: 'company_message',
         target_role: 'student',
+        sender_id: user?.id,
       }));
 
       const { error } = await supabase.from('notifications').insert(notifications);
