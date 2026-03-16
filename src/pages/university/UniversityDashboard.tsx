@@ -7,7 +7,7 @@ import { Layout } from '@/components/layout/Layout';
 import { UniversityProfile } from '@/components/university/UniversityProfile';
 import { UniversityColleges } from '@/components/university/UniversityColleges';
 import { UniversityUsers } from '@/components/university/UniversityUsers';
-import { UniversityCoordinators } from '@/components/university/UniversityCoordinators';
+
 import { UniversityLoginLogs } from '@/components/university/UniversityLoginLogs';
 import { UniversityStudents } from '@/components/university/UniversityStudents';
 import { UniversityOrgChart } from '@/components/university/UniversityOrgChart';
