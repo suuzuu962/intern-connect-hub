@@ -94,7 +94,7 @@ const UniversityDashboard = () => {
       items: [
         { id: 'colleges', label: 'Colleges', icon: School },
         { id: 'students', label: 'Students', icon: Users },
-        { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
+        
         { id: 'users', label: 'Users', icon: User },
       ],
     },
