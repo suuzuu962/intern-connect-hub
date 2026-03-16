@@ -16,6 +16,8 @@ import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemo
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeader';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeGate } from '@/components/upgrade/UpgradeGate';
 
 type ActiveSection = 'dashboard' | 'org-chart' | 'analytics' | 'colleges' | 'students' | 'coordinators' | 'users' | 'memos' | 'profile';
 
