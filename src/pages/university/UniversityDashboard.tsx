@@ -27,7 +27,7 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  
+  const { isLocked, getMessage } = useFeatureAccess('university');
 
 
   useEffect(() => {
