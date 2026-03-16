@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSuperAdmin } from '@/lib/super-admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch, FileText, TrendingUp } from 'lucide-react';
+import { Building2, Briefcase, Users, FileCheck, Clock, CheckCircle, ChevronRight, GitBranch, FileText, TrendingUp, ArrowUpCircle } from 'lucide-react';
 import { AnalyticsFunnel } from '@/components/admin/AnalyticsFunnel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ interface Stats {
   activeInternships: number;
   totalStudents: number;
   totalApplications: number;
+  pendingUpgradeRequests: number;
 }
 
 interface AdminOverviewProps {
@@ -37,6 +38,7 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     activeInternships: 0,
     totalStudents: 0,
     totalApplications: 0,
+    pendingUpgradeRequests: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -44,11 +46,12 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
     const fetchStats = async () => {
       try {
         // Fetch all stats in parallel
-        const [companiesRes, internshipsRes, studentsRes, applicationsRes] = await Promise.all([
+        const [companiesRes, internshipsRes, studentsRes, applicationsRes, upgradeRes] = await Promise.all([
           supabase.from('companies').select('id, is_verified'),
           supabase.from('internships').select('id, is_active'),
           supabase.from('students').select('id'),
           supabase.from('applications').select('id'),
+          supabase.from('upgrade_requests').select('id').eq('status', 'pending'),
         ]);
 
         const companies = companiesRes.data || [];
@@ -64,6 +67,7 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
           activeInternships: internships.filter(i => i.is_active === true).length,
           totalStudents: students.length,
           totalApplications: applications.length,
+          pendingUpgradeRequests: upgradeRes.data?.length || 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -200,6 +204,21 @@ export const AdminOverview = ({ onNavigate }: AdminOverviewProps) => {
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </div>
+              {stats.pendingUpgradeRequests > 0 && (
+                <div 
+                  className="flex justify-between items-center p-3 bg-primary/5 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors group"
+                  onClick={() => handleNavigate('upgrade-requests')}
+                >
+                  <span className="text-sm flex items-center gap-2">
+                    <ArrowUpCircle className="h-4 w-4 text-primary" />
+                    Pending upgrade requests
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-primary">{stats.pendingUpgradeRequests}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
