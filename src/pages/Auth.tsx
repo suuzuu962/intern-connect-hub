@@ -162,7 +162,7 @@ const Auth = () => {
 
     if (isInstitutionalRole) {
       // Use university-signup edge function for institutional roles
-      const dbRole = role === 'college' ? 'college_coordinator' : 'university';
+      const dbRole = 'university';
       const { data: functionData, error: functionError } = await supabase.functions.invoke('university-signup', {
         body: {
           email,
@@ -171,7 +171,7 @@ const Auth = () => {
           role: dbRole,
           phoneNumber,
           institutionName,
-          isCollegeAdmin: role === 'college',
+          isCollegeAdmin: false,
         },
       });
 
