@@ -42,12 +42,15 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Check if user already exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const userExists = existingUsers?.users?.some(u => u.email === email)
+    // Check if user already exists by looking up profiles table (reliable across all roles)
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id')
+      .eq('email', email)
+      .maybeSingle()
     
-    if (userExists) {
-      return new Response(JSON.stringify({ error: 'An account with this email already exists' }), {
+    if (existingProfile) {
+      return new Response(JSON.stringify({ error: 'This email is already registered. Please log in instead.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
