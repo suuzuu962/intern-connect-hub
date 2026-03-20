@@ -159,6 +159,23 @@ const Auth = () => {
 
     setLoading(true);
 
+    // Check if email is already registered under any role
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (existingProfile) {
+      toast({
+        title: 'Email Already Registered',
+        description: 'This email is already associated with an account. Please log in instead.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
     if (isInstitutionalRole) {
       // Use university-signup edge function for institutional roles
       const dbRole = 'university';
