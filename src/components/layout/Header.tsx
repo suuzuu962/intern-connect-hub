@@ -14,10 +14,11 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
-const navLinks = [
+const allNavLinks = [
   { href: '/', label: 'Home' },
-  { href: '/internships', label: 'Internships' },
-  { href: '/companies', label: 'Companies' },
+  { href: '/internships', label: 'Internships', hideOn: ['/for-universities'] },
+  { href: '/companies', label: 'Companies', hideOn: ['/for-universities'] },
+  { href: '/for-universities', label: 'For Universities', showOn: ['/for-universities', '/'] },
   { href: '/about', label: 'About Us' },
 ];
 
