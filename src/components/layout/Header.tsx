@@ -14,10 +14,11 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
-const navLinks = [
+const allNavLinks = [
   { href: '/', label: 'Home' },
-  { href: '/internships', label: 'Internships' },
-  { href: '/companies', label: 'Companies' },
+  { href: '/internships', label: 'Internships', hideOn: ['/for-universities'] },
+  { href: '/companies', label: 'Companies', hideOn: ['/for-universities'] },
+  { href: '/for-universities', label: 'For Universities', showOn: ['/for-universities', '/'] },
   { href: '/about', label: 'About Us' },
 ];
 
@@ -71,7 +72,13 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {allNavLinks
+              .filter((link) => {
+                if (link.hideOn?.includes(location.pathname)) return false;
+                if (link.showOn && !link.showOn.includes(location.pathname)) return false;
+                return true;
+              })
+              .map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
@@ -239,7 +246,13 @@ export const Header = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <nav className="flex flex-col gap-4">
-              {navLinks.map((link) => (
+              {allNavLinks
+                .filter((link) => {
+                  if (link.hideOn?.includes(location.pathname)) return false;
+                  if (link.showOn && !link.showOn.includes(location.pathname)) return false;
+                  return true;
+                })
+                .map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}

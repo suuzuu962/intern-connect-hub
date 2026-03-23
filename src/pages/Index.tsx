@@ -151,6 +151,48 @@ const Index = () => {
       {/* Work Funnel */}
       <WorkFunnelSection />
 
+      {/* University & College Services */}
+      <section className="py-16 lg:py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <ScrollSection className="text-center mb-12">
+            <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-heading font-bold mb-3">
+              For <span className="gradient-text">Universities & Colleges</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-muted-foreground max-w-xl mx-auto">
+              Streamline internship management across your institution with powerful tools
+            </motion.p>
+          </ScrollSection>
+
+          <ScrollSection className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { icon: Users, title: 'Student Management', description: 'Track all students across colleges from a single dashboard' },
+              { icon: Building2, title: 'Multi-College Support', description: 'Manage multiple colleges under one university umbrella' },
+              { icon: Target, title: 'Placement Analytics', description: 'Real-time reports on placements, completions, and partnerships' },
+            ].map((item, i) => (
+              <motion.div key={i} variants={fadeUp}>
+                <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                  <CardContent className="pt-8 pb-6 px-4">
+                    <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
+                      <item.icon className="h-7 w-7 text-primary-foreground" />
+                    </div>
+                    <h3 className="font-heading font-semibold text-base mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </ScrollSection>
+
+          <ScrollSection className="text-center mt-8">
+            <motion.div variants={fadeUp}>
+              <Button size="lg" asChild className="gradient-primary border-0 text-base px-8">
+                <Link to="/for-universities">Learn More <ArrowRight className="ml-2 h-5 w-5" /></Link>
+              </Button>
+            </motion.div>
+          </ScrollSection>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 lg:py-20">
         <div className="container mx-auto px-4">
