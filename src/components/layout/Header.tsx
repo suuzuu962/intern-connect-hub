@@ -72,7 +72,13 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {allNavLinks
+              .filter((link) => {
+                if (link.hideOn?.includes(location.pathname)) return false;
+                if (link.showOn && !link.showOn.includes(location.pathname)) return false;
+                return true;
+              })
+              .map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
