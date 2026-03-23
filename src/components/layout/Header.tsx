@@ -18,7 +18,7 @@ const allNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/internships', label: 'Internships', hideOn: ['/for-universities'] },
   { href: '/companies', label: 'Companies', hideOn: ['/for-universities'] },
-  { href: '/for-universities', label: 'For Universities', showOn: ['/for-universities', '/'] },
+  { href: '/for-universities', label: 'For Universities', showOn: ['/for-universities'] },
   { href: '/about', label: 'About Us' },
 ];
 
