@@ -147,6 +147,11 @@ const Index = () => {
       {/* Work Funnel */}
       {config.showWorkFunnel && <WorkFunnelSection />}
 
+      {/* Custom Sections */}
+      {config.customSections?.filter(s => s.enabled).map(section => (
+        <CustomSectionRenderer key={section.id} section={section} />
+      ))}
+
       {/* University & College Services */}
       {config.showUniversitySection && (
         <section className="py-16 lg:py-20 bg-muted/30">
