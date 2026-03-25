@@ -7,6 +7,7 @@ export interface RoleHeroContent {
   description: string;
   primaryCta: { label: string; link: string };
   secondaryCta?: { label: string; link: string };
+  imageUrl?: string;
 }
 
 export interface RoleStep {
@@ -26,6 +27,7 @@ export interface RoleAdBanner {
   ctaLabel: string;
   ctaLink: string;
   variant: 'primary' | 'accent' | 'success' | 'warning';
+  imageUrl?: string;
 }
 
 export interface RoleHomeConfig {
