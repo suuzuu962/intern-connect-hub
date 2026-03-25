@@ -572,10 +572,13 @@ export const LandingPageContentManager = () => {
         {/* Editor */}
         <div className="xl:col-span-2">
           <Tabs defaultValue="hero" className="space-y-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="hero">Hero Section</TabsTrigger>
               <TabsTrigger value="stats">Statistics</TabsTrigger>
               <TabsTrigger value="ads">Ad Banners</TabsTrigger>
+              <TabsTrigger value="custom">
+                <Sparkles className="h-3 w-3 mr-1" /> Custom Sections
+              </TabsTrigger>
               <TabsTrigger value="sections">Toggles</TabsTrigger>
             </TabsList>
 
