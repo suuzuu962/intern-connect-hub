@@ -538,6 +538,49 @@ export const LandingPageContentManager = () => {
     });
   };
 
+  // ── External Links ──
+  const addExternalLink = () => {
+    const newLink: ExternalLink = {
+      id: `link_${Date.now()}`,
+      title: 'New External Page',
+      description: 'Description of the external page',
+      url: 'https://',
+      openInNewTab: true,
+      enabled: true,
+    };
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: [...(prev[activeRole].externalLinks || []), newLink],
+      },
+    }));
+  };
+
+  const removeExternalLink = async (id: string) => {
+    const link = (configs[activeRole].externalLinks || []).find(l => l.id === id);
+    if (link?.imageUrl) await deleteImage(link.imageUrl);
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: (prev[activeRole].externalLinks || []).filter(l => l.id !== id),
+      },
+    }));
+  };
+
+  const updateExternalLink = (id: string, updates: Partial<ExternalLink>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: (prev[activeRole].externalLinks || []).map(l =>
+          l.id === id ? { ...l, ...updates } : l
+        ),
+      },
+    }));
+  };
+
   const current = configs[activeRole];
 
   if (loading) {
