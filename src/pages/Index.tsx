@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
 import { WorkFunnelSection } from '@/components/home/WorkFunnelSection';
 import { AdBanner } from '@/components/home/AdBanner';
+import { CustomSectionRenderer } from '@/components/home/CustomSection';
 import { useLandingPageContent } from '@/hooks/useLandingPageContent';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, useInView } from 'framer-motion';
