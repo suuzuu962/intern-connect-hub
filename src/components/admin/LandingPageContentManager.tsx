@@ -224,6 +224,26 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
         </div>
       ))}
 
+
+      {/* External Links Preview */}
+      {config.externalLinks?.filter(l => l.enabled).length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">External Pages</p>
+          {config.externalLinks.filter(l => l.enabled).map((link) => (
+            <div key={link.id} className="rounded-lg border p-2 flex items-center gap-3 bg-card hover:bg-muted/30 transition-colors">
+              {link.imageUrl && (
+                <img src={link.imageUrl} alt="" className="w-12 h-10 object-cover rounded shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-xs truncate">{link.title}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{link.url}</p>
+              </div>
+              <ExternalLinkIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Section indicators */}
       <div className="flex flex-wrap gap-2">
         <Badge variant={config.showWorkFunnel ? 'default' : 'secondary'} className="text-[10px]">

@@ -8,6 +8,7 @@ import {
   type RoleAdBanner,
 } from '@/components/home/roleHomeContent';
 import type { CustomSectionData } from '@/components/home/CustomSection';
+import type { ExternalLink } from '@/components/admin/LandingPageContentManager';
 
 const SETTINGS_KEY = 'landing_page_content';
 
@@ -18,15 +19,17 @@ interface SerializableConfig {
   showUniversitySection?: boolean;
   showWorkFunnel?: boolean;
   customSections?: CustomSectionData[];
+  externalLinks?: ExternalLink[];
 }
 
 export interface LandingPageConfig extends RoleHomeConfig {
   customSections: CustomSectionData[];
+  externalLinks: ExternalLink[];
 }
 
 export function useLandingPageContent(role: string | null): LandingPageConfig {
   const defaultConfig = getHomeConfig(role);
-  const [config, setConfig] = useState<LandingPageConfig>({ ...defaultConfig, customSections: [] });
+  const [config, setConfig] = useState<LandingPageConfig>({ ...defaultConfig, customSections: [], externalLinks: [] });
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +63,10 @@ export function useLandingPageContent(role: string | null): LandingPageConfig {
           showUniversitySection: saved.showUniversitySection ?? fallback.showUniversitySection,
           showWorkFunnel: saved.showWorkFunnel ?? fallback.showWorkFunnel,
           customSections: saved.customSections ?? [],
+          externalLinks: saved.externalLinks ?? [],
         });
       } else {
-        setConfig({ ...getHomeConfig(role), customSections: [] });
+        setConfig({ ...getHomeConfig(role), customSections: [], externalLinks: [] });
       }
     };
 
