@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
 import { WorkFunnelSection } from '@/components/home/WorkFunnelSection';
 import { AdBanner } from '@/components/home/AdBanner';
-import { getHomeConfig } from '@/components/home/roleHomeContent';
+import { useLandingPageContent } from '@/hooks/useLandingPageContent';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
@@ -44,7 +44,7 @@ function ScrollSection({ children, className }: { children: React.ReactNode; cla
 
 const Index = () => {
   const { role } = useAuth();
-  const config = getHomeConfig(role);
+  const config = useLandingPageContent(role);
 
   return (
     <Layout>
