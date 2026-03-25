@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { guestConfig, studentConfig, companyConfig, universityConfig, adminConfig } from '@/components/home/roleHomeContent';
 import type { RoleHomeConfig, RoleHeroContent, RoleStat, RoleAdBanner } from '@/components/home/roleHomeContent';
-import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight, GripVertical, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { SECTION_TEMPLATES, type CustomSectionData, type CustomSectionType, type CustomSectionItem } from '@/components/home/CustomSection';
 
 const ROLES = [
   { key: 'guest', label: 'Guest (Not logged in)' },
@@ -42,6 +43,7 @@ interface SerializableConfig {
   ads: RoleAdBanner[];
   showUniversitySection: boolean;
   showWorkFunnel: boolean;
+  customSections: CustomSectionData[];
 }
 
 function toSerializable(config: RoleHomeConfig): SerializableConfig {
@@ -51,6 +53,7 @@ function toSerializable(config: RoleHomeConfig): SerializableConfig {
     ads: config.ads,
     showUniversitySection: config.showUniversitySection,
     showWorkFunnel: config.showWorkFunnel,
+    customSections: [],
   };
 }
 
@@ -196,6 +199,19 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
         </div>
       )}
 
+      {/* Custom Sections Preview */}
+      {config.customSections?.filter(s => s.enabled).map((s, i) => (
+        <div key={i} className="rounded-lg border p-3 bg-card">
+          <div className="flex items-center gap-2 mb-1">
+            {(() => { const T = SECTION_TEMPLATES.find(t => t.type === s.type); return T ? <T.icon className="h-3 w-3 text-muted-foreground" /> : null; })()}
+            <p className="font-semibold text-xs">{s.title}</p>
+            <Badge variant="outline" className="ml-auto text-[8px]">{s.type.replace('_', ' ')}</Badge>
+          </div>
+          {s.subtitle && <p className="text-[10px] text-muted-foreground">{s.subtitle}</p>}
+          <p className="text-[10px] text-muted-foreground mt-1">{s.items.length} item(s)</p>
+        </div>
+      ))}
+
       {/* Section indicators */}
       <div className="flex flex-wrap gap-2">
         <Badge variant={config.showWorkFunnel ? 'default' : 'secondary'} className="text-[10px]">
@@ -203,6 +219,9 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
         </Badge>
         <Badge variant={config.showUniversitySection ? 'default' : 'secondary'} className="text-[10px]">
           University Section: {config.showUniversitySection ? 'ON' : 'OFF'}
+        </Badge>
+        <Badge variant="outline" className="text-[10px]">
+          {config.customSections?.filter(s => s.enabled).length || 0} custom section(s)
         </Badge>
       </div>
     </div>
@@ -398,6 +417,115 @@ export const LandingPageContentManager = () => {
     }));
   };
 
+  // ── Custom Sections ──
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  const addCustomSection = (type: CustomSectionType) => {
+    const template = SECTION_TEMPLATES.find(t => t.type === type)!;
+    const newSection: CustomSectionData = {
+      id: `${type}_${Date.now()}`,
+      type,
+      title: template.label,
+      subtitle: template.description,
+      items: [...template.defaultItems],
+      bgStyle: 'default',
+      enabled: true,
+    };
+    if (type === 'cta_banner') {
+      newSection.ctaLabel = 'Get Started';
+      newSection.ctaLink = '/auth';
+    }
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: [...(prev[activeRole].customSections || []), newSection],
+      },
+    }));
+    setShowAddSection(false);
+    setExpandedSection(newSection.id);
+  };
+
+  const removeCustomSection = (id: string) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).filter(s => s.id !== id),
+      },
+    }));
+  };
+
+  const updateCustomSection = (id: string, updates: Partial<CustomSectionData>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === id ? { ...s, ...updates } : s
+        ),
+      },
+    }));
+  };
+
+  const updateSectionItem = (sectionId: string, itemIndex: number, updates: Partial<CustomSectionItem>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s => {
+          if (s.id !== sectionId) return s;
+          const items = [...s.items];
+          items[itemIndex] = { ...items[itemIndex], ...updates };
+          return { ...s, items };
+        }),
+      },
+    }));
+  };
+
+  const addSectionItem = (sectionId: string) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === sectionId ? { ...s, items: [...s.items, { title: 'New Item', description: 'Description here' }] } : s
+        ),
+      },
+    }));
+  };
+
+  const removeSectionItem = (sectionId: string, itemIndex: number) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === sectionId ? { ...s, items: s.items.filter((_, i) => i !== itemIndex) } : s
+        ),
+      },
+    }));
+  };
+
+  const moveSectionUp = (index: number) => {
+    if (index === 0) return;
+    setConfigs(prev => {
+      const sections = [...(prev[activeRole].customSections || [])];
+      [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
+      return { ...prev, [activeRole]: { ...prev[activeRole], customSections: sections } };
+    });
+  };
+
+  const moveSectionDown = (index: number) => {
+    setConfigs(prev => {
+      const sections = [...(prev[activeRole].customSections || [])];
+      if (index >= sections.length - 1) return prev;
+      [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
+      return { ...prev, [activeRole]: { ...prev[activeRole], customSections: sections } };
+    });
+  };
+
   const current = configs[activeRole];
 
   if (loading) {
@@ -444,10 +572,13 @@ export const LandingPageContentManager = () => {
         {/* Editor */}
         <div className="xl:col-span-2">
           <Tabs defaultValue="hero" className="space-y-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="hero">Hero Section</TabsTrigger>
               <TabsTrigger value="stats">Statistics</TabsTrigger>
               <TabsTrigger value="ads">Ad Banners</TabsTrigger>
+              <TabsTrigger value="custom">
+                <Sparkles className="h-3 w-3 mr-1" /> Custom Sections
+              </TabsTrigger>
               <TabsTrigger value="sections">Toggles</TabsTrigger>
             </TabsList>
 
@@ -608,7 +739,186 @@ export const LandingPageContentManager = () => {
               </Card>
             </TabsContent>
 
-            {/* Section Toggles */}
+            {/* Custom Sections */}
+            <TabsContent value="custom">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" /> Custom Sections
+                      </CardTitle>
+                      <CardDescription>Add, reorder, and manage custom content sections for this role's landing page.</CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => setShowAddSection(true)}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Section
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(!current.customSections || current.customSections.length === 0) && (
+                    <div className="text-center py-12 space-y-3">
+                      <Sparkles className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+                      <p className="text-sm text-muted-foreground">No custom sections yet.</p>
+                      <Button size="sm" variant="outline" onClick={() => setShowAddSection(true)}>
+                        <Plus className="h-4 w-4 mr-1" /> Add Your First Section
+                      </Button>
+                    </div>
+                  )}
+
+                  {(current.customSections || []).map((section, sIdx) => {
+                    const template = SECTION_TEMPLATES.find(t => t.type === section.type);
+                    const Icon = template?.icon || Sparkles;
+                    const isExpanded = expandedSection === section.id;
+
+                    return (
+                      <div key={section.id} className="rounded-lg border overflow-hidden">
+                        {/* Section Header */}
+                        <div
+                          className="flex items-center gap-3 p-3 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
+                          onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+                        >
+                          <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <Icon className="h-4 w-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{section.title}</p>
+                            <p className="text-[10px] text-muted-foreground">{section.type.replace(/_/g, ' ')} · {section.items.length} item(s)</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Switch
+                              checked={section.enabled}
+                              onCheckedChange={v => { updateCustomSection(section.id, { enabled: v }); }}
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); moveSectionUp(sIdx); }} disabled={sIdx === 0}>
+                              <ChevronUp className="h-3 w-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); moveSectionDown(sIdx); }} disabled={sIdx >= (current.customSections?.length || 0) - 1}>
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={e => { e.stopPropagation(); removeCustomSection(section.id); }}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Expanded Editor */}
+                        {isExpanded && (
+                          <div className="p-4 space-y-4 border-t">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <Label>Section Title</Label>
+                                <Input value={section.title} onChange={e => updateCustomSection(section.id, { title: e.target.value })} />
+                              </div>
+                              <div>
+                                <Label>Background Style</Label>
+                                <Select value={section.bgStyle || 'default'} onValueChange={v => updateCustomSection(section.id, { bgStyle: v as CustomSectionData['bgStyle'] })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="default">Default</SelectItem>
+                                    <SelectItem value="muted">Muted</SelectItem>
+                                    <SelectItem value="gradient">Gradient</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div>
+                              <Label>Subtitle</Label>
+                              <Input value={section.subtitle || ''} onChange={e => updateCustomSection(section.id, { subtitle: e.target.value })} placeholder="Optional subtitle text" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <Label>CTA Label (optional)</Label>
+                                <Input value={section.ctaLabel || ''} onChange={e => updateCustomSection(section.id, { ctaLabel: e.target.value })} placeholder="e.g. Learn More" />
+                              </div>
+                              <div>
+                                <Label>CTA Link</Label>
+                                <Input value={section.ctaLink || ''} onChange={e => updateCustomSection(section.id, { ctaLink: e.target.value })} placeholder="e.g. /internships" />
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Items */}
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">Items ({section.items.length})</p>
+                              <Button size="sm" variant="outline" onClick={() => addSectionItem(section.id)}>
+                                <Plus className="h-3 w-3 mr-1" /> Add Item
+                              </Button>
+                            </div>
+
+                            {section.items.map((item, iIdx) => (
+                              <div key={iIdx} className="p-3 rounded-lg bg-muted/20 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="outline" className="text-[10px]">Item {iIdx + 1}</Badge>
+                                  <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => removeSectionItem(section.id, iIdx)}>
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  <div>
+                                    <Label className="text-xs">Title</Label>
+                                    <Input className="h-8 text-sm" value={item.title || ''} onChange={e => updateSectionItem(section.id, iIdx, { title: e.target.value })} />
+                                  </div>
+                                  {(section.type === 'testimonials') && (
+                                    <div>
+                                      <Label className="text-xs">Author / Role</Label>
+                                      <Input className="h-8 text-sm" value={item.author || ''} onChange={e => updateSectionItem(section.id, iIdx, { author: e.target.value })} />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Description</Label>
+                                  <Textarea className="text-sm" value={item.description || ''} onChange={e => updateSectionItem(section.id, iIdx, { description: e.target.value })} rows={2} />
+                                </div>
+                                {['features_grid', 'testimonials', 'partner_logos'].includes(section.type) && (
+                                  <ImageUploadField
+                                    label="Image (optional)"
+                                    value={item.imageUrl}
+                                    onChange={url => updateSectionItem(section.id, iIdx, { imageUrl: url })}
+                                    onRemove={() => updateSectionItem(section.id, iIdx, { imageUrl: undefined })}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+
+              {/* Add Section Dialog */}
+              <Dialog open={showAddSection} onOpenChange={setShowAddSection}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" /> Add New Section
+                    </DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-muted-foreground mb-4">Choose a section template to get started quickly.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
+                    {SECTION_TEMPLATES.map(template => (
+                      <button
+                        key={template.type}
+                        onClick={() => addCustomSection(template.type)}
+                        className="text-left p-4 rounded-lg border hover:border-primary/50 hover:bg-primary/5 transition-all space-y-1 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <template.icon className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+                          <span className="font-semibold text-sm">{template.label}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{template.description}</p>
+                        <p className="text-[10px] text-primary/60">{template.defaultItems.length} default item(s)</p>
+                      </button>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
+
+
             <TabsContent value="sections">
               <Card>
                 <CardHeader>

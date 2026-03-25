@@ -7,6 +7,7 @@ import {
   type RoleStat,
   type RoleAdBanner,
 } from '@/components/home/roleHomeContent';
+import type { CustomSectionData } from '@/components/home/CustomSection';
 
 const SETTINGS_KEY = 'landing_page_content';
 
@@ -16,11 +17,16 @@ interface SerializableConfig {
   ads?: RoleAdBanner[];
   showUniversitySection?: boolean;
   showWorkFunnel?: boolean;
+  customSections?: CustomSectionData[];
 }
 
-export function useLandingPageContent(role: string | null): RoleHomeConfig {
+export interface LandingPageConfig extends RoleHomeConfig {
+  customSections: CustomSectionData[];
+}
+
+export function useLandingPageContent(role: string | null): LandingPageConfig {
   const defaultConfig = getHomeConfig(role);
-  const [config, setConfig] = useState<RoleHomeConfig>(defaultConfig);
+  const [config, setConfig] = useState<LandingPageConfig>({ ...defaultConfig, customSections: [] });
 
   useEffect(() => {
     let cancelled = false;
@@ -46,15 +52,17 @@ export function useLandingPageContent(role: string | null): RoleHomeConfig {
             description: saved.hero?.description ?? fallback.hero.description,
             primaryCta: saved.hero?.primaryCta ?? fallback.hero.primaryCta,
             secondaryCta: saved.hero?.secondaryCta ?? fallback.hero.secondaryCta,
+            imageUrl: saved.hero?.imageUrl,
           },
           stats: saved.stats ?? fallback.stats,
-          steps: fallback.steps, // steps use icons, keep from defaults
+          steps: fallback.steps,
           ads: saved.ads ?? fallback.ads,
           showUniversitySection: saved.showUniversitySection ?? fallback.showUniversitySection,
           showWorkFunnel: saved.showWorkFunnel ?? fallback.showWorkFunnel,
+          customSections: saved.customSections ?? [],
         });
       } else {
-        setConfig(getHomeConfig(role));
+        setConfig({ ...getHomeConfig(role), customSections: [] });
       }
     };
 
