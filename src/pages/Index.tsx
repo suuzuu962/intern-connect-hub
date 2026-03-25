@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, Users, Target } from 'lucide-react';
+import { ArrowRight, Building2, Users, Target, ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
@@ -151,6 +151,60 @@ const Index = () => {
       {config.customSections?.filter(s => s.enabled).map(section => (
         <CustomSectionRenderer key={section.id} section={section} />
       ))}
+
+      {/* External Links */}
+      {config.externalLinks?.filter(l => l.enabled).length > 0 && (
+        <section className="py-16 lg:py-20">
+          <div className="container mx-auto px-4">
+            <ScrollSection className="text-center mb-12">
+              <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-heading font-bold mb-3">
+                Explore <span className="gradient-text">More Resources</span>
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-muted-foreground max-w-xl mx-auto">
+                Discover additional pages and resources curated for you
+              </motion.p>
+            </ScrollSection>
+
+            <ScrollSection className={`grid gap-6 ${
+              config.externalLinks.filter(l => l.enabled).length === 1
+                ? 'grid-cols-1 max-w-lg mx-auto'
+                : config.externalLinks.filter(l => l.enabled).length === 2
+                  ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'
+                  : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+            }`}>
+              {config.externalLinks.filter(l => l.enabled).map((link) => (
+                <motion.div key={link.id} variants={fadeUp}>
+                  <a
+                    href={link.url}
+                    target={link.openInNewTab ? '_blank' : '_self'}
+                    rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
+                    className="group block rounded-xl border bg-card overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all"
+                  >
+                    {link.imageUrl && (
+                      <div className="aspect-video overflow-hidden">
+                        <img
+                          src={link.imageUrl}
+                          alt={link.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-heading font-semibold text-base group-hover:text-primary transition-colors">
+                          {link.title}
+                        </h3>
+                        <ExternalLinkIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{link.description}</p>
+                    </div>
+                  </a>
+                </motion.div>
+              ))}
+            </ScrollSection>
+          </div>
+        </section>
+      )}
 
       {/* University & College Services */}
       {config.showUniversitySection && (

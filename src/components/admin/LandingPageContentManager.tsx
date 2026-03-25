@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { guestConfig, studentConfig, companyConfig, universityConfig, adminConfig } from '@/components/home/roleHomeContent';
 import type { RoleHomeConfig, RoleHeroContent, RoleStat, RoleAdBanner } from '@/components/home/roleHomeContent';
-import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight, GripVertical, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight, GripVertical, Sparkles, ChevronDown, ChevronUp, ExternalLink as ExternalLinkIcon, Link as LinkIcon } from 'lucide-react';
 import { SECTION_TEMPLATES, type CustomSectionData, type CustomSectionType, type CustomSectionItem } from '@/components/home/CustomSection';
 
 const ROLES = [
@@ -37,6 +37,16 @@ const defaultConfigs: Record<RoleKey, RoleHomeConfig> = {
 
 const SETTINGS_KEY = 'landing_page_content';
 
+export interface ExternalLink {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  imageUrl?: string;
+  openInNewTab: boolean;
+  enabled: boolean;
+}
+
 interface SerializableConfig {
   hero: RoleHeroContent;
   stats: RoleStat[];
@@ -44,6 +54,7 @@ interface SerializableConfig {
   showUniversitySection: boolean;
   showWorkFunnel: boolean;
   customSections: CustomSectionData[];
+  externalLinks: ExternalLink[];
 }
 
 function toSerializable(config: RoleHomeConfig): SerializableConfig {
@@ -54,6 +65,7 @@ function toSerializable(config: RoleHomeConfig): SerializableConfig {
     showUniversitySection: config.showUniversitySection,
     showWorkFunnel: config.showWorkFunnel,
     customSections: [],
+    externalLinks: [],
   };
 }
 
@@ -211,6 +223,26 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
           <p className="text-[10px] text-muted-foreground mt-1">{s.items.length} item(s)</p>
         </div>
       ))}
+
+
+      {/* External Links Preview */}
+      {config.externalLinks?.filter(l => l.enabled).length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">External Pages</p>
+          {config.externalLinks.filter(l => l.enabled).map((link) => (
+            <div key={link.id} className="rounded-lg border p-2 flex items-center gap-3 bg-card hover:bg-muted/30 transition-colors">
+              {link.imageUrl && (
+                <img src={link.imageUrl} alt="" className="w-12 h-10 object-cover rounded shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-xs truncate">{link.title}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{link.url}</p>
+              </div>
+              <ExternalLinkIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Section indicators */}
       <div className="flex flex-wrap gap-2">
@@ -526,6 +558,49 @@ export const LandingPageContentManager = () => {
     });
   };
 
+  // ── External Links ──
+  const addExternalLink = () => {
+    const newLink: ExternalLink = {
+      id: `link_${Date.now()}`,
+      title: 'New External Page',
+      description: 'Description of the external page',
+      url: 'https://',
+      openInNewTab: true,
+      enabled: true,
+    };
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: [...(prev[activeRole].externalLinks || []), newLink],
+      },
+    }));
+  };
+
+  const removeExternalLink = async (id: string) => {
+    const link = (configs[activeRole].externalLinks || []).find(l => l.id === id);
+    if (link?.imageUrl) await deleteImage(link.imageUrl);
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: (prev[activeRole].externalLinks || []).filter(l => l.id !== id),
+      },
+    }));
+  };
+
+  const updateExternalLink = (id: string, updates: Partial<ExternalLink>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        externalLinks: (prev[activeRole].externalLinks || []).map(l =>
+          l.id === id ? { ...l, ...updates } : l
+        ),
+      },
+    }));
+  };
+
   const current = configs[activeRole];
 
   if (loading) {
@@ -578,6 +653,9 @@ export const LandingPageContentManager = () => {
               <TabsTrigger value="ads">Ad Banners</TabsTrigger>
               <TabsTrigger value="custom">
                 <Sparkles className="h-3 w-3 mr-1" /> Custom Sections
+              </TabsTrigger>
+              <TabsTrigger value="links">
+                <ExternalLinkIcon className="h-3 w-3 mr-1" /> External Links
               </TabsTrigger>
               <TabsTrigger value="sections">Toggles</TabsTrigger>
             </TabsList>
@@ -918,6 +996,84 @@ export const LandingPageContentManager = () => {
               </Dialog>
             </TabsContent>
 
+            {/* External Links */}
+            <TabsContent value="links">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <ExternalLinkIcon className="h-4 w-4 text-primary" /> External Landing Pages
+                      </CardTitle>
+                      <CardDescription>Add links to external landing pages or microsites. These appear as a dedicated section on the home page.</CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={addExternalLink}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Link
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {(!current.externalLinks || current.externalLinks.length === 0) && (
+                    <div className="text-center py-12 space-y-3">
+                      <LinkIcon className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+                      <p className="text-sm text-muted-foreground">No external links added yet.</p>
+                      <Button size="sm" variant="outline" onClick={addExternalLink}>
+                        <Plus className="h-4 w-4 mr-1" /> Add Your First Link
+                      </Button>
+                    </div>
+                  )}
+
+                  {(current.externalLinks || []).map((link) => (
+                    <div key={link.id} className="p-4 rounded-lg border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ExternalLinkIcon className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-sm">{link.title || 'Untitled'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={link.enabled}
+                            onCheckedChange={v => updateExternalLink(link.id, { enabled: v })}
+                          />
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeExternalLink(link.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <Label>Title</Label>
+                          <Input value={link.title} onChange={e => updateExternalLink(link.id, { title: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>URL</Label>
+                          <Input value={link.url} onChange={e => updateExternalLink(link.id, { url: e.target.value })} placeholder="https://example.com/landing" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea value={link.description} onChange={e => updateExternalLink(link.id, { description: e.target.value })} rows={2} />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={link.openInNewTab}
+                            onCheckedChange={v => updateExternalLink(link.id, { openInNewTab: v })}
+                          />
+                          <Label className="text-sm cursor-pointer">Open in new tab</Label>
+                        </div>
+                      </div>
+                      <ImageUploadField
+                        label="Preview Image (optional)"
+                        value={link.imageUrl}
+                        onChange={url => updateExternalLink(link.id, { imageUrl: url })}
+                        onRemove={() => updateExternalLink(link.id, { imageUrl: undefined })}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="sections">
               <Card>
