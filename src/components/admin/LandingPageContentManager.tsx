@@ -417,6 +417,115 @@ export const LandingPageContentManager = () => {
     }));
   };
 
+  // ── Custom Sections ──
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  const addCustomSection = (type: CustomSectionType) => {
+    const template = SECTION_TEMPLATES.find(t => t.type === type)!;
+    const newSection: CustomSectionData = {
+      id: `${type}_${Date.now()}`,
+      type,
+      title: template.label,
+      subtitle: template.description,
+      items: [...template.defaultItems],
+      bgStyle: 'default',
+      enabled: true,
+    };
+    if (type === 'cta_banner') {
+      newSection.ctaLabel = 'Get Started';
+      newSection.ctaLink = '/auth';
+    }
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: [...(prev[activeRole].customSections || []), newSection],
+      },
+    }));
+    setShowAddSection(false);
+    setExpandedSection(newSection.id);
+  };
+
+  const removeCustomSection = (id: string) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).filter(s => s.id !== id),
+      },
+    }));
+  };
+
+  const updateCustomSection = (id: string, updates: Partial<CustomSectionData>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === id ? { ...s, ...updates } : s
+        ),
+      },
+    }));
+  };
+
+  const updateSectionItem = (sectionId: string, itemIndex: number, updates: Partial<CustomSectionItem>) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s => {
+          if (s.id !== sectionId) return s;
+          const items = [...s.items];
+          items[itemIndex] = { ...items[itemIndex], ...updates };
+          return { ...s, items };
+        }),
+      },
+    }));
+  };
+
+  const addSectionItem = (sectionId: string) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === sectionId ? { ...s, items: [...s.items, { title: 'New Item', description: 'Description here' }] } : s
+        ),
+      },
+    }));
+  };
+
+  const removeSectionItem = (sectionId: string, itemIndex: number) => {
+    setConfigs(prev => ({
+      ...prev,
+      [activeRole]: {
+        ...prev[activeRole],
+        customSections: (prev[activeRole].customSections || []).map(s =>
+          s.id === sectionId ? { ...s, items: s.items.filter((_, i) => i !== itemIndex) } : s
+        ),
+      },
+    }));
+  };
+
+  const moveSectionUp = (index: number) => {
+    if (index === 0) return;
+    setConfigs(prev => {
+      const sections = [...(prev[activeRole].customSections || [])];
+      [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
+      return { ...prev, [activeRole]: { ...prev[activeRole], customSections: sections } };
+    });
+  };
+
+  const moveSectionDown = (index: number) => {
+    setConfigs(prev => {
+      const sections = [...(prev[activeRole].customSections || [])];
+      if (index >= sections.length - 1) return prev;
+      [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
+      return { ...prev, [activeRole]: { ...prev[activeRole], customSections: sections } };
+    });
+  };
+
   const current = configs[activeRole];
 
   if (loading) {
