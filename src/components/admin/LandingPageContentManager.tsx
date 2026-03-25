@@ -976,6 +976,84 @@ export const LandingPageContentManager = () => {
               </Dialog>
             </TabsContent>
 
+            {/* External Links */}
+            <TabsContent value="links">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <ExternalLinkIcon className="h-4 w-4 text-primary" /> External Landing Pages
+                      </CardTitle>
+                      <CardDescription>Add links to external landing pages or microsites. These appear as a dedicated section on the home page.</CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={addExternalLink}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Link
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {(!current.externalLinks || current.externalLinks.length === 0) && (
+                    <div className="text-center py-12 space-y-3">
+                      <LinkIcon className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+                      <p className="text-sm text-muted-foreground">No external links added yet.</p>
+                      <Button size="sm" variant="outline" onClick={addExternalLink}>
+                        <Plus className="h-4 w-4 mr-1" /> Add Your First Link
+                      </Button>
+                    </div>
+                  )}
+
+                  {(current.externalLinks || []).map((link) => (
+                    <div key={link.id} className="p-4 rounded-lg border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ExternalLinkIcon className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-sm">{link.title || 'Untitled'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={link.enabled}
+                            onCheckedChange={v => updateExternalLink(link.id, { enabled: v })}
+                          />
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeExternalLink(link.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <Label>Title</Label>
+                          <Input value={link.title} onChange={e => updateExternalLink(link.id, { title: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>URL</Label>
+                          <Input value={link.url} onChange={e => updateExternalLink(link.id, { url: e.target.value })} placeholder="https://example.com/landing" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea value={link.description} onChange={e => updateExternalLink(link.id, { description: e.target.value })} rows={2} />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={link.openInNewTab}
+                            onCheckedChange={v => updateExternalLink(link.id, { openInNewTab: v })}
+                          />
+                          <Label className="text-sm cursor-pointer">Open in new tab</Label>
+                        </div>
+                      </div>
+                      <ImageUploadField
+                        label="Preview Image (optional)"
+                        value={link.imageUrl}
+                        onChange={url => updateExternalLink(link.id, { imageUrl: url })}
+                        onRemove={() => updateExternalLink(link.id, { imageUrl: undefined })}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="sections">
               <Card>
