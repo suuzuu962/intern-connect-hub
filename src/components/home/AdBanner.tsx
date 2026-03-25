@@ -31,7 +31,10 @@ export function AdBanner({ ads }: AdBannerProps) {
               transition={{ duration: 0.4, delay: i * 0.1 }}
               className={`rounded-xl border p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${variantStyles[ad.variant]}`}
             >
-              <div>
+              {ad.imageUrl && (
+                <img src={ad.imageUrl} alt="" className="w-20 h-14 object-cover rounded-lg shrink-0 hidden sm:block" />
+              )}
+              <div className="flex-1">
                 <h3 className="font-heading font-semibold text-base mb-1">{ad.title}</h3>
                 <p className="text-sm text-muted-foreground">{ad.description}</p>
               </div>

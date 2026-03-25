@@ -51,6 +51,9 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 lg:py-28">
         <div className="absolute inset-0 gradient-hero opacity-10" />
+        {config.hero.imageUrl && (
+          <img src={config.hero.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15" />
+        )}
         <motion.div
           className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl"
           animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
