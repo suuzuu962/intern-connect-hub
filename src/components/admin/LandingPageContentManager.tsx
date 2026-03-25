@@ -199,6 +199,19 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
         </div>
       )}
 
+      {/* Custom Sections Preview */}
+      {config.customSections?.filter(s => s.enabled).map((s, i) => (
+        <div key={i} className="rounded-lg border p-3 bg-card">
+          <div className="flex items-center gap-2 mb-1">
+            {(() => { const T = SECTION_TEMPLATES.find(t => t.type === s.type); return T ? <T.icon className="h-3 w-3 text-muted-foreground" /> : null; })()}
+            <p className="font-semibold text-xs">{s.title}</p>
+            <Badge variant="outline" className="ml-auto text-[8px]">{s.type.replace('_', ' ')}</Badge>
+          </div>
+          {s.subtitle && <p className="text-[10px] text-muted-foreground">{s.subtitle}</p>}
+          <p className="text-[10px] text-muted-foreground mt-1">{s.items.length} item(s)</p>
+        </div>
+      ))}
+
       {/* Section indicators */}
       <div className="flex flex-wrap gap-2">
         <Badge variant={config.showWorkFunnel ? 'default' : 'secondary'} className="text-[10px]">
@@ -206,6 +219,9 @@ function LandingPreview({ config, role }: { config: SerializableConfig; role: st
         </Badge>
         <Badge variant={config.showUniversitySection ? 'default' : 'secondary'} className="text-[10px]">
           University Section: {config.showUniversitySection ? 'ON' : 'OFF'}
+        </Badge>
+        <Badge variant="outline" className="text-[10px]">
+          {config.customSections?.filter(s => s.enabled).length || 0} custom section(s)
         </Badge>
       </div>
     </div>
