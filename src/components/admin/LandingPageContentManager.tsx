@@ -37,6 +37,16 @@ const defaultConfigs: Record<RoleKey, RoleHomeConfig> = {
 
 const SETTINGS_KEY = 'landing_page_content';
 
+export interface ExternalLink {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  imageUrl?: string;
+  openInNewTab: boolean;
+  enabled: boolean;
+}
+
 interface SerializableConfig {
   hero: RoleHeroContent;
   stats: RoleStat[];
@@ -44,6 +54,7 @@ interface SerializableConfig {
   showUniversitySection: boolean;
   showWorkFunnel: boolean;
   customSections: CustomSectionData[];
+  externalLinks: ExternalLink[];
 }
 
 function toSerializable(config: RoleHomeConfig): SerializableConfig {
@@ -54,6 +65,7 @@ function toSerializable(config: RoleHomeConfig): SerializableConfig {
     showUniversitySection: config.showUniversitySection,
     showWorkFunnel: config.showWorkFunnel,
     customSections: [],
+    externalLinks: [],
   };
 }
 
