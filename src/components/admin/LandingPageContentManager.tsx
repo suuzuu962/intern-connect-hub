@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { guestConfig, studentConfig, companyConfig, universityConfig, adminConfig } from '@/components/home/roleHomeContent';
 import type { RoleHomeConfig, RoleHeroContent, RoleStat, RoleAdBanner } from '@/components/home/roleHomeContent';
-import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Plus, Trash2, Eye, Upload, X, Image as ImageIcon, ArrowRight, GripVertical, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { SECTION_TEMPLATES, type CustomSectionData, type CustomSectionType, type CustomSectionItem } from '@/components/home/CustomSection';
 
 const ROLES = [
   { key: 'guest', label: 'Guest (Not logged in)' },
@@ -42,6 +43,7 @@ interface SerializableConfig {
   ads: RoleAdBanner[];
   showUniversitySection: boolean;
   showWorkFunnel: boolean;
+  customSections: CustomSectionData[];
 }
 
 function toSerializable(config: RoleHomeConfig): SerializableConfig {
@@ -51,6 +53,7 @@ function toSerializable(config: RoleHomeConfig): SerializableConfig {
     ads: config.ads,
     showUniversitySection: config.showUniversitySection,
     showWorkFunnel: config.showWorkFunnel,
+    customSections: [],
   };
 }
 
