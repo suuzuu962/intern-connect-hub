@@ -76,8 +76,8 @@ export const LandingPageContentManager = () => {
       .eq('key', SETTINGS_KEY)
       .maybeSingle();
 
-    if (data?.value && typeof data.value === 'object') {
-      const saved = data.value as Record<string, SerializableConfig>;
+    if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+      const saved = data.value as unknown as Record<string, SerializableConfig>;
       setConfigs(prev => {
         const merged: Record<string, SerializableConfig> = { ...prev };
         ROLES.forEach(r => {
@@ -103,12 +103,12 @@ export const LandingPageContentManager = () => {
     if (existing) {
       ({ error } = await supabase
         .from('platform_settings')
-        .update({ value: configs as unknown as Record<string, unknown>, updated_at: new Date().toISOString() })
+        .update({ value: JSON.parse(JSON.stringify(configs)), updated_at: new Date().toISOString() })
         .eq('key', SETTINGS_KEY));
     } else {
       ({ error } = await supabase
         .from('platform_settings')
-        .insert({ key: SETTINGS_KEY, value: configs as unknown as Record<string, unknown> }));
+        .insert([{ key: SETTINGS_KEY, value: JSON.parse(JSON.stringify(configs)) }]));
     }
 
     if (error) {
