@@ -122,9 +122,11 @@ export const AdminDocumentation = () => {
     return acc;
   }, {});
 
+  const STORAGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/admin-guides`;
+
   const getUrl = (guide: GuideItem) => {
     if (guide.isCustom && guide.fileUrl) return guide.fileUrl;
-    return `/admin_guides/${guide.filename}`;
+    return `${STORAGE_BASE}/${guide.filename}`;
   };
 
   const handleDownload = (guide: GuideItem) => {
