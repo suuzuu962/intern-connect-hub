@@ -44,13 +44,13 @@ const defaultSettings: Record<string, any> = {
   allowStudentRegistration: true,
   allowCompanyRegistration: true,
   allowUniversityRegistration: true,
-  allowCoordinatorRegistration: true,
+  
   
   // User Management
   maxApplicationsPerStudent: 10,
   maxInternshipsPerCompany: 50,
   maxCollegesPerUniversity: 100,
-  maxCoordinatorsPerCollege: 5,
+  
   sessionTimeout: 15,
   
   // Company Settings
@@ -78,14 +78,10 @@ const defaultSettings: Record<string, any> = {
   // University Features
   enableUniversityDashboard: true,
   enableCollegeManagement: true,
-  enableCoordinatorAssignment: true,
+  
   enableStudentTracking: true,
   enableLoginLogs: true,
   
-  // Coordinator Features
-  enableDiaryApproval: true,
-  enableStudentMonitoring: true,
-  enableBulkOperations: false,
   
   // Payment Features
   enablePayments: true,
@@ -219,7 +215,7 @@ export const PlatformSettings = () => {
         { id: 'allowStudentRegistration', label: 'Student Registration', description: 'Allow students to register', type: 'toggle', value: settings.allowStudentRegistration },
         { id: 'allowCompanyRegistration', label: 'Company Registration', description: 'Allow companies to register', type: 'toggle', value: settings.allowCompanyRegistration },
         { id: 'allowUniversityRegistration', label: 'University Registration', description: 'Allow universities to register', type: 'toggle', value: settings.allowUniversityRegistration },
-        { id: 'allowCoordinatorRegistration', label: 'Coordinator Registration', description: 'Allow coordinators to self-register', type: 'toggle', value: settings.allowCoordinatorRegistration },
+        
       ]
     },
     {
@@ -231,7 +227,7 @@ export const PlatformSettings = () => {
         { id: 'maxApplicationsPerStudent', label: 'Max Applications/Student', description: 'Maximum internship applications per student', type: 'number', value: settings.maxApplicationsPerStudent },
         { id: 'maxInternshipsPerCompany', label: 'Max Internships/Company', description: 'Maximum active internships per company', type: 'number', value: settings.maxInternshipsPerCompany },
         { id: 'maxCollegesPerUniversity', label: 'Max Colleges/University', description: 'Maximum colleges under a university', type: 'number', value: settings.maxCollegesPerUniversity },
-        { id: 'maxCoordinatorsPerCollege', label: 'Max Coordinators/College', description: 'Maximum coordinators per college', type: 'number', value: settings.maxCoordinatorsPerCollege },
+        
         { id: 'sessionTimeout', label: 'Idle Timeout (min)', description: 'Auto logout after inactivity (minutes)', type: 'number', value: settings.sessionTimeout },
       ]
     },
@@ -283,21 +279,11 @@ export const PlatformSettings = () => {
       settings: [
         { id: 'enableUniversityDashboard', label: 'University Dashboard', description: 'Enable university admin panel', type: 'toggle', value: settings.enableUniversityDashboard },
         { id: 'enableCollegeManagement', label: 'College Management', description: 'Manage affiliated colleges', type: 'toggle', value: settings.enableCollegeManagement },
-        { id: 'enableCoordinatorAssignment', label: 'Coordinator Assignment', description: 'Assign coordinators to colleges', type: 'toggle', value: settings.enableCoordinatorAssignment },
+        
         { id: 'enableStudentTracking', label: 'Student Tracking', description: 'Track student progress', type: 'toggle', value: settings.enableStudentTracking },
         { id: 'enableLoginLogs', label: 'Login Logs', description: 'Track user login history', type: 'toggle', value: settings.enableLoginLogs },
       ]
     },
-    {
-      id: 'coordinator',
-      title: 'Coordinator Features',
-      icon: Network,
-      description: 'Configure coordinator capabilities',
-      settings: [
-        { id: 'enableDiaryApproval', label: 'Diary Approval', description: 'Coordinators can approve diaries', type: 'toggle', value: settings.enableDiaryApproval },
-        { id: 'enableStudentMonitoring', label: 'Student Monitoring', description: 'Monitor assigned students', type: 'toggle', value: settings.enableStudentMonitoring },
-        { id: 'enableBulkOperations', label: 'Bulk Operations', description: 'Allow bulk student actions', type: 'toggle', value: settings.enableBulkOperations },
-      ]
     },
     {
       id: 'payments',
