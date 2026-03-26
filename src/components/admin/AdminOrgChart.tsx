@@ -291,7 +291,6 @@ export const AdminOrgChart = () => {
             <DialogTitle className="flex items-center gap-2">
               {type === 'university' && <Building2 className="h-5 w-5" />}
               {type === 'college' && <School className="h-5 w-5" />}
-              {type === 'coordinator' && <Users className="h-5 w-5" />}
               {type === 'student' && <GraduationCap className="h-5 w-5" />}
               {type.charAt(0).toUpperCase() + type.slice(1)} Details
             </DialogTitle>
@@ -300,7 +299,6 @@ export const AdminOrgChart = () => {
           <div className="space-y-4">
             {type === 'university' && renderUniversityDetails(itemData as University)}
             {type === 'college' && renderCollegeDetails(itemData as College)}
-            {type === 'coordinator' && renderCoordinatorDetails(itemData as Coordinator)}
             {type === 'student' && renderStudentDetails(itemData as Student)}
           </div>
         </DialogContent>
@@ -395,7 +393,6 @@ export const AdminOrgChart = () => {
 
   const renderCollegeDetails = (college: College) => {
     const university = data.universities.find(u => u.id === college.university_id);
-    const coordinators = getCoordinatorsForCollege(college.id);
     const students = getStudentsForCollege(college.id);
 
     return (
@@ -464,77 +461,11 @@ export const AdminOrgChart = () => {
         
         <div>
           <h4 className="font-medium mb-2">Statistics</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold">{coordinators.length}</div>
-              <div className="text-xs text-muted-foreground">Coordinators</div>
-            </div>
+          <div className="grid grid-cols-1 gap-3">
             <div className="bg-muted rounded-lg p-3 text-center">
               <div className="text-2xl font-bold">{students.length}</div>
               <div className="text-xs text-muted-foreground">Students</div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderCoordinatorDetails = (coord: Coordinator) => {
-    const college = data.colleges.find(c => c.id === coord.college_id);
-    const university = college ? data.universities.find(u => u.id === college.university_id) : null;
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{coord.name}</h3>
-          <div className="flex gap-2">
-            <Badge variant={coord.is_approved ? 'default' : 'secondary'}>
-              {coord.is_approved ? 'Approved' : 'Pending'}
-            </Badge>
-            <Badge variant={coord.is_active ? 'default' : 'destructive'}>
-              {coord.is_active ? 'Active' : 'Inactive'}
-            </Badge>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="grid gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span>{coord.email}</span>
-          </div>
-          {coord.phone && (
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{coord.phone}</span>
-            </div>
-          )}
-          {coord.designation && (
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>{coord.designation}</span>
-            </div>
-          )}
-        </div>
-
-        <Separator />
-        
-        <div>
-          <h4 className="font-medium mb-2">Assignment</h4>
-          <div className="grid gap-2 text-sm">
-            {college && (
-              <div className="flex items-center gap-2">
-                <School className="h-4 w-4 text-muted-foreground" />
-                <span>College: {college.name}</span>
-              </div>
-            )}
-            {university && (
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>University: {university.name}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
