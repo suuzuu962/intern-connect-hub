@@ -83,6 +83,7 @@ export const AdminDocumentation = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title: '', description: '', category: 'Custom' });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
