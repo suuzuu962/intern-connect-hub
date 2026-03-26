@@ -15,8 +15,9 @@ import {
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
   Briefcase, CreditCard, Plug, Puzzle, FileBarChart, Map, MapPin,
   Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye, Plus,
-  Upload, Trash2, Loader2
+  Upload, Trash2, Loader2, ScanSearch, AlertTriangle, CheckCircle2
 } from 'lucide-react';
+import { ADMIN_FEATURE_REGISTRY, scanForMissingDocs, type ScanResult as FeatureScanResult } from '@/lib/admin-feature-registry';
 
 interface GuideItem {
   id: string;
