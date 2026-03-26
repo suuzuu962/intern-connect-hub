@@ -3,12 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import {
   FileText, Download, Search, LayoutDashboard, BarChart3, Target,
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
   Briefcase, CreditCard, Plug, Puzzle, FileBarChart, Map, MapPin,
-  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye
+  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye, Plus,
+  Upload, Trash2, Loader2
 } from 'lucide-react';
 
 interface GuideItem {
@@ -18,9 +24,21 @@ interface GuideItem {
   filename: string;
   icon: LucideIcon;
   category: string;
+  isCustom?: boolean;
+  fileUrl?: string;
 }
 
-const guides: GuideItem[] = [
+interface CustomDocument {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  filename: string;
+  file_url: string;
+  created_at: string;
+}
+
+const builtInGuides: GuideItem[] = [
   { id: '01', title: 'Dashboard Overview', description: 'Navigate the main admin dashboard and key metrics', filename: '01_Dashboard_Overview.pdf', icon: LayoutDashboard, category: 'Core' },
   { id: '02', title: 'Platform Analytics', description: 'Monitor growth, user activity, and engagement', filename: '02_Analytics.pdf', icon: BarChart3, category: 'Core' },
   { id: '03', title: 'Benchmarking', description: 'Compare KPIs and performance indicators', filename: '03_Benchmarking.pdf', icon: Target, category: 'Core' },
@@ -51,19 +69,52 @@ const categoryColors: Record<string, string> = {
   Marketplace: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
   Security: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   System: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  Custom: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
 };
+
+const CATEGORIES = ['Core', 'Governance', 'Marketplace', 'Security', 'System', 'Custom'];
 
 export const AdminDocumentation = () => {
   const [search, setSearch] = useState('');
   const [viewingGuide, setViewingGuide] = useState<GuideItem | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [customDocs, setCustomDocs] = useState<CustomDocument[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({ title: '', description: '', category: 'Custom' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = guides.filter(g =>
+  useEffect(() => {
+    fetchCustomDocs();
+  }, []);
+
+  const fetchCustomDocs = async () => {
+    const { data } = await supabase
+      .from('admin_documents')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setCustomDocs(data as unknown as CustomDocument[]);
+  };
+
+  const allGuides: GuideItem[] = [
+    ...builtInGuides,
+    ...customDocs.map(doc => ({
+      id: `custom-${doc.id}`,
+      title: doc.title,
+      description: doc.description || 'Custom uploaded document',
+      filename: doc.filename,
+      icon: FileText,
+      category: doc.category || 'Custom',
+      isCustom: true,
+      fileUrl: doc.file_url,
+    })),
+  ];
+
+  const filtered = allGuides.filter(g =>
     g.title.toLowerCase().includes(search.toLowerCase()) ||
     g.description.toLowerCase().includes(search.toLowerCase()) ||
     g.category.toLowerCase().includes(search.toLowerCase())
   );
-
-  const getUrl = (filename: string) => `/admin_guides/${filename}`;
 
   const grouped = filtered.reduce<Record<string, GuideItem[]>>((acc, g) => {
     if (!acc[g.category]) acc[g.category] = [];
@@ -71,10 +122,15 @@ export const AdminDocumentation = () => {
     return acc;
   }, {});
 
-  const handleDownload = (filename: string) => {
+  const getUrl = (guide: GuideItem) => {
+    if (guide.isCustom && guide.fileUrl) return guide.fileUrl;
+    return `/admin_guides/${guide.filename}`;
+  };
+
+  const handleDownload = (guide: GuideItem) => {
     const link = document.createElement('a');
-    link.href = getUrl(filename);
-    link.download = filename;
+    link.href = getUrl(guide);
+    link.download = guide.filename;
     link.target = '_blank';
     link.click();
   };
@@ -83,11 +139,71 @@ export const AdminDocumentation = () => {
     setViewingGuide(guide);
   };
 
+  const handleUpload = async () => {
+    if (!selectedFile || !uploadForm.title) {
+      toast({ title: 'Please fill in title and select a file', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = selectedFile.name.split('.').pop();
+      const path = `admin-docs/${Date.now()}_${selectedFile.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('public-assets')
+        .upload(path, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('public-assets')
+        .getPublicUrl(path);
+
+      const { error: dbError } = await supabase.from('admin_documents').insert({
+        title: uploadForm.title,
+        description: uploadForm.description || null,
+        category: uploadForm.category,
+        filename: selectedFile.name,
+        file_url: urlData.publicUrl,
+        file_size: selectedFile.size,
+      } as any);
+
+      if (dbError) throw dbError;
+
+      toast({ title: 'Document uploaded successfully' });
+      setShowUpload(false);
+      setUploadForm({ title: '', description: '', category: 'Custom' });
+      setSelectedFile(null);
+      fetchCustomDocs();
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    }
+    setUploading(false);
+  };
+
+  const handleDelete = async (docId: string) => {
+    const { error } = await supabase
+      .from('admin_documents')
+      .delete()
+      .eq('id', docId.replace('custom-', ''));
+    if (!error) {
+      toast({ title: 'Document deleted' });
+      fetchCustomDocs();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Documentation</h2>
-        <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Documentation</h2>
+          <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
+        </div>
+        <Button onClick={() => setShowUpload(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Document
+        </Button>
       </div>
 
       <div className="relative max-w-md">
@@ -100,13 +216,22 @@ export const AdminDocumentation = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="border-dashed">
           <CardContent className="p-4 flex items-center gap-3">
             <FileText className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-2xl font-bold">{guides.length}</p>
-              <p className="text-xs text-muted-foreground">Total Guides</p>
+              <p className="text-2xl font-bold">{builtInGuides.length}</p>
+              <p className="text-xs text-muted-foreground">Built-in Guides</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-dashed">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Upload className="h-5 w-5 text-amber-500" />
+            <div>
+              <p className="text-2xl font-bold">{customDocs.length}</p>
+              <p className="text-xs text-muted-foreground">Custom Documents</p>
             </div>
           </CardContent>
         </Card>
@@ -114,7 +239,7 @@ export const AdminDocumentation = () => {
           <CardContent className="p-4 flex items-center gap-3">
             <Download className="h-5 w-5 text-emerald-500" />
             <div>
-              <p className="text-2xl font-bold">5</p>
+              <p className="text-2xl font-bold">{Object.keys(grouped).length}</p>
               <p className="text-xs text-muted-foreground">Categories</p>
             </div>
           </CardContent>
@@ -124,7 +249,7 @@ export const AdminDocumentation = () => {
       {Object.entries(grouped).map(([category, items]) => (
         <div key={category} className="space-y-3">
           <div className="flex items-center gap-2">
-            <Badge className={categoryColors[category] || ''}>{category}</Badge>
+            <Badge className={categoryColors[category] || categoryColors.Custom}>{category}</Badge>
             <span className="text-sm text-muted-foreground">{items.length} guides</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -138,28 +263,25 @@ export const AdminDocumentation = () => {
                         <Icon className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold truncate">{guide.title}</h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-sm font-semibold truncate">{guide.title}</h4>
+                          {guide.isCustom && <Badge variant="outline" className="text-[9px] px-1 py-0">Custom</Badge>}
+                        </div>
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{guide.description}</p>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex items-center gap-1.5">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">PDF</Badge>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-xs px-2"
-                            onClick={() => handleView(guide)}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
+                          <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => handleView(guide)}>
+                            <Eye className="h-3 w-3 mr-1" />View
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-xs px-2"
-                            onClick={() => handleDownload(guide.filename)}
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Download
+                          <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => handleDownload(guide)}>
+                            <Download className="h-3 w-3 mr-1" />Download
                           </Button>
+                          {guide.isCustom && (
+                            <Button size="sm" variant="ghost" className="h-6 text-xs px-2 text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(guide.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -174,32 +296,80 @@ export const AdminDocumentation = () => {
       {filtered.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-          <p>No guides found matching "{search}"</p>
+          <p>No guides found matching &quot;{search}&quot;</p>
         </div>
       )}
 
+      {/* View Dialog */}
       <Dialog open={!!viewingGuide} onOpenChange={() => setViewingGuide(null)}>
         <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center justify-between">
               <span>{viewingGuide?.title}</span>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => viewingGuide && handleDownload(viewingGuide.filename)}
-              >
-                <Download className="h-3.5 w-3.5 mr-1.5" />
-                Download
+              <Button size="sm" variant="outline" onClick={() => viewingGuide && handleDownload(viewingGuide)}>
+                <Download className="h-3.5 w-3.5 mr-1.5" />Download
               </Button>
             </DialogTitle>
           </DialogHeader>
           {viewingGuide && (
-            <iframe
-              src={getUrl(viewingGuide.filename)}
-              className="flex-1 w-full rounded-md border border-border"
-              title={viewingGuide.title}
-            />
+            <iframe src={getUrl(viewingGuide)} className="flex-1 w-full rounded-md border border-border" title={viewingGuide.title} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Dialog */}
+      <Dialog open={showUpload} onOpenChange={setShowUpload}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Document</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Title *</Label>
+              <Input placeholder="Document title..." value={uploadForm.title}
+                onChange={e => setUploadForm(p => ({ ...p, title: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea placeholder="Brief description..." value={uploadForm.description}
+                onChange={e => setUploadForm(p => ({ ...p, description: e.target.value }))} rows={2} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={uploadForm.category} onValueChange={v => setUploadForm(p => ({ ...p, category: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>PDF File *</Label>
+              <input type="file" ref={fileInputRef} accept=".pdf" className="hidden"
+                onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {selectedFile ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">{selectedFile.name}</span>
+                    <span className="text-xs text-muted-foreground">({(selectedFile.size / 1024).toFixed(0)} KB)</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Click to select a PDF file</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <Button className="w-full" onClick={handleUpload} disabled={uploading}>
+              {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              {uploading ? 'Uploading...' : 'Upload Document'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
