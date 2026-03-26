@@ -36,12 +36,6 @@ interface University {
   name: string;
 }
 
-interface Coordinator {
-  id: string;
-  name: string;
-  email: string;
-  is_approved: boolean | null;
-}
 
 interface CollegeFormData {
   name: string;
@@ -92,7 +86,6 @@ const initialFormData: CollegeFormData = {
 export const CollegeManagement = () => {
   const [colleges, setColleges] = useState<College[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
-  const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,16 +138,6 @@ export const CollegeManagement = () => {
     setLoading(false);
   };
 
-  const fetchCollegeCoordinators = async (collegeId: string) => {
-    const { data, error } = await supabase
-      .from('college_coordinators')
-      .select('id, name, email, is_approved')
-      .eq('college_id', collegeId);
-
-    if (!error) {
-      setCoordinators(data || []);
-    }
-  };
 
   const fetchCollegeStudents = async (collegeId: string) => {
     const { data: studentsData, error } = await supabase
@@ -469,7 +452,6 @@ export const CollegeManagement = () => {
 
   const openDetailDialog = async (college: College) => {
     setSelectedCollege(college);
-    await fetchCollegeCoordinators(college.id);
     setIsDetailDialogOpen(true);
   };
 
@@ -485,10 +467,6 @@ export const CollegeManagement = () => {
     const matchesUniversity = filterUniversity === 'all' || college.university_id === filterUniversity;
     return matchesSearch && matchesUniversity;
   });
-
-  const getCoordinatorCount = (collegeId: string) => {
-    return colleges.find(c => c.id === collegeId) ? 0 : 0; // Will be calculated from coordinators if needed
-  };
 
   if (loading) {
     return (
@@ -871,7 +849,7 @@ export const CollegeManagement = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete College</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{college.name}"? This will also affect any coordinators and students linked to this college. This action cannot be undone.
+                                Are you sure you want to delete "{college.name}"? This will also affect any students linked to this college. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -971,30 +949,6 @@ export const CollegeManagement = () => {
 
                   <Separator />
 
-                  {/* Coordinators */}
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      ASSIGNED COORDINATORS ({coordinators.length})
-                    </h4>
-                    {coordinators.length > 0 ? (
-                      <div className="space-y-2">
-                        {coordinators.map(coord => (
-                          <div key={coord.id} className="p-3 bg-muted rounded-lg flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{coord.name}</p>
-                              <p className="text-sm text-muted-foreground">{coord.email}</p>
-                            </div>
-                            <Badge variant={coord.is_approved ? 'default' : 'outline'}>
-                              {coord.is_approved ? 'Approved' : 'Pending'}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">No coordinators assigned to this college.</p>
-                    )}
-                  </div>
                 </div>
               </ScrollArea>
             )}
@@ -1053,7 +1007,7 @@ export const CollegeManagement = () => {
               {selectedNewUniversity && selectedNewUniversity !== selectedCollege?.university_id && (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    This will move the college and all its associated coordinators and students to the new university.
+                    This will move the college and all its associated students to the new university.
                   </p>
                 </div>
               )}

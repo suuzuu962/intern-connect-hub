@@ -58,17 +58,6 @@ interface College {
   university_id: string;
 }
 
-interface Coordinator {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  designation: string | null;
-  is_approved: boolean | null;
-  is_active: boolean | null;
-  college_id: string | null;
-}
-
 interface Student {
   id: string;
   user_id: string;
@@ -82,19 +71,17 @@ interface Student {
 interface OrgData {
   universities: University[];
   colleges: College[];
-  coordinators: Coordinator[];
   students: Student[];
 }
 
-type DetailType = 'university' | 'college' | 'coordinator' | 'student';
+type DetailType = 'university' | 'college' | 'student';
 
-type FilterType = 'all' | 'university' | 'college' | 'coordinator' | 'student';
+type FilterType = 'all' | 'university' | 'college' | 'student';
 
 export const AdminOrgChart = () => {
   const [data, setData] = useState<OrgData>({
     universities: [],
     colleges: [],
-    coordinators: [],
     students: [],
   });
   const [loading, setLoading] = useState(true);
@@ -102,7 +89,7 @@ export const AdminOrgChart = () => {
   const [expandedColleges, setExpandedColleges] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<{
     type: DetailType;
-    data: University | College | Coordinator | Student;
+    data: University | College | Student;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -115,15 +102,13 @@ export const AdminOrgChart = () => {
   const fetchOrgData = async () => {
     try {
       // Fetch all data in parallel
-      const [universitiesRes, collegesRes, coordinatorsRes, studentsRes, profilesRes] = await Promise.all([
+      const [universitiesRes, collegesRes, studentsRes, profilesRes] = await Promise.all([
         supabase.from('universities').select('*').order('name'),
         supabase.from('colleges').select('*').order('name'),
-        supabase.from('college_coordinators').select('*').order('name'),
         supabase.from('students').select('id, user_id, usn, department, course, college_id'),
         supabase.from('profiles').select('user_id, full_name'),
       ]);
 
-      // Map profile names to students
       const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p.full_name]));
       const studentsWithNames = (studentsRes.data || []).map(s => ({
         ...s,
@@ -133,7 +118,6 @@ export const AdminOrgChart = () => {
       setData({
         universities: universitiesRes.data || [],
         colleges: collegesRes.data || [],
-        coordinators: coordinatorsRes.data || [],
         students: studentsWithNames,
       });
     } catch (error) {
@@ -181,9 +165,6 @@ export const AdminOrgChart = () => {
     return data.colleges.filter(c => c.university_id === universityId);
   };
 
-  const getCoordinatorsForCollege = (collegeId: string) => {
-    return data.coordinators.filter(c => c.college_id === collegeId);
-  };
 
   const getStudentsForCollege = (collegeId: string) => {
     return data.students.filter(s => s.college_id === collegeId);
@@ -203,10 +184,8 @@ export const AdminOrgChart = () => {
 
     let filteredUniversities = data.universities;
     let filteredColleges = data.colleges;
-    let filteredCoordinators = data.coordinators;
     let filteredStudents = data.students;
 
-    // Apply search filter
     if (query) {
       filteredUniversities = data.universities.filter(u => 
         u.name.toLowerCase().includes(query) ||
@@ -220,12 +199,6 @@ export const AdminOrgChart = () => {
         c.contact_person_name?.toLowerCase().includes(query)
       );
       
-      filteredCoordinators = data.coordinators.filter(c => 
-        c.name.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query) ||
-        c.designation?.toLowerCase().includes(query)
-      );
-      
       filteredStudents = data.students.filter(s => 
         s.name.toLowerCase().includes(query) ||
         s.usn?.toLowerCase().includes(query) ||
@@ -234,19 +207,14 @@ export const AdminOrgChart = () => {
       );
     }
 
-    // Apply type filter
     if (filterType !== 'all') {
       if (filterType !== 'university') filteredUniversities = [];
       if (filterType !== 'college') filteredColleges = [];
-      if (filterType !== 'coordinator') filteredCoordinators = [];
       if (filterType !== 'student') filteredStudents = [];
     }
 
-    // If searching, also include parent entities that contain matching children
     if (query && filterType === 'all') {
-      // Include colleges that have matching coordinators or students
       const collegesWithMatchingChildren = new Set<string>();
-      filteredCoordinators.forEach(c => c.college_id && collegesWithMatchingChildren.add(c.college_id));
       filteredStudents.forEach(s => s.college_id && collegesWithMatchingChildren.add(s.college_id));
       
       const additionalColleges = data.colleges.filter(c => 
@@ -254,7 +222,6 @@ export const AdminOrgChart = () => {
       );
       filteredColleges = [...filteredColleges, ...additionalColleges];
 
-      // Include universities that have matching colleges
       const universitiesWithMatchingColleges = new Set<string>();
       filteredColleges.forEach(c => universitiesWithMatchingColleges.add(c.university_id));
       
@@ -267,7 +234,6 @@ export const AdminOrgChart = () => {
     return {
       universities: filteredUniversities,
       colleges: filteredColleges,
-      coordinators: filteredCoordinators,
       students: filteredStudents,
     };
   }, [data, searchQuery, filterType]);
@@ -289,9 +255,6 @@ export const AdminOrgChart = () => {
     return filteredData.colleges.filter(c => c.university_id === universityId);
   };
 
-  const getFilteredCoordinatorsForCollege = (collegeId: string) => {
-    return filteredData.coordinators.filter(c => c.college_id === collegeId);
-  };
 
   const getFilteredStudentsForCollege = (collegeId: string) => {
     return filteredData.students.filter(s => s.college_id === collegeId);
@@ -328,7 +291,6 @@ export const AdminOrgChart = () => {
             <DialogTitle className="flex items-center gap-2">
               {type === 'university' && <Building2 className="h-5 w-5" />}
               {type === 'college' && <School className="h-5 w-5" />}
-              {type === 'coordinator' && <Users className="h-5 w-5" />}
               {type === 'student' && <GraduationCap className="h-5 w-5" />}
               {type.charAt(0).toUpperCase() + type.slice(1)} Details
             </DialogTitle>
@@ -337,7 +299,6 @@ export const AdminOrgChart = () => {
           <div className="space-y-4">
             {type === 'university' && renderUniversityDetails(itemData as University)}
             {type === 'college' && renderCollegeDetails(itemData as College)}
-            {type === 'coordinator' && renderCoordinatorDetails(itemData as Coordinator)}
             {type === 'student' && renderStudentDetails(itemData as Student)}
           </div>
         </DialogContent>
@@ -432,7 +393,6 @@ export const AdminOrgChart = () => {
 
   const renderCollegeDetails = (college: College) => {
     const university = data.universities.find(u => u.id === college.university_id);
-    const coordinators = getCoordinatorsForCollege(college.id);
     const students = getStudentsForCollege(college.id);
 
     return (
@@ -501,77 +461,11 @@ export const AdminOrgChart = () => {
         
         <div>
           <h4 className="font-medium mb-2">Statistics</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold">{coordinators.length}</div>
-              <div className="text-xs text-muted-foreground">Coordinators</div>
-            </div>
+          <div className="grid grid-cols-1 gap-3">
             <div className="bg-muted rounded-lg p-3 text-center">
               <div className="text-2xl font-bold">{students.length}</div>
               <div className="text-xs text-muted-foreground">Students</div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderCoordinatorDetails = (coord: Coordinator) => {
-    const college = data.colleges.find(c => c.id === coord.college_id);
-    const university = college ? data.universities.find(u => u.id === college.university_id) : null;
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{coord.name}</h3>
-          <div className="flex gap-2">
-            <Badge variant={coord.is_approved ? 'default' : 'secondary'}>
-              {coord.is_approved ? 'Approved' : 'Pending'}
-            </Badge>
-            <Badge variant={coord.is_active ? 'default' : 'destructive'}>
-              {coord.is_active ? 'Active' : 'Inactive'}
-            </Badge>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="grid gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span>{coord.email}</span>
-          </div>
-          {coord.phone && (
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{coord.phone}</span>
-            </div>
-          )}
-          {coord.designation && (
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>{coord.designation}</span>
-            </div>
-          )}
-        </div>
-
-        <Separator />
-        
-        <div>
-          <h4 className="font-medium mb-2">Assignment</h4>
-          <div className="grid gap-2 text-sm">
-            {college && (
-              <div className="flex items-center gap-2">
-                <School className="h-4 w-4 text-muted-foreground" />
-                <span>College: {college.name}</span>
-              </div>
-            )}
-            {university && (
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>University: {university.name}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -680,7 +574,7 @@ export const AdminOrgChart = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search universities, colleges, coordinators, or students..."
+                placeholder="Search universities, colleges, or students..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-9"
@@ -705,7 +599,7 @@ export const AdminOrgChart = () => {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="university">Universities</SelectItem>
                 <SelectItem value="college">Colleges</SelectItem>
-                <SelectItem value="coordinator">Coordinators</SelectItem>
+                
                 <SelectItem value="student">Students</SelectItem>
               </SelectContent>
             </Select>
@@ -716,7 +610,7 @@ export const AdminOrgChart = () => {
             <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg">
               <div className="text-sm">
                 <span className="font-medium">
-                  {filteredData.universities.length} universities, {filteredData.colleges.length} colleges, {filteredData.coordinators.length} coordinators, {filteredData.students.length} students
+                  {filteredData.universities.length} universities, {filteredData.colleges.length} colleges, {filteredData.students.length} students
                 </span>
                 <span className="text-muted-foreground"> found</span>
               </div>
@@ -737,11 +631,6 @@ export const AdminOrgChart = () => {
               <School className="h-6 w-6 mx-auto mb-2 text-primary" />
               <div className="text-2xl font-bold">{data.colleges.length}</div>
               <div className="text-sm text-muted-foreground">Colleges</div>
-            </div>
-            <div className="bg-primary/10 rounded-lg p-4 text-center">
-              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <div className="text-2xl font-bold">{data.coordinators.length}</div>
-              <div className="text-sm text-muted-foreground">Coordinators</div>
             </div>
             <div className="bg-primary/10 rounded-lg p-4 text-center">
               <GraduationCap className="h-6 w-6 mx-auto mb-2 text-primary" />
@@ -817,7 +706,6 @@ export const AdminOrgChart = () => {
                             ) : (
                               <div className="p-2 space-y-2">
                                 {uniColleges.map((college) => {
-                                  const collegeCoordinators = getFilteredCoordinatorsForCollege(college.id);
                                   const collegeStudents = getFilteredStudentsForCollege(college.id);
 
                                   return (
@@ -827,7 +715,6 @@ export const AdminOrgChart = () => {
                                       onOpenChange={() => toggleCollege(college.id)}
                                     >
                                       <div className="ml-6 border rounded-lg overflow-hidden bg-background">
-                                        {/* College Header */}
                                         <div className="flex items-center">
                                           <CollapsibleTrigger asChild>
                                             <div className="flex-1 p-3 cursor-pointer hover:bg-muted/50 transition-colors">
@@ -841,16 +728,10 @@ export const AdminOrgChart = () => {
                                                   <School className="h-4 w-4 text-primary" />
                                                   <span className="font-medium">{highlightMatch(college.name)}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Badge variant="outline" className="text-xs">
-                                                    <Users className="h-3 w-3 mr-1" />
-                                                    {collegeCoordinators.length}
-                                                  </Badge>
-                                                  <Badge variant="outline" className="text-xs">
-                                                    <GraduationCap className="h-3 w-3 mr-1" />
-                                                    {collegeStudents.length}
-                                                  </Badge>
-                                                </div>
+                                                <Badge variant="outline" className="text-xs">
+                                                  <GraduationCap className="h-3 w-3 mr-1" />
+                                                  {collegeStudents.length} Students
+                                                </Badge>
                                               </div>
                                             </div>
                                           </CollapsibleTrigger>
@@ -864,42 +745,9 @@ export const AdminOrgChart = () => {
                                           </Button>
                                         </div>
 
-                                        {/* Coordinators & Students */}
                                         <CollapsibleContent>
                                           <div className="border-t p-3 bg-muted/10">
-                                            <div className="grid md:grid-cols-2 gap-4">
-                                              {/* Coordinators */}
-                                              <div>
-                                                <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
-                                                  <Users className="h-4 w-4" />
-                                                  Coordinators ({collegeCoordinators.length})
-                                                </h5>
-                                                {collegeCoordinators.length === 0 ? (
-                                                  <p className="text-xs text-muted-foreground italic">No coordinators</p>
-                                                ) : (
-                                                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                                                    {collegeCoordinators.map((coord) => (
-                                                      <div
-                                                        key={coord.id}
-                                                        className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
-                                                        onClick={() => handleItemClick('coordinator', coord)}
-                                                      >
-                                                        <span className="text-sm">{highlightMatch(coord.name)}</span>
-                                                        <Badge 
-                                                          variant={coord.is_approved ? 'default' : 'secondary'} 
-                                                          className="text-xs"
-                                                        >
-                                                          {coord.is_approved ? 'Approved' : 'Pending'}
-                                                        </Badge>
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
-
-                                              {/* Students */}
-                                              <div>
-                                                <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
+                                            <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
                                                   <GraduationCap className="h-4 w-4" />
                                                   Students ({collegeStudents.length})
                                                 </h5>
@@ -928,8 +776,6 @@ export const AdminOrgChart = () => {
                                                     )}
                                                   </div>
                                                 )}
-                                              </div>
-                                            </div>
                                           </div>
                                         </CollapsibleContent>
                                       </div>

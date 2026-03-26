@@ -8,20 +8,18 @@ import {
   Loader2, 
   Building2, 
   School, 
-  Users, 
   GraduationCap, 
   ChevronDown, 
   ChevronRight,
   Network
 } from 'lucide-react';
-import { University, College, CollegeCoordinator } from '@/types/database';
+import { University, College } from '@/types/database';
 
 interface UniversityOrgChartProps {
   universityId: string;
 }
 
 interface CollegeWithDetails extends College {
-  coordinators: CollegeCoordinator[];
   studentCount: number;
 }
 
@@ -29,7 +27,6 @@ interface OrgChartData {
   university: University | null;
   colleges: CollegeWithDetails[];
   totalStudents: number;
-  totalCoordinators: number;
 }
 
 export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) => {
@@ -37,7 +34,6 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
     university: null,
     colleges: [],
     totalStudents: 0,
-    totalCoordinators: 0,
   });
   const [loading, setLoading] = useState(true);
   const [expandedColleges, setExpandedColleges] = useState<Set<string>>(new Set());
@@ -48,54 +44,36 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
 
   const fetchOrgData = async () => {
     try {
-      // Fetch university details
       const { data: universityData } = await supabase
         .from('universities')
         .select('*')
         .eq('id', universityId)
         .single();
 
-      // Fetch colleges
       const { data: collegesData } = await supabase
         .from('colleges')
         .select('*')
         .eq('university_id', universityId)
         .order('name');
 
-      // Fetch coordinators
-      const { data: coordinatorsData } = await supabase
-        .from('college_coordinators')
-        .select('*')
-        .eq('university_id', universityId);
-
-      // Fetch student counts per college
       const collegeIds = (collegesData || []).map(c => c.id);
       const { data: studentsData } = await supabase
         .from('students')
         .select('college_id')
         .in('college_id', collegeIds.length > 0 ? collegeIds : ['none']);
 
-      // Build college details with coordinators and student counts
       const collegesWithDetails: CollegeWithDetails[] = (collegesData || []).map(college => {
-        const collegeCoordinators = (coordinatorsData || []).filter(
-          coord => coord.college_id === college.id
-        );
         const studentCount = (studentsData || []).filter(
           student => student.college_id === college.id
         ).length;
 
-        return {
-          ...college,
-          coordinators: collegeCoordinators,
-          studentCount,
-        };
+        return { ...college, studentCount };
       });
 
       setData({
         university: universityData,
         colleges: collegesWithDetails,
         totalStudents: studentsData?.length || 0,
-        totalCoordinators: coordinatorsData?.length || 0,
       });
     } catch (error) {
       console.error('Error fetching org data:', error);
@@ -107,22 +85,14 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
   const toggleCollege = (collegeId: string) => {
     setExpandedColleges(prev => {
       const next = new Set(prev);
-      if (next.has(collegeId)) {
-        next.delete(collegeId);
-      } else {
-        next.add(collegeId);
-      }
+      if (next.has(collegeId)) next.delete(collegeId);
+      else next.add(collegeId);
       return next;
     });
   };
 
-  const expandAll = () => {
-    setExpandedColleges(new Set(data.colleges.map(c => c.id)));
-  };
-
-  const collapseAll = () => {
-    setExpandedColleges(new Set());
-  };
+  const expandAll = () => setExpandedColleges(new Set(data.colleges.map(c => c.id)));
+  const collapseAll = () => setExpandedColleges(new Set());
 
   if (loading) {
     return (
@@ -141,18 +111,13 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
             Organization Chart
           </CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={expandAll}>
-              Expand All
-            </Button>
-            <Button variant="outline" size="sm" onClick={collapseAll}>
-              Collapse All
-            </Button>
+            <Button variant="outline" size="sm" onClick={expandAll}>Expand All</Button>
+            <Button variant="outline" size="sm" onClick={collapseAll}>Collapse All</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* University Node */}
           <div className="flex flex-col items-center">
             <div className="bg-primary text-primary-foreground rounded-lg p-4 shadow-lg min-w-[280px]">
               <div className="flex items-center gap-3">
@@ -168,28 +133,17 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
                   <span>{data.colleges.length} Colleges</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{data.totalCoordinators} Coordinators</span>
-                </div>
-                <div className="flex items-center gap-1">
                   <GraduationCap className="h-4 w-4" />
                   <span>{data.totalStudents} Students</span>
                 </div>
               </div>
             </div>
-
-            {/* Connection Line */}
-            {data.colleges.length > 0 && (
-              <div className="w-0.5 h-8 bg-border" />
-            )}
+            {data.colleges.length > 0 && <div className="w-0.5 h-8 bg-border" />}
           </div>
 
-          {/* Colleges Grid */}
           {data.colleges.length > 0 && (
             <div className="relative">
-              {/* Horizontal connector line */}
               <div className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-border" />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
                 {data.colleges.map((college) => (
                   <Collapsible
@@ -198,7 +152,6 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
                     onOpenChange={() => toggleCollege(college.id)}
                   >
                     <div className="border rounded-lg overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
-                      {/* College Header */}
                       <CollapsibleTrigger asChild>
                         <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                           <div className="flex items-center justify-between">
@@ -214,10 +167,6 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
                           </div>
                           <div className="flex gap-2 mt-2">
                             <Badge variant="outline" className="text-xs">
-                              <Users className="h-3 w-3 mr-1" />
-                              {college.coordinators.length} Coordinators
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
                               <GraduationCap className="h-3 w-3 mr-1" />
                               {college.studentCount} Students
                             </Badge>
@@ -230,11 +179,8 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
                           </div>
                         </div>
                       </CollapsibleTrigger>
-
-                      {/* College Details */}
                       <CollapsibleContent>
                         <div className="border-t p-4 bg-muted/30 space-y-3">
-                          {/* Contact Info */}
                           {college.contact_person_name && (
                             <div className="text-sm">
                               <span className="text-muted-foreground">Contact:</span>{' '}
@@ -246,47 +192,10 @@ export const UniversityOrgChart = ({ universityId }: UniversityOrgChartProps) =>
                               )}
                             </div>
                           )}
-                          
                           {college.email && (
                             <div className="text-sm">
                               <span className="text-muted-foreground">Email:</span>{' '}
                               {college.email}
-                            </div>
-                          )}
-
-                          {/* Coordinators List */}
-                          {college.coordinators.length > 0 && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-muted-foreground">
-                                Coordinators:
-                              </h5>
-                              <div className="space-y-1">
-                                {college.coordinators.map((coord) => (
-                                  <div
-                                    key={coord.id}
-                                    className="flex items-center justify-between bg-background rounded p-2 text-sm"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-muted-foreground" />
-                                      <span>{coord.name}</span>
-                                    </div>
-                                    <div className="flex gap-1">
-                                      <Badge 
-                                        variant={coord.is_approved ? 'default' : 'secondary'}
-                                        className="text-xs"
-                                      >
-                                        {coord.is_approved ? 'Approved' : 'Pending'}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {college.coordinators.length === 0 && (
-                            <div className="text-sm text-muted-foreground italic">
-                              No coordinators assigned
                             </div>
                           )}
                         </div>

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Download, Users, Building2, Briefcase, FileText, Loader2, CalendarIcon, X, GraduationCap, School, UserCheck, Shield, Bell, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type ExportType = 'students' | 'companies' | 'internships' | 'applications' | 'universities' | 'colleges' | 'coordinators' | 'login_logs' | 'notifications' | 'payments';
+type ExportType = 'students' | 'companies' | 'internships' | 'applications' | 'universities' | 'colleges' | 'login_logs' | 'notifications' | 'payments';
 
 export const DataExport = () => {
   const [exporting, setExporting] = useState<ExportType | null>(null);
@@ -338,39 +338,6 @@ export const DataExport = () => {
     }
   };
 
-  const exportCoordinators = async () => {
-    setExporting('coordinators');
-    try {
-      let query = supabase.from('college_coordinators').select('*, college:colleges(name), university:universities(name)').order('created_at', { ascending: false });
-      query = applyDateFilter(query, 'created_at');
-
-      const { data: coordinators, error } = await query;
-      if (error) throw error;
-
-      const exportData = coordinators?.map(c => ({
-        name: c.name,
-        email: c.email,
-        phone: c.phone || '',
-        designation: c.designation || '',
-        college_name: (c.college as any)?.name || '',
-        university_name: (c.university as any)?.name || '',
-        address: c.address || '',
-        is_approved: c.is_approved ? 'Yes' : 'No',
-        is_active: c.is_active ? 'Yes' : 'No',
-        created_at: c.created_at,
-      })) || [];
-
-      const headers = ['name', 'email', 'phone', 'designation', 'college_name', 'university_name', 'address', 'is_approved', 'is_active', 'created_at'];
-      const csv = convertToCSV(exportData, headers);
-      downloadCSV(csv, getFilenameWithDateRange('coordinators'));
-      toast.success(`Exported ${exportData.length} coordinators`);
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Failed to export coordinators');
-    } finally {
-      setExporting(null);
-    }
-  };
 
   const exportLoginLogs = async () => {
     setExporting('login_logs');
@@ -533,15 +500,6 @@ export const DataExport = () => {
       color: 'text-cyan-600',
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       onClick: exportColleges,
-    },
-    {
-      type: 'coordinators' as ExportType,
-      title: 'Coordinators',
-      description: 'Export college coordinators with approval status and details.',
-      icon: UserCheck,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
-      onClick: exportCoordinators,
     },
     {
       type: 'login_logs' as ExportType,
