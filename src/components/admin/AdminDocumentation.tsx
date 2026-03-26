@@ -1,13 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import {
   FileText, Download, Search, LayoutDashboard, BarChart3, Target,
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
   Briefcase, CreditCard, Plug, Puzzle, FileBarChart, Map, MapPin,
-  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon
+  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye
 } from 'lucide-react';
 
 interface GuideItem {
