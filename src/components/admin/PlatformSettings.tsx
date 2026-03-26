@@ -284,7 +284,6 @@ export const PlatformSettings = () => {
         { id: 'enableLoginLogs', label: 'Login Logs', description: 'Track user login history', type: 'toggle', value: settings.enableLoginLogs },
       ]
     },
-    },
     {
       id: 'payments',
       title: 'Payment Settings',
