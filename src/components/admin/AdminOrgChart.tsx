@@ -747,8 +747,7 @@ export const AdminOrgChart = () => {
 
                                         <CollapsibleContent>
                                           <div className="border-t p-3 bg-muted/10">
-                                            <div>
-                                                <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
+                                            <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
                                                   <GraduationCap className="h-4 w-4" />
                                                   Students ({collegeStudents.length})
                                                 </h5>
@@ -777,8 +776,6 @@ export const AdminOrgChart = () => {
                                                     )}
                                                   </div>
                                                 )}
-                                              </div>
-                                            </div>
                                           </div>
                                         </CollapsibleContent>
                                       </div>
