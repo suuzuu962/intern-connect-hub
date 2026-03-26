@@ -599,7 +599,7 @@ export const AdminOrgChart = () => {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="university">Universities</SelectItem>
                 <SelectItem value="college">Colleges</SelectItem>
-                <SelectItem value="coordinator">Coordinators</SelectItem>
+                
                 <SelectItem value="student">Students</SelectItem>
               </SelectContent>
             </Select>
@@ -610,7 +610,7 @@ export const AdminOrgChart = () => {
             <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg">
               <div className="text-sm">
                 <span className="font-medium">
-                  {filteredData.universities.length} universities, {filteredData.colleges.length} colleges, {filteredData.coordinators.length} coordinators, {filteredData.students.length} students
+                  {filteredData.universities.length} universities, {filteredData.colleges.length} colleges, {filteredData.students.length} students
                 </span>
                 <span className="text-muted-foreground"> found</span>
               </div>
@@ -631,11 +631,6 @@ export const AdminOrgChart = () => {
               <School className="h-6 w-6 mx-auto mb-2 text-primary" />
               <div className="text-2xl font-bold">{data.colleges.length}</div>
               <div className="text-sm text-muted-foreground">Colleges</div>
-            </div>
-            <div className="bg-primary/10 rounded-lg p-4 text-center">
-              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <div className="text-2xl font-bold">{data.coordinators.length}</div>
-              <div className="text-sm text-muted-foreground">Coordinators</div>
             </div>
             <div className="bg-primary/10 rounded-lg p-4 text-center">
               <GraduationCap className="h-6 w-6 mx-auto mb-2 text-primary" />
@@ -711,7 +706,6 @@ export const AdminOrgChart = () => {
                             ) : (
                               <div className="p-2 space-y-2">
                                 {uniColleges.map((college) => {
-                                  const collegeCoordinators = getFilteredCoordinatorsForCollege(college.id);
                                   const collegeStudents = getFilteredStudentsForCollege(college.id);
 
                                   return (
@@ -721,7 +715,6 @@ export const AdminOrgChart = () => {
                                       onOpenChange={() => toggleCollege(college.id)}
                                     >
                                       <div className="ml-6 border rounded-lg overflow-hidden bg-background">
-                                        {/* College Header */}
                                         <div className="flex items-center">
                                           <CollapsibleTrigger asChild>
                                             <div className="flex-1 p-3 cursor-pointer hover:bg-muted/50 transition-colors">
@@ -735,16 +728,10 @@ export const AdminOrgChart = () => {
                                                   <School className="h-4 w-4 text-primary" />
                                                   <span className="font-medium">{highlightMatch(college.name)}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Badge variant="outline" className="text-xs">
-                                                    <Users className="h-3 w-3 mr-1" />
-                                                    {collegeCoordinators.length}
-                                                  </Badge>
-                                                  <Badge variant="outline" className="text-xs">
-                                                    <GraduationCap className="h-3 w-3 mr-1" />
-                                                    {collegeStudents.length}
-                                                  </Badge>
-                                                </div>
+                                                <Badge variant="outline" className="text-xs">
+                                                  <GraduationCap className="h-3 w-3 mr-1" />
+                                                  {collegeStudents.length} Students
+                                                </Badge>
                                               </div>
                                             </div>
                                           </CollapsibleTrigger>
@@ -758,41 +745,9 @@ export const AdminOrgChart = () => {
                                           </Button>
                                         </div>
 
-                                        {/* Coordinators & Students */}
                                         <CollapsibleContent>
                                           <div className="border-t p-3 bg-muted/10">
-                                            <div className="grid md:grid-cols-2 gap-4">
-                                              {/* Coordinators */}
-                                              <div>
-                                                <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
-                                                  <Users className="h-4 w-4" />
-                                                  Coordinators ({collegeCoordinators.length})
-                                                </h5>
-                                                {collegeCoordinators.length === 0 ? (
-                                                  <p className="text-xs text-muted-foreground italic">No coordinators</p>
-                                                ) : (
-                                                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                                                    {collegeCoordinators.map((coord) => (
-                                                      <div
-                                                        key={coord.id}
-                                                        className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
-                                                        onClick={() => handleItemClick('coordinator', coord)}
-                                                      >
-                                                        <span className="text-sm">{highlightMatch(coord.name)}</span>
-                                                        <Badge 
-                                                          variant={coord.is_approved ? 'default' : 'secondary'} 
-                                                          className="text-xs"
-                                                        >
-                                                          {coord.is_approved ? 'Approved' : 'Pending'}
-                                                        </Badge>
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
-
-                                              {/* Students */}
-                                              <div>
+                                            <div>
                                                 <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
                                                   <GraduationCap className="h-4 w-4" />
                                                   Students ({collegeStudents.length})
