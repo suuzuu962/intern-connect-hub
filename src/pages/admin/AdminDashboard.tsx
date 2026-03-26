@@ -25,11 +25,12 @@ import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import { PluginManagement } from '@/components/admin/PluginManagement';
 import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import { LandingPageContentManager } from '@/components/admin/LandingPageContentManager';
+import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
