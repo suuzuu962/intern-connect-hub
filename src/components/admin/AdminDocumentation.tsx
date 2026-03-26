@@ -262,6 +262,10 @@ export const AdminDocumentation = () => {
           <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleScanDocs} disabled={scanning}>
+            {scanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanSearch className="h-4 w-4 mr-2" />}
+            {scanning ? 'Scanning...' : 'Scan & Sync'}
+          </Button>
           <Button variant="outline" onClick={handleBulkDownload} disabled={bulkDownloading}>
             {bulkDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             {bulkDownloading ? 'Zipping...' : 'Download All'}
