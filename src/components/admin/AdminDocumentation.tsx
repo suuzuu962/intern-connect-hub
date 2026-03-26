@@ -243,11 +243,16 @@ export const AdminDocumentation = () => {
           <h2 className="text-2xl font-bold">Documentation</h2>
           <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
         </div>
-        <Button onClick={() => setShowUpload(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Document
-        </Button>
-      </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleBulkDownload} disabled={bulkDownloading}>
+            {bulkDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            {bulkDownloading ? 'Zipping...' : 'Download All'}
+          </Button>
+          <Button onClick={() => setShowUpload(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Document
+          </Button>
+        </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
