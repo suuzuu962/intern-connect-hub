@@ -13,7 +13,7 @@ export const useIdleTimeoutSetting = (): number => {
           .from('platform_settings')
           .select('value')
           .eq('key', 'all_settings')
-          .single();
+          .maybeSingle();
 
         if (!error && data?.value) {
           const settings = data.value as Record<string, any>;

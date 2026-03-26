@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import { ReactNode, forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 interface PageTransitionProps {
@@ -29,11 +29,12 @@ const pageVariants = {
   },
 };
 
-export const PageTransition = ({ children }: PageTransitionProps) => {
+export const PageTransition = forwardRef<HTMLDivElement, PageTransitionProps>(({ children }, ref) => {
   const location = useLocation();
 
   return (
     <motion.div
+      ref={ref}
       key={location.pathname}
       variants={pageVariants}
       initial="initial"
@@ -43,4 +44,6 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
       {children}
     </motion.div>
   );
-};
+});
+
+PageTransition.displayName = 'PageTransition';
