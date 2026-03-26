@@ -1,13 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import {
   FileText, Download, Search, LayoutDashboard, BarChart3, Target,
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
   Briefcase, CreditCard, Plug, Puzzle, FileBarChart, Map, MapPin,
-  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon
+  Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye
 } from 'lucide-react';
 
 interface GuideItem {
@@ -54,12 +55,15 @@ const categoryColors: Record<string, string> = {
 
 export const AdminDocumentation = () => {
   const [search, setSearch] = useState('');
+  const [viewingGuide, setViewingGuide] = useState<GuideItem | null>(null);
 
   const filtered = guides.filter(g =>
     g.title.toLowerCase().includes(search.toLowerCase()) ||
     g.description.toLowerCase().includes(search.toLowerCase()) ||
     g.category.toLowerCase().includes(search.toLowerCase())
   );
+
+  const getUrl = (filename: string) => `/admin_guides/${filename}`;
 
   const grouped = filtered.reduce<Record<string, GuideItem[]>>((acc, g) => {
     if (!acc[g.category]) acc[g.category] = [];
@@ -68,12 +72,15 @@ export const AdminDocumentation = () => {
   }, {});
 
   const handleDownload = (filename: string) => {
-    // PDFs are stored in /mnt/documents/admin_guides/ which maps to the documents storage
     const link = document.createElement('a');
-    link.href = `/admin_guides/${filename}`;
+    link.href = getUrl(filename);
     link.download = filename;
     link.target = '_blank';
     link.click();
+  };
+
+  const handleView = (guide: GuideItem) => {
+    setViewingGuide(guide);
   };
 
   return (
@@ -139,6 +146,15 @@ export const AdminDocumentation = () => {
                             size="sm"
                             variant="ghost"
                             className="h-6 text-xs px-2"
+                            onClick={() => handleView(guide)}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-xs px-2"
                             onClick={() => handleDownload(guide.filename)}
                           >
                             <Download className="h-3 w-3 mr-1" />
@@ -161,6 +177,31 @@ export const AdminDocumentation = () => {
           <p>No guides found matching "{search}"</p>
         </div>
       )}
+
+      <Dialog open={!!viewingGuide} onOpenChange={() => setViewingGuide(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>{viewingGuide?.title}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => viewingGuide && handleDownload(viewingGuide.filename)}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Download
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {viewingGuide && (
+            <iframe
+              src={getUrl(viewingGuide.filename)}
+              className="flex-1 w-full rounded-md border border-border"
+              title={viewingGuide.title}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
