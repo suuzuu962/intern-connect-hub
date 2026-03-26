@@ -8,7 +8,6 @@ import { Layout } from '@/components/layout/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
 import { CollegeStudents } from '@/components/college/CollegeStudents';
-import { CollegeCoordinators } from '@/components/college/CollegeCoordinators';
 import { CollegeDiaryApproval } from '@/components/college/CollegeDiaryApproval';
 import { CollegeOrgChart } from '@/components/college/CollegeOrgChart';
 import { InstitutionalMemos } from '@/components/institutional/InstitutionalMemos';
@@ -22,17 +21,16 @@ import { SidebarProfileHeader } from '@/components/dashboard/SidebarProfileHeade
 
 interface CollegeWithStats extends College {
   studentCount?: number;
-  coordinatorCount?: number;
 }
 
-type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'attendance' | 'coordinators' | 'memos' | 'profile';
+type ActiveSection = 'dashboard' | 'org-chart' | 'students' | 'diary-approvals' | 'attendance' | 'memos' | 'profile';
 
 const CollegeDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<ActiveSection>((searchParams.get('tab') as ActiveSection) || 'dashboard');
   const [college, setCollege] = useState<CollegeWithStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ students: 0, coordinators: 0, diaryEntries: 0 });
+  const [stats, setStats] = useState({ students: 0, diaryEntries: 0 });
   const [pendingDiaryCount, setPendingDiaryCount] = useState(0);
   const { user } = useAuth();
 
