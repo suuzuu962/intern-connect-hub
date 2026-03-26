@@ -184,10 +184,8 @@ export const AdminOrgChart = () => {
 
     let filteredUniversities = data.universities;
     let filteredColleges = data.colleges;
-    let filteredCoordinators = data.coordinators;
     let filteredStudents = data.students;
 
-    // Apply search filter
     if (query) {
       filteredUniversities = data.universities.filter(u => 
         u.name.toLowerCase().includes(query) ||
@@ -201,12 +199,6 @@ export const AdminOrgChart = () => {
         c.contact_person_name?.toLowerCase().includes(query)
       );
       
-      filteredCoordinators = data.coordinators.filter(c => 
-        c.name.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query) ||
-        c.designation?.toLowerCase().includes(query)
-      );
-      
       filteredStudents = data.students.filter(s => 
         s.name.toLowerCase().includes(query) ||
         s.usn?.toLowerCase().includes(query) ||
@@ -215,19 +207,14 @@ export const AdminOrgChart = () => {
       );
     }
 
-    // Apply type filter
     if (filterType !== 'all') {
       if (filterType !== 'university') filteredUniversities = [];
       if (filterType !== 'college') filteredColleges = [];
-      if (filterType !== 'coordinator') filteredCoordinators = [];
       if (filterType !== 'student') filteredStudents = [];
     }
 
-    // If searching, also include parent entities that contain matching children
     if (query && filterType === 'all') {
-      // Include colleges that have matching coordinators or students
       const collegesWithMatchingChildren = new Set<string>();
-      filteredCoordinators.forEach(c => c.college_id && collegesWithMatchingChildren.add(c.college_id));
       filteredStudents.forEach(s => s.college_id && collegesWithMatchingChildren.add(s.college_id));
       
       const additionalColleges = data.colleges.filter(c => 
@@ -235,7 +222,6 @@ export const AdminOrgChart = () => {
       );
       filteredColleges = [...filteredColleges, ...additionalColleges];
 
-      // Include universities that have matching colleges
       const universitiesWithMatchingColleges = new Set<string>();
       filteredColleges.forEach(c => universitiesWithMatchingColleges.add(c.university_id));
       
@@ -248,7 +234,6 @@ export const AdminOrgChart = () => {
     return {
       universities: filteredUniversities,
       colleges: filteredColleges,
-      coordinators: filteredCoordinators,
       students: filteredStudents,
     };
   }, [data, searchQuery, filterType]);
@@ -270,9 +255,6 @@ export const AdminOrgChart = () => {
     return filteredData.colleges.filter(c => c.university_id === universityId);
   };
 
-  const getFilteredCoordinatorsForCollege = (collegeId: string) => {
-    return filteredData.coordinators.filter(c => c.college_id === collegeId);
-  };
 
   const getFilteredStudentsForCollege = (collegeId: string) => {
     return filteredData.students.filter(s => s.college_id === collegeId);
