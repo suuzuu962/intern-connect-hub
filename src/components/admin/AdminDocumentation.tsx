@@ -55,12 +55,15 @@ const categoryColors: Record<string, string> = {
 
 export const AdminDocumentation = () => {
   const [search, setSearch] = useState('');
+  const [viewingGuide, setViewingGuide] = useState<GuideItem | null>(null);
 
   const filtered = guides.filter(g =>
     g.title.toLowerCase().includes(search.toLowerCase()) ||
     g.description.toLowerCase().includes(search.toLowerCase()) ||
     g.category.toLowerCase().includes(search.toLowerCase())
   );
+
+  const getUrl = (filename: string) => `/admin_guides/${filename}`;
 
   const grouped = filtered.reduce<Record<string, GuideItem[]>>((acc, g) => {
     if (!acc[g.category]) acc[g.category] = [];
