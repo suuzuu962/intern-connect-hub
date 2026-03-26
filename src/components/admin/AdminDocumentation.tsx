@@ -15,8 +15,9 @@ import {
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
   Briefcase, CreditCard, Plug, Puzzle, FileBarChart, Map, MapPin,
   Bell, ArrowUpCircle, FileEdit, Settings, LucideIcon, Eye, Plus,
-  Upload, Trash2, Loader2
+  Upload, Trash2, Loader2, ScanSearch, AlertTriangle, CheckCircle2
 } from 'lucide-react';
+import { ADMIN_FEATURE_REGISTRY, scanForMissingDocs, type ScanResult as FeatureScanResult } from '@/lib/admin-feature-registry';
 
 interface GuideItem {
   id: string;
@@ -84,7 +85,24 @@ export const AdminDocumentation = () => {
   const [uploadForm, setUploadForm] = useState({ title: '', description: '', category: 'Custom' });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [scanResult, setScanResult] = useState<FeatureScanResult | null>(null);
+  const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScanDocs = () => {
+    setScanning(true);
+    setTimeout(() => {
+      const existingFilenames = allGuides.map(g => g.filename);
+      const result = scanForMissingDocs(existingFilenames);
+      setScanResult(result);
+      setScanning(false);
+      if (result.missing.length === 0) {
+        toast({ title: 'All features documented!', description: `${result.documented} guides cover all ${result.totalFeatures} features.` });
+      } else {
+        toast({ title: `${result.missing.length} missing doc(s) found`, description: 'Scroll down to see which features need documentation.', variant: 'destructive' });
+      }
+    }, 800);
+  };
 
   useEffect(() => {
     fetchCustomDocs();
@@ -244,6 +262,10 @@ export const AdminDocumentation = () => {
           <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleScanDocs} disabled={scanning}>
+            {scanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanSearch className="h-4 w-4 mr-2" />}
+            {scanning ? 'Scanning...' : 'Scan & Sync'}
+          </Button>
           <Button variant="outline" onClick={handleBulkDownload} disabled={bulkDownloading}>
             {bulkDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             {bulkDownloading ? 'Zipping...' : 'Download All'}
@@ -294,6 +316,53 @@ export const AdminDocumentation = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Scan Results Panel */}
+      {scanResult && (
+        <Card className={scanResult.missing.length > 0 ? 'border-destructive/50 bg-destructive/5' : 'border-emerald-500/50 bg-emerald-500/5'}>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {scanResult.missing.length > 0 ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                )}
+                <h3 className="font-semibold">
+                  {scanResult.missing.length > 0
+                    ? `${scanResult.missing.length} feature(s) missing documentation`
+                    : 'All features are documented!'}
+                </h3>
+              </div>
+              <Badge variant="outline">{scanResult.documented}/{scanResult.totalFeatures} covered</Badge>
+            </div>
+            {scanResult.missing.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  The following admin features do not have a matching PDF guide. Use "Add Document" to upload documentation for them.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {scanResult.missing.map(feature => (
+                    <div key={feature.sectionId} className="flex items-center gap-2 p-2 rounded-md bg-background border">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{feature.label}</p>
+                        <p className="text-xs text-muted-foreground">Expected: {feature.docFilename}</p>
+                      </div>
+                      <Badge className={categoryColors[feature.category] || categoryColors.Custom} variant="outline">
+                        {feature.category}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setScanResult(null)}>
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {Object.entries(grouped).map(([category, items]) => (
         <div key={category} className="space-y-3">
