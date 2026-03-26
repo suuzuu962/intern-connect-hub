@@ -72,12 +72,15 @@ export const AdminDocumentation = () => {
   }, {});
 
   const handleDownload = (filename: string) => {
-    // PDFs are stored in /mnt/documents/admin_guides/ which maps to the documents storage
     const link = document.createElement('a');
-    link.href = `/admin_guides/${filename}`;
+    link.href = getUrl(filename);
     link.download = filename;
     link.target = '_blank';
     link.click();
+  };
+
+  const handleView = (guide: GuideItem) => {
+    setViewingGuide(guide);
   };
 
   return (
