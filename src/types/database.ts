@@ -192,23 +192,6 @@ export interface College {
   university?: University;
 }
 
-export interface CollegeCoordinator {
-  id: string;
-  user_id: string;
-  college_id: string | null;
-  university_id: string | null;
-  name: string;
-  email: string;
-  phone: string | null;
-  designation: string | null;
-  address: string | null;
-  is_approved: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  college?: College;
-  university?: University;
-}
 
 export interface LoginLog {
   id: string;
