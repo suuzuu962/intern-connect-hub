@@ -143,6 +143,45 @@ export const AdminDocumentation = () => {
     setViewingGuide(guide);
   };
 
+  const handleBulkDownload = async () => {
+    setBulkDownloading(true);
+    try {
+      const zip = new JSZip();
+      const guides = allGuides;
+      let downloaded = 0;
+
+      for (const guide of guides) {
+        try {
+          const response = await fetch(getUrl(guide));
+          if (response.ok) {
+            const blob = await response.blob();
+            zip.file(guide.filename, blob);
+            downloaded++;
+          }
+        } catch {
+          console.warn(`Skipped: ${guide.filename}`);
+        }
+      }
+
+      if (downloaded === 0) {
+        toast({ title: 'No files could be downloaded', variant: 'destructive' });
+        return;
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = 'Admin_Guides_All.zip';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast({ title: `Downloaded ${downloaded} guides as ZIP` });
+    } catch (err) {
+      toast({ title: 'Bulk download failed', variant: 'destructive' });
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedFile || !uploadForm.title) {
       toast({ title: 'Please fill in title and select a file', variant: 'destructive' });
