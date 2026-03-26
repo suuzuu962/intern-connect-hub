@@ -85,7 +85,24 @@ export const AdminDocumentation = () => {
   const [uploadForm, setUploadForm] = useState({ title: '', description: '', category: 'Custom' });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [scanResult, setScanResult] = useState<FeatureScanResult | null>(null);
+  const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScanDocs = () => {
+    setScanning(true);
+    setTimeout(() => {
+      const existingFilenames = allGuides.map(g => g.filename);
+      const result = scanForMissingDocs(existingFilenames);
+      setScanResult(result);
+      setScanning(false);
+      if (result.missing.length === 0) {
+        toast({ title: 'All features documented!', description: `${result.documented} guides cover all ${result.totalFeatures} features.` });
+      } else {
+        toast({ title: `${result.missing.length} missing doc(s) found`, description: 'Scroll down to see which features need documentation.', variant: 'destructive' });
+      }
+    }, 800);
+  };
 
   useEffect(() => {
     fetchCustomDocs();
