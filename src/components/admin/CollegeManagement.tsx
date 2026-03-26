@@ -468,8 +468,6 @@ export const CollegeManagement = () => {
     return matchesSearch && matchesUniversity;
   });
 
-  const getCoordinatorCount = (collegeId: string) => {
-    return colleges.find(c => c.id === collegeId) ? 0 : 0; // Will be calculated from coordinators if needed
   };
 
   if (loading) {
@@ -853,7 +851,7 @@ export const CollegeManagement = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete College</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{college.name}"? This will also affect any coordinators and students linked to this college. This action cannot be undone.
+                                Are you sure you want to delete "{college.name}"? This will also affect any students linked to this college. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
