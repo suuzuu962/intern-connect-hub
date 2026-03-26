@@ -131,6 +131,7 @@ const defaultSettings: Record<string, any> = {
   socialTelegramUrl: '',
   socialDiscordUrl: '',
   socialYoutubeUrl: '',
+  socialWhatsappUrl: '',
   supportPhone: '+91 8147 747 147',
   supportAddress: 'Shastri Nagar 1st Cross 3rd House, Bellary, Karnataka, India - 583101',
 };
@@ -380,6 +381,7 @@ export const PlatformSettings = () => {
         { id: 'socialTelegramUrl', label: 'Telegram', description: 'Telegram channel URL', type: 'input', value: settings.socialTelegramUrl },
         { id: 'socialDiscordUrl', label: 'Discord', description: 'Discord server invite URL', type: 'input', value: settings.socialDiscordUrl },
         { id: 'socialYoutubeUrl', label: 'YouTube', description: 'YouTube channel URL', type: 'input', value: settings.socialYoutubeUrl },
+        { id: 'socialWhatsappUrl', label: 'WhatsApp', description: 'WhatsApp contact or group link', type: 'input', value: settings.socialWhatsappUrl },
       ]
     },
   ];
