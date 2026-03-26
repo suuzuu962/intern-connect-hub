@@ -436,13 +436,12 @@ export const AdminDocumentation = () => {
           </DialogHeader>
           {viewingGuide && (
             <div className="flex-1 w-full rounded-md border border-border overflow-hidden">
-              <object data={getUrl(viewingGuide)} type="application/pdf" className="w-full h-full">
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-                  <FileText className="h-16 w-16 opacity-40" />
-                  <p className="text-lg font-medium">PDF preview not available in this browser</p>
-                  <p className="text-sm">Click "Open in New Tab" or "Download" to view the document.</p>
-                </div>
-              </object>
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(getUrl(viewingGuide))}&embedded=true`}
+                className="w-full h-full border-0"
+                title={viewingGuide.title}
+                sandbox="allow-scripts allow-same-origin allow-popups"
+              />
             </div>
           )}
         </DialogContent>
