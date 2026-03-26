@@ -317,6 +317,53 @@ export const AdminDocumentation = () => {
         </Card>
       </div>
 
+      {/* Scan Results Panel */}
+      {scanResult && (
+        <Card className={scanResult.missing.length > 0 ? 'border-destructive/50 bg-destructive/5' : 'border-emerald-500/50 bg-emerald-500/5'}>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {scanResult.missing.length > 0 ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                )}
+                <h3 className="font-semibold">
+                  {scanResult.missing.length > 0
+                    ? `${scanResult.missing.length} feature(s) missing documentation`
+                    : 'All features are documented!'}
+                </h3>
+              </div>
+              <Badge variant="outline">{scanResult.documented}/{scanResult.totalFeatures} covered</Badge>
+            </div>
+            {scanResult.missing.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  The following admin features do not have a matching PDF guide. Use "Add Document" to upload documentation for them.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {scanResult.missing.map(feature => (
+                    <div key={feature.sectionId} className="flex items-center gap-2 p-2 rounded-md bg-background border">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{feature.label}</p>
+                        <p className="text-xs text-muted-foreground">Expected: {feature.docFilename}</p>
+                      </div>
+                      <Badge className={categoryColors[feature.category] || categoryColors.Custom} variant="outline">
+                        {feature.category}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setScanResult(null)}>
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {Object.entries(grouped).map(([category, items]) => (
         <div key={category} className="space-y-3">
           <div className="flex items-center gap-2">
