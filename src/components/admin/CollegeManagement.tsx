@@ -468,8 +468,6 @@ export const CollegeManagement = () => {
     return matchesSearch && matchesUniversity;
   });
 
-  };
-
   if (loading) {
     return (
       <Card>
