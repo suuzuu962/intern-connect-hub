@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import JSZip from 'jszip';
 import {
   FileText, Download, Search, LayoutDashboard, BarChart3, Target,
   Network, ShieldCheck, GraduationCap, School, Users, Building2,
@@ -82,6 +83,7 @@ export const AdminDocumentation = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title: '', description: '', category: 'Custom' });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -139,6 +141,45 @@ export const AdminDocumentation = () => {
 
   const handleView = (guide: GuideItem) => {
     setViewingGuide(guide);
+  };
+
+  const handleBulkDownload = async () => {
+    setBulkDownloading(true);
+    try {
+      const zip = new JSZip();
+      const guides = allGuides;
+      let downloaded = 0;
+
+      for (const guide of guides) {
+        try {
+          const response = await fetch(getUrl(guide));
+          if (response.ok) {
+            const blob = await response.blob();
+            zip.file(guide.filename, blob);
+            downloaded++;
+          }
+        } catch {
+          console.warn(`Skipped: ${guide.filename}`);
+        }
+      }
+
+      if (downloaded === 0) {
+        toast({ title: 'No files could be downloaded', variant: 'destructive' });
+        return;
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = 'Admin_Guides_All.zip';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast({ title: `Downloaded ${downloaded} guides as ZIP` });
+    } catch (err) {
+      toast({ title: 'Bulk download failed', variant: 'destructive' });
+    } finally {
+      setBulkDownloading(false);
+    }
   };
 
   const handleUpload = async () => {
@@ -202,10 +243,16 @@ export const AdminDocumentation = () => {
           <h2 className="text-2xl font-bold">Documentation</h2>
           <p className="text-muted-foreground">Step-by-step PDF guides for every admin feature</p>
         </div>
-        <Button onClick={() => setShowUpload(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Document
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleBulkDownload} disabled={bulkDownloading}>
+            {bulkDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            {bulkDownloading ? 'Zipping...' : 'Download All'}
+          </Button>
+          <Button onClick={() => setShowUpload(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Document
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-md">
