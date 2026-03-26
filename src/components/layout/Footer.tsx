@@ -1,7 +1,81 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Linkedin, Instagram, Facebook, Youtube, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface SocialLinks {
+  socialTwitterUrl: string;
+  socialInstagramUrl: string;
+  socialLinkedinUrl: string;
+  socialFacebookUrl: string;
+  socialTelegramUrl: string;
+  socialDiscordUrl: string;
+  socialYoutubeUrl: string;
+  supportEmail: string;
+  supportPhone: string;
+  supportAddress: string;
+}
+
+const defaults: SocialLinks = {
+  socialTwitterUrl: '',
+  socialInstagramUrl: '',
+  socialLinkedinUrl: '',
+  socialFacebookUrl: '',
+  socialTelegramUrl: '',
+  socialDiscordUrl: '',
+  socialYoutubeUrl: '',
+  supportEmail: 'econfinexplorationpvtltd@gmail.com',
+  supportPhone: '+91 8147 747 147',
+  supportAddress: 'Shastri Nagar 1st Cross 3rd House, Bellary, Karnataka, India - 583101',
+};
 
 export const Footer = () => {
+  const [links, setLinks] = useState<SocialLinks>(defaults);
+
+  useEffect(() => {
+    const fetchLinks = async () => {
+      try {
+        const { data } = await supabase
+          .from('platform_settings')
+          .select('value')
+          .eq('key', 'all_settings')
+          .single();
+        if (data?.value) {
+          const v = data.value as Record<string, any>;
+          setLinks({
+            socialTwitterUrl: v.socialTwitterUrl || '',
+            socialInstagramUrl: v.socialInstagramUrl || '',
+            socialLinkedinUrl: v.socialLinkedinUrl || '',
+            socialFacebookUrl: v.socialFacebookUrl || '',
+            socialTelegramUrl: v.socialTelegramUrl || '',
+            socialDiscordUrl: v.socialDiscordUrl || '',
+            socialYoutubeUrl: v.socialYoutubeUrl || '',
+            supportEmail: v.supportEmail || defaults.supportEmail,
+            supportPhone: v.supportPhone || defaults.supportPhone,
+            supportAddress: v.supportAddress || defaults.supportAddress,
+          });
+        }
+      } catch (e) {
+        // use defaults
+      }
+    };
+    fetchLinks();
+  }, []);
+
+  const socialItems = [
+    { url: links.socialTwitterUrl, label: 'X (Twitter)', icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    )},
+    { url: links.socialInstagramUrl, label: 'Instagram', icon: <Instagram className="h-5 w-5" /> },
+    { url: links.socialLinkedinUrl, label: 'LinkedIn', icon: <Linkedin className="h-5 w-5" /> },
+    { url: links.socialFacebookUrl, label: 'Facebook', icon: <Facebook className="h-5 w-5" /> },
+    { url: links.socialTelegramUrl, label: 'Telegram', icon: <Send className="h-5 w-5" /> },
+    { url: links.socialDiscordUrl, label: 'Discord', icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286z"/></svg>
+    )},
+    { url: links.socialYoutubeUrl, label: 'YouTube', icon: <Youtube className="h-5 w-5" /> },
+  ];
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12 md:py-16">
@@ -19,27 +93,18 @@ export const Footer = () => {
               Your gateway to meaningful internship experiences and future career opportunities.
             </p>
             <div className="flex flex-wrap gap-4 mt-5">
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="X (Twitter)">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="Instagram">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="LinkedIn">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="Facebook">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="Telegram">
-                <Send className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="Discord">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286z"/></svg>
-              </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200" aria-label="YouTube">
-                <Youtube className="h-5 w-5" />
-              </a>
+              {socialItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.url || '#'}
+                  target={item.url ? '_blank' : undefined}
+                  rel={item.url ? 'noopener noreferrer' : undefined}
+                  className="text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200"
+                  aria-label={item.label}
+                >
+                  {item.icon}
+                </a>
+              ))}
             </div>
           </div>
 
@@ -73,16 +138,16 @@ export const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-primary-foreground/60 shrink-0 mt-0.5" />
                 <span className="text-primary-foreground/70 text-sm leading-relaxed">
-                  Shastri Nagar 1st Cross 3rd House, Bellary, Karnataka, India - 583101
+                  {links.supportAddress}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-primary-foreground/60 shrink-0" />
-                <span className="text-primary-foreground/70 text-sm">+91 8147 747 147</span>
+                <span className="text-primary-foreground/70 text-sm">{links.supportPhone}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-primary-foreground/60 shrink-0" />
-                <span className="text-primary-foreground/70 text-sm break-all">econfinexplorationpvtltd@gmail.com</span>
+                <span className="text-primary-foreground/70 text-sm break-all">{links.supportEmail}</span>
               </li>
             </ul>
           </div>

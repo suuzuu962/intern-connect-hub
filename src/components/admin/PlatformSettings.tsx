@@ -122,6 +122,17 @@ const defaultSettings: Record<string, any> = {
   enableAPI: false,
   apiRateLimit: 100,
   enableWebhooks: false,
+
+  // Social Media & Support
+  socialTwitterUrl: '',
+  socialInstagramUrl: '',
+  socialLinkedinUrl: '',
+  socialFacebookUrl: '',
+  socialTelegramUrl: '',
+  socialDiscordUrl: '',
+  socialYoutubeUrl: '',
+  supportPhone: '+91 8147 747 147',
+  supportAddress: 'Shastri Nagar 1st Cross 3rd House, Bellary, Karnataka, India - 583101',
 };
 
 export const PlatformSettings = () => {
@@ -351,6 +362,24 @@ export const PlatformSettings = () => {
         { id: 'enableAPI', label: 'Enable API', description: 'Enable public API access', type: 'toggle', value: settings.enableAPI },
         { id: 'apiRateLimit', label: 'Rate Limit (req/min)', description: 'API rate limit per minute', type: 'number', value: settings.apiRateLimit },
         { id: 'enableWebhooks', label: 'Enable Webhooks', description: 'Allow webhook integrations', type: 'toggle', value: settings.enableWebhooks },
+      ]
+    },
+    {
+      id: 'social',
+      title: 'Social Media & Support',
+      icon: Globe,
+      description: 'Manage social media links and support contact info shown in the footer',
+      settings: [
+        { id: 'supportEmail', label: 'Support Email', description: 'Contact email for support', type: 'input', value: settings.supportEmail },
+        { id: 'supportPhone', label: 'Support Phone', description: 'Contact phone number', type: 'input', value: settings.supportPhone },
+        { id: 'supportAddress', label: 'Address', description: 'Physical office address', type: 'input', value: settings.supportAddress },
+        { id: 'socialTwitterUrl', label: 'X (Twitter)', description: 'Twitter / X profile URL', type: 'input', value: settings.socialTwitterUrl },
+        { id: 'socialInstagramUrl', label: 'Instagram', description: 'Instagram profile URL', type: 'input', value: settings.socialInstagramUrl },
+        { id: 'socialLinkedinUrl', label: 'LinkedIn', description: 'LinkedIn page URL', type: 'input', value: settings.socialLinkedinUrl },
+        { id: 'socialFacebookUrl', label: 'Facebook', description: 'Facebook page URL', type: 'input', value: settings.socialFacebookUrl },
+        { id: 'socialTelegramUrl', label: 'Telegram', description: 'Telegram channel URL', type: 'input', value: settings.socialTelegramUrl },
+        { id: 'socialDiscordUrl', label: 'Discord', description: 'Discord server invite URL', type: 'input', value: settings.socialDiscordUrl },
+        { id: 'socialYoutubeUrl', label: 'YouTube', description: 'YouTube channel URL', type: 'input', value: settings.socialYoutubeUrl },
       ]
     },
   ];
