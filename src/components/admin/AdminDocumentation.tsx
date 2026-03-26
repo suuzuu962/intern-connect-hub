@@ -146,6 +146,15 @@ export const AdminDocumentation = () => {
                             size="sm"
                             variant="ghost"
                             className="h-6 text-xs px-2"
+                            onClick={() => handleView(guide)}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-xs px-2"
                             onClick={() => handleDownload(guide.filename)}
                           >
                             <Download className="h-3 w-3 mr-1" />
@@ -168,6 +177,31 @@ export const AdminDocumentation = () => {
           <p>No guides found matching "{search}"</p>
         </div>
       )}
+
+      <Dialog open={!!viewingGuide} onOpenChange={() => setViewingGuide(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>{viewingGuide?.title}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => viewingGuide && handleDownload(viewingGuide.filename)}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Download
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {viewingGuide && (
+            <iframe
+              src={getUrl(viewingGuide.filename)}
+              className="flex-1 w-full rounded-md border border-border"
+              title={viewingGuide.title}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
