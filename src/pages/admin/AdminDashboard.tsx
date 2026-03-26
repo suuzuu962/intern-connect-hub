@@ -25,11 +25,12 @@ import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import { PluginManagement } from '@/components/admin/PluginManagement';
 import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import { LandingPageContentManager } from '@/components/admin/LandingPageContentManager';
+import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -42,7 +43,7 @@ type ActiveSection =
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests'
-  | 'landing-content';
+  | 'landing-content' | 'documentation';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -105,6 +106,7 @@ const AdminDashboard = () => {
         { id: 'upgrade-requests', label: 'Upgrade Requests', icon: ArrowUpCircle },
         { id: 'landing-content', label: 'Landing Pages', icon: FileEdit },
         { id: 'reports', label: 'Data Export', icon: Download },
+        { id: 'documentation', label: 'Documentation', icon: BookOpen },
         { id: 'settings', label: 'Settings', icon: Settings },
       ],
     },
@@ -135,6 +137,7 @@ const AdminDashboard = () => {
       case 'upgrade-requests': return <UpgradeRequestsManagement />;
       case 'landing-content': return <LandingPageContentManager />;
       case 'reports': return <DataExport />;
+      case 'documentation': return <AdminDocumentation />;
       case 'settings': return <PlatformSettings />;
       default: return null;
     }
