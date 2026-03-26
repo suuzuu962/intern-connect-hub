@@ -58,17 +58,6 @@ interface College {
   university_id: string;
 }
 
-interface Coordinator {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  designation: string | null;
-  is_approved: boolean | null;
-  is_active: boolean | null;
-  college_id: string | null;
-}
-
 interface Student {
   id: string;
   user_id: string;
@@ -82,19 +71,17 @@ interface Student {
 interface OrgData {
   universities: University[];
   colleges: College[];
-  coordinators: Coordinator[];
   students: Student[];
 }
 
-type DetailType = 'university' | 'college' | 'coordinator' | 'student';
+type DetailType = 'university' | 'college' | 'student';
 
-type FilterType = 'all' | 'university' | 'college' | 'coordinator' | 'student';
+type FilterType = 'all' | 'university' | 'college' | 'student';
 
 export const AdminOrgChart = () => {
   const [data, setData] = useState<OrgData>({
     universities: [],
     colleges: [],
-    coordinators: [],
     students: [],
   });
   const [loading, setLoading] = useState(true);
@@ -102,7 +89,7 @@ export const AdminOrgChart = () => {
   const [expandedColleges, setExpandedColleges] = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<{
     type: DetailType;
-    data: University | College | Coordinator | Student;
+    data: University | College | Student;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -115,15 +102,13 @@ export const AdminOrgChart = () => {
   const fetchOrgData = async () => {
     try {
       // Fetch all data in parallel
-      const [universitiesRes, collegesRes, coordinatorsRes, studentsRes, profilesRes] = await Promise.all([
+      const [universitiesRes, collegesRes, studentsRes, profilesRes] = await Promise.all([
         supabase.from('universities').select('*').order('name'),
         supabase.from('colleges').select('*').order('name'),
-        supabase.from('college_coordinators').select('*').order('name'),
         supabase.from('students').select('id, user_id, usn, department, course, college_id'),
         supabase.from('profiles').select('user_id, full_name'),
       ]);
 
-      // Map profile names to students
       const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p.full_name]));
       const studentsWithNames = (studentsRes.data || []).map(s => ({
         ...s,
@@ -133,7 +118,6 @@ export const AdminOrgChart = () => {
       setData({
         universities: universitiesRes.data || [],
         colleges: collegesRes.data || [],
-        coordinators: coordinatorsRes.data || [],
         students: studentsWithNames,
       });
     } catch (error) {
@@ -181,9 +165,6 @@ export const AdminOrgChart = () => {
     return data.colleges.filter(c => c.university_id === universityId);
   };
 
-  const getCoordinatorsForCollege = (collegeId: string) => {
-    return data.coordinators.filter(c => c.college_id === collegeId);
-  };
 
   const getStudentsForCollege = (collegeId: string) => {
     return data.students.filter(s => s.college_id === collegeId);
