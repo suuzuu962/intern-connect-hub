@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Network, LayoutDashboard, UserCheck, Settings, Mail, Calendar } from 'lucide-react';
+import { Loader2, AlertCircle, Users, BookOpen, GraduationCap, Network, LayoutDashboard, Settings, Mail, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CollegeProfile } from '@/components/college/CollegeProfile';
@@ -56,16 +56,14 @@ const CollegeDashboard = () => {
 
       if (coordinatorData?.college) {
         setCollege(coordinatorData.college);
-        const [studentsResult, coordinatorsResult, diaryResult] = await Promise.all([
+        const [studentsResult, diaryResult] = await Promise.all([
           supabase.from('students').select('id', { count: 'exact', head: true }).eq('college_id', coordinatorData.college.id),
-          supabase.from('college_coordinators').select('id', { count: 'exact', head: true }).eq('college_id', coordinatorData.college.id).eq('is_approved', true),
           supabase.from('internship_diary').select('id', { count: 'exact', head: true }).in('student_id',
             (await supabase.from('students').select('id').eq('college_id', coordinatorData.college.id)).data?.map(s => s.id) || []
           )
         ]);
         setStats({
           students: studentsResult.count || 0,
-          coordinators: coordinatorsResult.count || 0,
           diaryEntries: diaryResult.count || 0,
         });
       }
@@ -111,7 +109,7 @@ const CollegeDashboard = () => {
     { id: 'students', label: 'Students', icon: Users },
     { id: 'diary-approvals', label: 'Diary Approvals', icon: BookOpen, badge: pendingDiaryCount > 0 ? pendingDiaryCount : undefined },
     { id: 'attendance', label: 'Attendance', icon: Calendar },
-    { id: 'coordinators', label: 'Coordinators', icon: UserCheck },
+    
     { id: 'memos', label: 'Memos', icon: Mail },
     { id: 'profile', label: 'Profile', icon: Settings },
   ];
@@ -141,18 +139,6 @@ const CollegeDashboard = () => {
               </Card>
               <Card className="border hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Coordinators</CardTitle>
-                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
-                    <GraduationCap className="h-4 w-4 text-green-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.coordinators}</div>
-                  <p className="text-xs text-muted-foreground">Active coordinators</p>
-                </CardContent>
-              </Card>
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Diary Entries</CardTitle>
                   <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
                     <BookOpen className="h-4 w-4 text-purple-600" />
@@ -171,7 +157,6 @@ const CollegeDashboard = () => {
       case 'students': return <CollegeStudents collegeId={college.id} viewMode="detailed" />;
       case 'diary-approvals': return <CollegeDiaryApproval collegeId={college.id} collegeName={college.name} onPendingCountChange={setPendingDiaryCount} />;
       case 'attendance': return <AttendanceTracker collegeId={college.id} role="college" />;
-      case 'coordinators': return <CollegeCoordinators collegeId={college.id} />;
       case 'memos': return <InstitutionalMemos universityId={(college as any).university_id} collegeId={college.id} senderRole="college" senderName={college.name} />;
       case 'profile': return <CollegeProfile college={college} onUpdate={setCollege} />;
       default: return null;
