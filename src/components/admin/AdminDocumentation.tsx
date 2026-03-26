@@ -308,13 +308,26 @@ export const AdminDocumentation = () => {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center justify-between">
               <span>{viewingGuide?.title}</span>
-              <Button size="sm" variant="outline" onClick={() => viewingGuide && handleDownload(viewingGuide)}>
-                <Download className="h-3.5 w-3.5 mr-1.5" />Download
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { if (viewingGuide) window.open(getUrl(viewingGuide), '_blank'); }}>
+                  <Eye className="h-3.5 w-3.5 mr-1.5" />Open in New Tab
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => viewingGuide && handleDownload(viewingGuide)}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" />Download
+                </Button>
+              </div>
             </DialogTitle>
           </DialogHeader>
           {viewingGuide && (
-            <iframe src={getUrl(viewingGuide)} className="flex-1 w-full rounded-md border border-border" title={viewingGuide.title} />
+            <div className="flex-1 w-full rounded-md border border-border overflow-hidden">
+              <object data={getUrl(viewingGuide)} type="application/pdf" className="w-full h-full">
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                  <FileText className="h-16 w-16 opacity-40" />
+                  <p className="text-lg font-medium">PDF preview not available in this browser</p>
+                  <p className="text-sm">Click "Open in New Tab" or "Download" to view the document.</p>
+                </div>
+              </object>
+            </div>
           )}
         </DialogContent>
       </Dialog>
