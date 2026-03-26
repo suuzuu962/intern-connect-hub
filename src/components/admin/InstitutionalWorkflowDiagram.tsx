@@ -103,7 +103,7 @@ export const InstitutionalWorkflowDiagram = () => {
               <WorkflowStep 
                 icon={<Database className="h-4 w-4" />}
                 label="Creates Records"
-                sublabel="Auth User → Role → College → Coordinator"
+                sublabel="Auth User → Role → College"
               />
               <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
               <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
@@ -116,56 +116,12 @@ export const InstitutionalWorkflowDiagram = () => {
             </div>
           </div>
 
-          {/* Coordinator Creation Flow */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-purple-600 dark:text-purple-400">
-              <Users className="h-5 w-5" />
-              3. Coordinator Creation (by University)
-            </h3>
-            <div className="flex flex-wrap items-center gap-3 pl-4">
-              <WorkflowStep 
-                icon={<Building2 className="h-4 w-4" />}
-                label="University Dashboard"
-                sublabel="Coordinators Tab → Add"
-              />
-              <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
-              <WorkflowStep 
-                icon={<FileText className="h-4 w-4" />}
-                label="Select College & Fill Form"
-                sublabel="Name, Email, Password"
-              />
-              <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
-              <WorkflowStep 
-                icon={<KeyRound className="h-4 w-4" />}
-                label="Edge Function: create-coordinator-account"
-                sublabel="Links to specific college"
-                highlight
-              />
-              <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
-              <WorkflowStep 
-                icon={<Database className="h-4 w-4" />}
-                label="Creates Records"
-                sublabel="Auth User → Role → Coordinator"
-              />
-              <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
-              <WorkflowStep 
-                icon={<CheckCircle className="h-4 w-4" />}
-                label="Coordinator Can Login"
-                sublabel="/auth → /college/dashboard"
-                success
-              />
-            </div>
-          </div>
 
           {/* Student Assignment Flow */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2 text-green-600 dark:text-green-400">
               <GraduationCap className="h-5 w-5" />
-              4. Student Assignment
+              3. Student Assignment
             </h3>
             <div className="flex flex-wrap items-center gap-3 pl-4">
               <WorkflowStep 
@@ -184,7 +140,7 @@ export const InstitutionalWorkflowDiagram = () => {
               <ArrowDown className="h-4 w-4 text-muted-foreground sm:hidden" />
               <WorkflowStep 
                 icon={<CheckCircle className="h-4 w-4" />}
-                label="Visible to Coordinators"
+                label="Visible to College"
                 sublabel="& University Admins"
                 success
               />
@@ -207,17 +163,9 @@ export const InstitutionalWorkflowDiagram = () => {
                 <Badge variant="outline" className="ml-2">university_id FK</Badge>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-2 w-full max-w-lg">
-                <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" />
-                <div className="hidden sm:block w-1/2 border-b border-muted-foreground/30"></div>
-                <ArrowDown className="h-5 w-5 text-muted-foreground hidden sm:block" />
-                <div className="hidden sm:block w-1/2 border-b border-muted-foreground/30"></div>
+                <ArrowDown className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
-                <div className="flex items-center gap-2 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20 flex-1 justify-center">
-                  <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <span className="font-medium text-sm">Coordinators</span>
-                  <Badge variant="outline" className="text-xs">college_id FK</Badge>
-                </div>
                 <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20 flex-1 justify-center">
                   <GraduationCap className="h-5 w-5 text-green-600 dark:text-green-400" />
                   <span className="font-medium text-sm">Students</span>
@@ -232,11 +180,11 @@ export const InstitutionalWorkflowDiagram = () => {
             <DashboardAccessCard 
               role="University"
               route="/university/dashboard"
-              capabilities={['Manage Colleges', 'Create Coordinators', 'View All Students', 'Org Chart', 'Login Logs']}
+              capabilities={['Manage Colleges', 'View All Students', 'Org Chart', 'Login Logs']}
               color="primary"
             />
             <DashboardAccessCard 
-              role="College / Coordinator"
+              role="College"
               route="/college/dashboard"
               capabilities={['View Students', 'Approve Diary Entries', 'Profile Management']}
               color="blue"

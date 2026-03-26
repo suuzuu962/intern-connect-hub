@@ -190,7 +190,7 @@ function generateFlowcharts(
     { role: 'student', entry: '/auth', dashboard: '/student/dashboard', records: 'Auth → Profile → Role → Student' },
     { role: 'company', entry: '/auth', dashboard: '/company/dashboard', records: 'Auth → Profile → Role → Company' },
     { role: 'university', entry: '/university-auth', dashboard: '/university/dashboard', records: 'Auth → Profile → Role → University' },
-    { role: 'college_coordinator', entry: '/university-auth', dashboard: '/college/dashboard', records: 'Auth → Profile → Role → Coordinator' },
+    
   ];
 
   for (const r of authRoles) {
@@ -213,7 +213,7 @@ function generateFlowcharts(
   flowcharts.push({
     id: 'institutional-hierarchy',
     title: 'Institutional Onboarding Chain',
-    subtitle: 'University → College → Coordinator → Student creation flow',
+    subtitle: 'University → College → Student creation flow',
     category: 'workflow',
     nodes: [
       { id: '1', icon: 'Building2', label: 'University Registers', sublabel: '/university-auth', variant: 'start' },
@@ -221,10 +221,8 @@ function generateFlowcharts(
       { id: '3', icon: 'Building2', label: 'University Dashboard', sublabel: 'Manages colleges', variant: 'process' },
       { id: '4', icon: 'Settings', label: 'create-college-account', sublabel: 'Edge Function', variant: 'warning' },
       { id: '5', icon: 'School', label: 'College Created', sublabel: 'Login enabled', variant: 'success' },
-      { id: '6', icon: 'Settings', label: 'create-coordinator-account', sublabel: 'Edge Function', variant: 'warning' },
-      { id: '7', icon: 'Users', label: 'Coordinator Assigned', sublabel: 'Linked to college', variant: 'success' },
-      { id: '8', icon: 'UserPlus', label: 'Student Self-Registers', sublabel: 'Selects college_id', variant: 'start' },
-      { id: '9', icon: 'GraduationCap', label: 'Visible to Hierarchy', sublabel: 'Coordinator & University', variant: 'success' },
+      { id: '6', icon: 'UserPlus', label: 'Student Self-Registers', sublabel: 'Selects college_id', variant: 'start' },
+      { id: '7', icon: 'GraduationCap', label: 'Visible to Hierarchy', sublabel: 'College & University', variant: 'success' },
     ],
   });
 
@@ -281,7 +279,7 @@ function generateFlowcharts(
       { id: '1', icon: 'GraduationCap', label: 'Active Internship', sublabel: 'offer_accepted', variant: 'start' },
       { id: '2', icon: 'BookOpen', label: 'Create Diary Entry', sublabel: 'Date, Title, Content, Hours', variant: 'default' },
       { id: '3', icon: 'Clock', label: 'Pending Approval', sublabel: 'is_approved = null', variant: 'process' },
-      { id: '4', icon: 'Users', label: 'Coordinator Reviews', sublabel: 'Diary Approval tab', variant: 'decision' },
+      { id: '4', icon: 'Users', label: 'College Reviews', sublabel: 'Diary Approval tab', variant: 'decision' },
     ],
     branches: [{
       afterNodeId: '4',
@@ -392,7 +390,7 @@ function generateFlowcharts(
     branches: [{
       afterNodeId: '2',
       paths: [
-        [{ id: 'b1', icon: 'Users', label: 'Coordinators', sublabel: 'college_id FK', variant: 'process' }],
+        
         [
           { id: 'b2', icon: 'GraduationCap', label: 'Students', sublabel: 'college_id FK', variant: 'process' },
           { id: 'b3', icon: 'FileText', label: 'Applications', sublabel: 'student_id FK', variant: 'default' },

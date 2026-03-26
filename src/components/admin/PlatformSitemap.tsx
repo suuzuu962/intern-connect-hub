@@ -102,7 +102,7 @@ function scanSitemap(): SitemapScanResult {
     },
     {
       path: '/auth', name: 'Login/Signup', icon: 'Lock', type: 'public', group: 'Public Pages',
-      description: 'Unified authentication page for all roles (students, companies, universities, college coordinators)',
+      description: 'Unified authentication page for all roles (students, companies, universities)',
       linkedPages: ['/', '/student/dashboard', '/company/dashboard', '/university/dashboard', '/college/dashboard'],
       tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'login_logs'], edgeFunctions: ['university-signup'], components: ['Auth'],
     },
@@ -185,29 +185,29 @@ function scanSitemap(): SitemapScanResult {
       path: '/admin/dashboard', name: 'Admin Dashboard', icon: 'Shield', type: 'protected', role: 'admin', group: 'Admin Dashboard',
       description: 'Super admin platform management with 20+ management sections',
       linkedPages: ['/admin/architecture-doc', '/admin/flowchart-documentation', '/analytics'],
-      tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'colleges', 'college_coordinators', 'internships', 'applications', 'payment_transactions', 'platform_settings', 'login_logs', 'notifications'],
+      tables: ['profiles', 'user_roles', 'students', 'companies', 'universities', 'colleges', 'internships', 'applications', 'payment_transactions', 'platform_settings', 'login_logs', 'notifications'],
       edgeFunctions: ['admin-create-user'],
-      components: ['AdminOverview', 'PlatformAnalytics', 'Benchmarking', 'AdminOrgChart', 'AdminManagement', 'UniversityManagement', 'CollegeManagement', 'CoordinatorManagement', 'StudentManagement', 'CompanyApprovalManagement', 'InternshipManagement', 'PaymentsManagement', 'SecurityLogs', 'ApiIntegration', 'CustomReports', 'PlatformFeatureMap', 'PlatformSitemap', 'NotificationManagement', 'DataExport', 'PlatformSettings'],
+      components: ['AdminOverview', 'PlatformAnalytics', 'Benchmarking', 'AdminOrgChart', 'AdminManagement', 'UniversityManagement', 'CollegeManagement', 'StudentManagement', 'CompanyApprovalManagement', 'InternshipManagement', 'PaymentsManagement', 'SecurityLogs', 'ApiIntegration', 'CustomReports', 'PlatformFeatureMap', 'PlatformSitemap', 'NotificationManagement', 'DataExport', 'PlatformSettings'],
     },
 
     // University Dashboard
     {
       path: '/university/dashboard', name: 'University Dashboard', icon: 'GraduationCap', type: 'protected', role: 'university', group: 'University Dashboard',
-      description: 'University management with colleges, coordinators, students, analytics, and org chart',
+      description: 'University management with colleges, students, analytics, and org chart',
       linkedPages: ['/notifications'],
-      tables: ['universities', 'colleges', 'college_coordinators', 'university_users', 'students', 'login_logs', 'institutional_memos'],
-      edgeFunctions: ['create-college-account', 'create-coordinator-account'],
-      components: ['UniversityProfile', 'UniversityColleges', 'UniversityCoordinators', 'UniversityStudents', 'UniversityUsers', 'UniversityAnalytics', 'UniversityOrgChart', 'UniversityLoginLogs', 'AddCoordinatorDialog', 'InstitutionalMemos', 'AttendanceTracker'],
+      tables: ['universities', 'colleges', 'university_users', 'students', 'login_logs', 'institutional_memos'],
+      edgeFunctions: ['create-college-account'],
+      components: ['UniversityProfile', 'UniversityColleges', 'UniversityStudents', 'UniversityUsers', 'UniversityAnalytics', 'UniversityOrgChart', 'UniversityLoginLogs', 'InstitutionalMemos', 'AttendanceTracker'],
     },
 
     // College Dashboard
     {
-      path: '/college/dashboard', name: 'College Dashboard', icon: 'School', type: 'protected', role: 'college_coordinator', group: 'College Dashboard',
-      description: 'College coordinator view with students, diary approval, attendance, and memos',
+      path: '/college/dashboard', name: 'College Dashboard', icon: 'School', type: 'protected', role: 'college', group: 'College Dashboard',
+      description: 'College view with students, diary approval, attendance, and memos',
       linkedPages: ['/notifications'],
-      tables: ['colleges', 'college_coordinators', 'students', 'internship_diary', 'student_attendance', 'institutional_memos'],
+      tables: ['colleges', 'students', 'internship_diary', 'student_attendance', 'institutional_memos'],
       edgeFunctions: [],
-      components: ['CollegeProfile', 'CollegeStudents', 'CollegeDiaryApproval', 'CollegeCoordinators', 'CollegeOrgChart', 'CoordinatorProfile', 'CoordinatorStudents', 'CoordinatorDiaryApproval', 'InstitutionalMemos', 'AttendanceTracker'],
+      components: ['CollegeProfile', 'CollegeStudents', 'CollegeDiaryApproval', 'CollegeOrgChart', 'InstitutionalMemos', 'AttendanceTracker'],
     },
 
     // Admin-only doc pages
