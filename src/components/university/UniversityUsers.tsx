@@ -76,7 +76,11 @@ const getDefaultPermissions = (role: UserRole): Record<string, boolean> => {
   return perms;
 };
 
-const MAX_USERS = 3;
+const MAX_USERS: Record<UserRole, number> = {
+  manager: 5,
+  college: 99,
+  scout: 99,
+};
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
