@@ -5,10 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Plus, Trash2, Search, Pencil, UserPlus } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Pencil, Shield, Settings2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -24,21 +25,61 @@ interface UniversityUser {
   name: string;
   is_active: boolean;
   created_at: string;
+  role: string;
+  permissions: Record<string, boolean>;
 }
 
-type UserRole = 'manager' | 'evaluator' | 'spectator';
+type UserRole = 'manager' | 'college' | 'scout';
 
-const ROLE_TABS: { id: UserRole; label: string; description: string }[] = [
-  { id: 'manager', label: 'Manager', description: 'Full access to manage colleges, students, and university settings.' },
-  { id: 'evaluator', label: 'Evaluator', description: 'View and evaluate student diaries, attendance, and academic records.' },
-  { id: 'spectator', label: 'Spectator', description: 'View, add and manage list of opportunity/Account level spectator(s).' },
+interface PermissionDef {
+  key: string;
+  label: string;
+  description: string;
+}
+
+const ROLE_TABS: { id: UserRole; label: string; description: string; color: string }[] = [
+  { id: 'manager', label: 'Manager', description: 'Full access to manage colleges, students, and university settings.', color: 'bg-primary text-primary-foreground' },
+  { id: 'college', label: 'College', description: 'Manage and oversee affiliated colleges, coordinators, and academic records.', color: 'bg-emerald-600 text-white' },
+  { id: 'scout', label: 'Scout', description: 'Observe, discover, and report insights across internships and student activity.', color: 'bg-amber-600 text-white' },
 ];
+
+const ROLE_PERMISSIONS: Record<UserRole, PermissionDef[]> = {
+  manager: [
+    { key: 'manage_colleges', label: 'Manage Colleges', description: 'Add, edit, and deactivate colleges' },
+    { key: 'manage_students', label: 'Manage Students', description: 'View and manage student records' },
+    { key: 'manage_users', label: 'Manage Team', description: 'Add and remove team members' },
+    { key: 'view_analytics', label: 'View Analytics', description: 'Access university analytics dashboard' },
+    { key: 'manage_settings', label: 'Manage Settings', description: 'Update university profile and settings' },
+    { key: 'send_memos', label: 'Send Memos', description: 'Send institutional communications' },
+  ],
+  college: [
+    { key: 'view_colleges', label: 'View Colleges', description: 'Browse affiliated college list' },
+    { key: 'manage_coordinators', label: 'Manage Coordinators', description: 'Add and manage college coordinators' },
+    { key: 'view_students', label: 'View Students', description: 'View student profiles under colleges' },
+    { key: 'approve_diaries', label: 'Approve Diaries', description: 'Review and approve internship diaries' },
+    { key: 'view_attendance', label: 'View Attendance', description: 'Monitor student attendance records' },
+    { key: 'send_memos', label: 'Send Memos', description: 'Send memos to colleges' },
+  ],
+  scout: [
+    { key: 'view_analytics', label: 'View Analytics', description: 'Access read-only analytics dashboard' },
+    { key: 'view_students', label: 'View Students', description: 'Browse student directory' },
+    { key: 'view_internships', label: 'View Internships', description: 'Browse available internships and applications' },
+    { key: 'view_colleges', label: 'View Colleges', description: 'View college listings' },
+    { key: 'view_attendance', label: 'View Attendance', description: 'View attendance reports' },
+    { key: 'export_reports', label: 'Export Reports', description: 'Download data exports and reports' },
+  ],
+};
+
+const getDefaultPermissions = (role: UserRole): Record<string, boolean> => {
+  const perms: Record<string, boolean> = {};
+  ROLE_PERMISSIONS[role]?.forEach(p => { perms[p.key] = true; });
+  return perms;
+};
 
 const MAX_USERS = 3;
 
-const getInitials = (name: string) => {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-};
+const getInitials = (name: string) =>
+  name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 const getAvatarColor = (name: string) => {
   const colors = [
@@ -50,19 +91,35 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+const getRoleBadge = (role: string) => {
+  switch (role) {
+    case 'manager':
+      return <Badge className="bg-primary/10 text-primary border-primary/20">Manager</Badge>;
+    case 'college':
+      return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">College</Badge>;
+    case 'scout':
+      return <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20">Scout</Badge>;
+    default:
+      return <Badge variant="outline">{role}</Badge>;
+  }
+};
+
 export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
   const [users, setUsers] = useState<UniversityUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [permDialogOpen, setPermDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UniversityUser | null>(null);
-  const [activeRole, setActiveRole] = useState<UserRole>('spectator');
+  const [permUser, setPermUser] = useState<UniversityUser | null>(null);
+  const [activeRole, setActiveRole] = useState<UserRole>('manager');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'scout' as UserRole });
+  const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>({});
 
   useEffect(() => { fetchUsers(); }, [universityId]);
 
@@ -76,7 +133,11 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      setUsers(data || []);
+      setUsers((data || []).map((u: any) => ({
+        ...u,
+        role: u.role || 'scout',
+        permissions: typeof u.permissions === 'object' && u.permissions ? u.permissions : {},
+      })));
     }
     setLoading(false);
   };
@@ -102,17 +163,26 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
   }, [universityId]);
 
   const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return users;
-    const q = searchQuery.toLowerCase();
-    return users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
-  }, [users, searchQuery]);
+    let filtered = users.filter(u => u.role === activeRole);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    }
+    return filtered;
+  }, [users, searchQuery, activeRole]);
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = { manager: 0, college: 0, scout: 0 };
+    users.forEach(u => { if (counts[u.role] !== undefined) counts[u.role]++; });
+    return counts;
+  }, [users]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '' });
+    setFormData({ name: '', email: '', password: '', role: activeRole });
     setEditingUser(null);
   };
 
@@ -139,7 +209,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
     if (editingUser) {
       const { error } = await supabase
         .from('university_users')
-        .update({ name: formData.name, email: formData.email })
+        .update({ name: formData.name, email: formData.email, role: formData.role } as any)
         .eq('id', editingUser.id);
 
       if (error) {
@@ -167,12 +237,15 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
       }
 
       if (authData.user) {
+        const defaultPerms = getDefaultPermissions(formData.role);
         const { error: userError } = await supabase.from('university_users').insert({
           university_id: universityId,
           user_id: authData.user.id,
           email: formData.email,
           name: formData.name,
-        });
+          role: formData.role,
+          permissions: defaultPerms,
+        } as any);
 
         if (userError) {
           toast({ title: 'Error', description: userError.message, variant: 'destructive' });
@@ -191,8 +264,39 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
 
   const handleEdit = (user: UniversityUser) => {
     setEditingUser(user);
-    setFormData({ name: user.name, email: user.email, password: '' });
+    setFormData({ name: user.name, email: user.email, password: '', role: user.role as UserRole });
     setDialogOpen(true);
+  };
+
+  const handleOpenPermissions = (user: UniversityUser) => {
+    setPermUser(user);
+    const role = user.role as UserRole;
+    const defaults = getDefaultPermissions(role);
+    const merged = { ...defaults };
+    Object.keys(user.permissions || {}).forEach(k => {
+      if (k in merged) merged[k] = !!user.permissions[k];
+    });
+    setTempPermissions(merged);
+    setPermDialogOpen(true);
+  };
+
+  const handleSavePermissions = async () => {
+    if (!permUser) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('university_users')
+      .update({ permissions: tempPermissions } as any)
+      .eq('id', permUser.id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Permissions updated' });
+      fetchUsers();
+      setPermDialogOpen(false);
+      setPermUser(null);
+    }
+    setSaving(false);
   };
 
   const handleDelete = async (userId: string, userRecordId: string) => {
@@ -257,13 +361,18 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           <button
             key={tab.id}
             onClick={() => setActiveRole(tab.id)}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all border ${
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all border flex items-center gap-2 ${
               activeRole === tab.id
                 ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                 : 'bg-background text-foreground border-border hover:bg-accent'
             }`}
           >
             {tab.label}
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              activeRole === tab.id ? 'bg-white/20' : 'bg-muted'
+            }`}>
+              {roleCounts[tab.id]}
+            </span>
           </button>
         ))}
       </div>
@@ -281,16 +390,13 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           >
             <Search className="h-4 w-4 text-muted-foreground" />
           </button>
-          <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </button>
           <Button
             onClick={() => { resetForm(); setDialogOpen(true); }}
             disabled={users.length >= MAX_USERS}
             className="rounded-full gap-2"
           >
             <Plus className="h-4 w-4" />
-            Assign {activeTab.label}
+            Add {activeTab.label}
           </Button>
         </div>
       </div>
@@ -313,6 +419,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           <TableHeader>
             <TableRow className="bg-accent/50">
               <TableHead className="font-semibold text-foreground">Name</TableHead>
+              <TableHead className="font-semibold text-foreground">Role</TableHead>
               <TableHead className="font-semibold text-foreground">Added By</TableHead>
               <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
             </TableRow>
@@ -320,7 +427,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
                   No {activeTab.label.toLowerCase()} users added yet.
                 </TableCell>
               </TableRow>
@@ -340,6 +447,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 text-xs font-medium">
                       Account Owner
@@ -347,10 +455,13 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} className="h-8 w-8">
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenPermissions(user)} className="h-8 w-8" title="Permissions">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} className="h-8 w-8" title="Edit">
                         <Pencil className="h-4 w-4 text-muted-foreground" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(user.user_id, user.id)} className="h-8 w-8">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(user.user_id, user.id)} className="h-8 w-8" title="Remove">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -386,7 +497,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
       <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Edit User' : `Add New ${activeTab.label}`}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -404,9 +515,33 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
                 <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
               </div>
             )}
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <div className="flex gap-2">
+                {ROLE_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, role: tab.id }))}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                      formData.role === tab.id
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-border hover:bg-accent'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {ROLE_TABS.find(t => t.id === formData.role)?.description}
+              </p>
+            </div>
             <Alert>
               <AlertDescription className="text-xs">
-                {editingUser ? 'User details will be updated.' : 'The user will receive an email to verify their account.'}
+                {editingUser
+                  ? 'User details will be updated. Permissions can be configured separately.'
+                  : 'The user will receive an email to verify their account. Default permissions for this role will be applied.'}
               </AlertDescription>
             </Alert>
             <div className="flex justify-end gap-2">
@@ -419,6 +554,52 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permissions Dialog */}
+      <Dialog open={permDialogOpen} onOpenChange={open => { setPermDialogOpen(open); if (!open) setPermUser(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-primary" />
+              Permissions — {permUser?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {permUser && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-4">
+                {getRoleBadge(permUser.role)}
+                <span className="text-xs text-muted-foreground">Toggle permissions on/off for this user</span>
+              </div>
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {ROLE_PERMISSIONS[permUser.role as UserRole]?.map(perm => (
+                  <div
+                    key={perm.key}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/30 transition-colors"
+                  >
+                    <div className="flex-1 mr-4">
+                      <p className="text-sm font-medium text-foreground">{perm.label}</p>
+                      <p className="text-xs text-muted-foreground">{perm.description}</p>
+                    </div>
+                    <Switch
+                      checked={!!tempPermissions[perm.key]}
+                      onCheckedChange={checked =>
+                        setTempPermissions(prev => ({ ...prev, [perm.key]: checked }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+                <Button variant="outline" onClick={() => setPermDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleSavePermissions} disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Permissions
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
