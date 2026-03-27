@@ -25,12 +25,13 @@ import { PlatformSitemap } from '@/components/admin/PlatformSitemap';
 import { PluginManagement } from '@/components/admin/PluginManagement';
 import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsManagement';
 import { LandingPageContentManager } from '@/components/admin/LandingPageContentManager';
+import { UniversityUserRequests } from '@/components/admin/UniversityUserRequests';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen, UserPlus
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -43,7 +44,7 @@ type ActiveSection =
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests'
-  | 'landing-content' | 'documentation';
+  | 'landing-content' | 'documentation' | 'university-user-requests';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,6 +77,7 @@ const AdminDashboard = () => {
       label: 'Governance',
       items: [
         { id: 'universities', label: 'Universities', icon: GraduationCap },
+        { id: 'university-user-requests', label: 'User Requests', icon: UserPlus },
         { id: 'colleges', label: 'Colleges', icon: School },
         { id: 'students', label: 'Students', icon: Users },
       ],
@@ -120,6 +122,7 @@ const AdminDashboard = () => {
       case 'org-chart': return <AdminOrgChart />;
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
+      case 'university-user-requests': return <UniversityUserRequests />;
       case 'colleges': return <CollegeManagement />;
       
       case 'students': return <StudentManagement />;

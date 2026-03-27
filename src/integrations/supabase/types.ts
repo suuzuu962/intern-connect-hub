@@ -1474,6 +1474,62 @@ export type Database = {
         }
         Relationships: []
       }
+      university_user_requests: {
+        Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          permissions: Json
+          requested_by: string
+          role: string
+          status: string
+          university_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          permissions?: Json
+          requested_by: string
+          role?: string
+          status?: string
+          university_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          permissions?: Json
+          requested_by?: string
+          role?: string
+          status?: string
+          university_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_user_requests_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       university_users: {
         Row: {
           created_at: string

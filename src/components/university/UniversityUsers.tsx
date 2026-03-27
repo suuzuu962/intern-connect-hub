@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Plus, Trash2, Search, Pencil, Shield, Settings2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Pencil, Shield, Settings2, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -29,6 +29,18 @@ interface UniversityUser {
   permissions: Record<string, boolean>;
 }
 
+interface UserRequest {
+  id: string;
+  university_id: string;
+  name: string;
+  email: string;
+  role: string;
+  permissions: Record<string, boolean>;
+  status: string;
+  created_at: string;
+  admin_notes: string | null;
+}
+
 type UserRole = 'manager' | 'college' | 'scout';
 
 interface PermissionDef {
@@ -37,10 +49,10 @@ interface PermissionDef {
   description: string;
 }
 
-const ROLE_TABS: { id: UserRole; label: string; description: string; color: string }[] = [
-  { id: 'manager', label: 'Manager', description: 'Full access to manage colleges, students, and university settings.', color: 'bg-primary text-primary-foreground' },
-  { id: 'college', label: 'College', description: 'Manage and oversee affiliated colleges, coordinators, and academic records.', color: 'bg-emerald-600 text-white' },
-  { id: 'scout', label: 'Scout', description: 'Observe, discover, and report insights across internships and student activity.', color: 'bg-amber-600 text-white' },
+const ROLE_TABS: { id: UserRole; label: string; description: string }[] = [
+  { id: 'manager', label: 'Manager', description: 'Full access to manage colleges, students, and university settings.' },
+  { id: 'college', label: 'College', description: 'Manage and oversee affiliated colleges, coordinators, and academic records.' },
+  { id: 'scout', label: 'Scout', description: 'Observe, discover, and report insights across internships and student activity.' },
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, PermissionDef[]> = {
@@ -108,8 +120,22 @@ const getRoleBadge = (role: string) => {
   }
 };
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return <Badge variant="outline" className="text-yellow-600 border-yellow-300 bg-yellow-50 gap-1"><Clock className="h-3 w-3" />Pending</Badge>;
+    case 'approved':
+      return <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50 gap-1"><CheckCircle2 className="h-3 w-3" />Approved</Badge>;
+    case 'rejected':
+      return <Badge variant="outline" className="text-destructive border-destructive/30 bg-destructive/5 gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+};
+
 export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
   const [users, setUsers] = useState<UniversityUser[]>([]);
+  const [requests, setRequests] = useState<UserRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -122,27 +148,32 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'scout' as UserRole });
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'scout' as UserRole });
   const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>({});
 
-  useEffect(() => { fetchUsers(); }, [universityId]);
+  useEffect(() => { fetchData(); }, [universityId]);
 
-  const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from('university_users')
-      .select('*')
-      .eq('university_id', universityId)
-      .order('created_at', { ascending: false });
+  const fetchData = async () => {
+    const [usersRes, requestsRes] = await Promise.all([
+      supabase.from('university_users').select('*').eq('university_id', universityId).order('created_at', { ascending: false }),
+      supabase.from('university_user_requests' as any).select('*').eq('university_id', universityId).order('created_at', { ascending: false }),
+    ]);
 
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      setUsers((data || []).map((u: any) => ({
+    if (!usersRes.error) {
+      setUsers((usersRes.data || []).map((u: any) => ({
         ...u,
         role: u.role || 'scout',
         permissions: typeof u.permissions === 'object' && u.permissions ? u.permissions : {},
       })));
     }
+
+    if (!requestsRes.error) {
+      setRequests((requestsRes.data || []).map((r: any) => ({
+        ...r,
+        permissions: typeof r.permissions === 'object' && r.permissions ? r.permissions : {},
+      })));
+    }
+
     setLoading(false);
   };
 
@@ -175,38 +206,47 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
     return filtered;
   }, [users, searchQuery, activeRole]);
 
+  const filteredRequests = useMemo(() => {
+    return requests.filter(r => r.role === activeRole);
+  }, [requests, activeRole]);
+
+  const pendingRequests = useMemo(() => filteredRequests.filter(r => r.status === 'pending'), [filteredRequests]);
+  const processedRequests = useMemo(() => filteredRequests.filter(r => r.status !== 'pending'), [filteredRequests]);
+
   const roleCounts = useMemo(() => {
     const counts: Record<string, number> = { manager: 0, college: 0, scout: 0 };
     users.forEach(u => { if (counts[u.role] !== undefined) counts[u.role]++; });
     return counts;
   }, [users]);
 
+  const pendingCounts = useMemo(() => {
+    const counts: Record<string, number> = { manager: 0, college: 0, scout: 0 };
+    requests.filter(r => r.status === 'pending').forEach(r => { if (counts[r.role] !== undefined) counts[r.role]++; });
+    return counts;
+  }, [requests]);
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const resetForm = () => {
-    setFormData({ name: '', email: '', password: '', role: activeRole });
+    setFormData({ name: '', email: '', role: activeRole });
     setEditingUser(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.name.trim() || !formData.email.trim()) {
+      toast({ title: 'Error', description: 'Name and email are required', variant: 'destructive' });
+      return;
+    }
+
     const roleLimit = MAX_USERS[formData.role];
-    const roleCount = users.filter(u => u.role === formData.role).length;
+    const roleCount = users.filter(u => u.role === formData.role).length +
+      requests.filter(r => r.role === formData.role && r.status === 'pending').length;
     if (roleCount >= roleLimit && !editingUser) {
-      toast({ title: 'Limit Reached', description: `You can only add up to ${roleLimit} ${formData.role} users.`, variant: 'destructive' });
-      return;
-    }
-
-    if (!formData.name.trim() || !formData.email.trim() || (!editingUser && !formData.password.trim())) {
-      toast({ title: 'Error', description: 'All fields are required', variant: 'destructive' });
-      return;
-    }
-
-    if (!editingUser && formData.password.length < 6) {
-      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
+      toast({ title: 'Limit Reached', description: `You can only add up to ${roleLimit} ${formData.role} users (including pending requests).`, variant: 'destructive' });
       return;
     }
 
@@ -222,16 +262,17 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'User updated successfully' });
-        fetchUsers();
+        fetchData();
         setDialogOpen(false);
         resetForm();
       }
     } else {
+      // Submit as request for admin approval
       const defaultPerms = getDefaultPermissions(formData.role);
       const { data, error: fnError } = await supabase.functions.invoke('create-university-user', {
         body: {
+          action: 'submit_request',
           email: formData.email,
-          password: formData.password,
           fullName: formData.name,
           universityId,
           role: formData.role,
@@ -240,10 +281,10 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
       });
 
       if (fnError || data?.error) {
-        toast({ title: 'Error', description: data?.error || fnError?.message || 'Failed to create user', variant: 'destructive' });
+        toast({ title: 'Error', description: data?.error || fnError?.message || 'Failed to submit request', variant: 'destructive' });
       } else {
-        toast({ title: 'User added successfully', description: 'Account created and ready to use.' });
-        fetchUsers();
+        toast({ title: 'Request Submitted', description: 'Admin will review and approve the request. You will be notified.' });
+        fetchData();
         setDialogOpen(false);
         resetForm();
       }
@@ -254,7 +295,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
 
   const handleEdit = (user: UniversityUser) => {
     setEditingUser(user);
-    setFormData({ name: user.name, email: user.email, password: '', role: user.role as UserRole });
+    setFormData({ name: user.name, email: user.email, role: user.role as UserRole });
     setDialogOpen(true);
   };
 
@@ -282,7 +323,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Permissions updated' });
-      fetchUsers();
+      fetchData();
       setPermDialogOpen(false);
       setPermUser(null);
     }
@@ -296,7 +337,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'User removed successfully' });
-      fetchUsers();
+      fetchData();
     }
   };
 
@@ -363,6 +404,11 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
             }`}>
               {roleCounts[tab.id]}
             </span>
+            {pendingCounts[tab.id] > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-500 text-white">
+                {pendingCounts[tab.id]}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -382,11 +428,11 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           </button>
           <Button
             onClick={() => { resetForm(); setDialogOpen(true); }}
-            disabled={roleCounts[activeRole] >= MAX_USERS[activeRole]}
+            disabled={roleCounts[activeRole] + pendingCounts[activeRole] >= MAX_USERS[activeRole]}
             className="rounded-full gap-2"
           >
             <Plus className="h-4 w-4" />
-            Add {activeTab.label}
+            Request {activeTab.label}
           </Button>
         </div>
       </div>
@@ -403,14 +449,71 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
         </div>
       )}
 
-      {/* Users Table */}
+      {/* Pending Requests */}
+      {pendingRequests.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Pending Requests</h4>
+          <div className="space-y-2">
+            {pendingRequests.map(req => (
+              <div key={req.id} className="border border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className={`${getAvatarColor(req.name)} text-white font-bold text-xs`}>
+                      {getInitials(req.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{req.name}</p>
+                    <p className="text-muted-foreground text-xs">{req.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {getRoleBadge(req.role)}
+                  {getStatusBadge(req.status)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Processed Requests (recent rejected) */}
+      {processedRequests.filter(r => r.status === 'rejected').length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Rejected Requests</h4>
+          <div className="space-y-2">
+            {processedRequests.filter(r => r.status === 'rejected').map(req => (
+              <div key={req.id} className="border border-destructive/20 bg-destructive/5 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-muted text-muted-foreground font-bold text-xs">
+                      {getInitials(req.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{req.name}</p>
+                    <p className="text-muted-foreground text-xs">{req.email}</p>
+                    {req.admin_notes && <p className="text-xs text-destructive mt-1">Reason: {req.admin_notes}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {getRoleBadge(req.role)}
+                  {getStatusBadge(req.status)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active Users Table */}
       <div className="border border-border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-accent/50">
               <TableHead className="font-semibold text-foreground">Name</TableHead>
               <TableHead className="font-semibold text-foreground">Role</TableHead>
-              <TableHead className="font-semibold text-foreground">Added By</TableHead>
+              <TableHead className="font-semibold text-foreground">Status</TableHead>
               <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -418,7 +521,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
             {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                  No {activeTab.label.toLowerCase()} users added yet.
+                  No active {activeTab.label.toLowerCase()} users yet.
                 </TableCell>
               </TableRow>
             ) : (
@@ -439,8 +542,8 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
                   </TableCell>
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 text-xs font-medium">
-                      Account Owner
+                    <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50 gap-1">
+                      <CheckCircle2 className="h-3 w-3" />Active
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -462,7 +565,6 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           </TableBody>
         </Table>
 
-        {/* Pagination Footer */}
         {filteredUsers.length > 0 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-accent/20">
             <span className="text-sm text-muted-foreground">
@@ -483,11 +585,11 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
         )}
       </div>
 
-      {/* Add/Edit User Dialog */}
+      {/* Add/Edit User Dialog - no password field for new users */}
       <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : `Add New ${activeTab.label}`}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Edit User' : `Request New ${activeTab.label}`}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -498,13 +600,6 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
               <Label htmlFor="email">Email *</Label>
               <Input id="email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} required disabled={!!editingUser} />
             </div>
-            {!editingUser && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input id="password" type="password" value={formData.password} onChange={e => handleChange('password', e.target.value)} required minLength={6} />
-                <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
-              </div>
-            )}
             <div className="space-y-2">
               <Label>Role</Label>
               <div className="flex gap-2">
@@ -531,7 +626,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
               <AlertDescription className="text-xs">
                 {editingUser
                   ? 'User details will be updated. Permissions can be configured separately.'
-                  : 'The user will receive an email to verify their account. Default permissions for this role will be applied.'}
+                  : 'This will submit a request to the platform admin. Once approved, the user account will be created and you will be notified.'}
               </AlertDescription>
             </Alert>
             <div className="flex justify-end gap-2">
@@ -540,7 +635,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {editingUser ? 'Update User' : 'Add User'}
+                {editingUser ? 'Update User' : 'Submit Request'}
               </Button>
             </div>
           </form>
