@@ -193,8 +193,10 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (users.length >= MAX_USERS && !editingUser) {
-      toast({ title: 'Limit Reached', description: `You can only add up to ${MAX_USERS} additional users.`, variant: 'destructive' });
+    const roleLimit = MAX_USERS[formData.role];
+    const roleCount = users.filter(u => u.role === formData.role).length;
+    if (roleCount >= roleLimit && !editingUser) {
+      toast({ title: 'Limit Reached', description: `You can only add up to ${roleLimit} ${formData.role} users.`, variant: 'destructive' });
       return;
     }
 
@@ -396,7 +398,7 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
           </button>
           <Button
             onClick={() => { resetForm(); setDialogOpen(true); }}
-            disabled={users.length >= MAX_USERS}
+            disabled={roleCounts[activeRole] >= MAX_USERS[activeRole]}
             className="rounded-full gap-2"
           >
             <Plus className="h-4 w-4" />
