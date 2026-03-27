@@ -69,8 +69,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Ensure the universityId matches the requesting user's university
-    if (university.id !== universityId) {
+    // Ensure the universityId matches the authorized university
+    if (authorizedUniversityId !== universityId) {
       return new Response(JSON.stringify({ error: 'Forbidden: Cannot add users to another university' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
