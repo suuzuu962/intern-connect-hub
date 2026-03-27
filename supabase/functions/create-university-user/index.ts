@@ -34,15 +34,29 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Verify requesting user owns a university
-    const { data: university, error: uniError } = await supabaseAdmin
+    // Verify requesting user owns the university OR is a manager for it
+    const { data: university } = await supabaseAdmin
       .from('universities')
       .select('id')
       .eq('user_id', requestingUser.id)
       .single()
 
-    if (uniError || !university) {
-      return new Response(JSON.stringify({ error: 'Forbidden: University owner access required' }), {
+    let authorizedUniversityId: string | null = university?.id || null
+
+    if (!authorizedUniversityId) {
+      // Check if user is a manager in a university
+      const { data: managerRecord } = await supabaseAdmin
+        .from('university_users')
+        .select('university_id')
+        .eq('user_id', requestingUser.id)
+        .eq('role', 'manager')
+        .single()
+
+      authorizedUniversityId = managerRecord?.university_id || null
+    }
+
+    if (!authorizedUniversityId) {
+      return new Response(JSON.stringify({ error: 'Forbidden: University owner or manager access required' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -55,8 +69,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Ensure the universityId matches the requesting user's university
-    if (university.id !== universityId) {
+    // Ensure the universityId matches the authorized university
+    if (authorizedUniversityId !== universityId) {
       return new Response(JSON.stringify({ error: 'Forbidden: Cannot add users to another university' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
