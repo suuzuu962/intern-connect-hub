@@ -122,7 +122,12 @@ const UniversityDashboard = () => {
       case 'colleges': return <UniversityColleges universityId={university.id} />;
       case 'students': return <UniversityStudents universityId={university.id} viewMode="detailed" />;
       
-      case 'users': return <div className="space-y-6"><UniversityUsers universityId={university.id} /><UniversityLoginLogs universityId={university.id} /></div>;
+      case 'users': return (
+        <div className="space-y-6">
+          <UniversityUsers universityId={university.id} />
+          <UniversityLoginLogs universityId={university.id} />
+        </div>
+      );
       case 'diary-approvals': 
         return collegeIds.length > 0 
           ? <CollegeDiaryApproval collegeId={collegeIds[0]} collegeName={university.name} onPendingCountChange={setPendingDiaryCount} />
