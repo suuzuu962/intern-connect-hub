@@ -152,6 +152,13 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: var(--font-sans);
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  table, td, th, p, span, div, h1, h2, h3, h4, h5, h6, li, a, code {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   h1, h2, h3, h4, h5, h6 {
