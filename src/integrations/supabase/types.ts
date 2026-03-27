@@ -1481,6 +1481,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          permissions: Json
+          role: string
           university_id: string
           user_id: string
         }
@@ -1490,6 +1492,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          permissions?: Json
+          role?: string
           university_id: string
           user_id: string
         }
@@ -1499,6 +1503,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          permissions?: Json
+          role?: string
           university_id?: string
           user_id?: string
         }
