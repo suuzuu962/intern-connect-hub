@@ -77,6 +77,7 @@ const AdminDashboard = () => {
       label: 'Governance',
       items: [
         { id: 'universities', label: 'Universities', icon: GraduationCap },
+        { id: 'university-user-requests', label: 'User Requests', icon: UserPlus },
         { id: 'colleges', label: 'Colleges', icon: School },
         { id: 'students', label: 'Students', icon: Users },
       ],
@@ -121,6 +122,7 @@ const AdminDashboard = () => {
       case 'org-chart': return <AdminOrgChart />;
       case 'admins': return <AdminManagement />;
       case 'universities': return <UniversityManagement />;
+      case 'university-user-requests': return <UniversityUserRequests />;
       case 'colleges': return <CollegeManagement />;
       
       case 'students': return <StudentManagement />;
