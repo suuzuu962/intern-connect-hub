@@ -227,41 +227,25 @@ export const UniversityUsers = ({ universityId }: UniversityUsersProps) => {
         resetForm();
       }
     } else {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { full_name: formData.name },
+      const defaultPerms = getDefaultPermissions(formData.role);
+      const { data, error: fnError } = await supabase.functions.invoke('create-university-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.name,
+          universityId,
+          role: formData.role,
+          permissions: defaultPerms,
         },
       });
 
-      if (authError) {
-        toast({ title: 'Error', description: authError.message, variant: 'destructive' });
-        setSaving(false);
-        return;
-      }
-
-      if (authData.user) {
-        const defaultPerms = getDefaultPermissions(formData.role);
-        const { error: userError } = await supabase.from('university_users').insert({
-          university_id: universityId,
-          user_id: authData.user.id,
-          email: formData.email,
-          name: formData.name,
-          role: formData.role,
-          permissions: defaultPerms,
-        } as any);
-
-        if (userError) {
-          toast({ title: 'Error', description: userError.message, variant: 'destructive' });
-        } else {
-          await supabase.from('user_roles').insert({ user_id: authData.user.id, role: 'university' });
-          toast({ title: 'User added successfully', description: 'They will receive a verification email.' });
-          fetchUsers();
-          setDialogOpen(false);
-          resetForm();
-        }
+      if (fnError || data?.error) {
+        toast({ title: 'Error', description: data?.error || fnError?.message || 'Failed to create user', variant: 'destructive' });
+      } else {
+        toast({ title: 'User added successfully', description: 'Account created and ready to use.' });
+        fetchUsers();
+        setDialogOpen(false);
+        resetForm();
       }
     }
 
