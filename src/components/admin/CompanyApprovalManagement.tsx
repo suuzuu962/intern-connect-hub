@@ -203,6 +203,77 @@ export const CompanyApprovalManagement = () => {
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (selectedPending.size === 0) return;
+    setBulkApproving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const ids = Array.from(selectedPending);
+
+      // Create default limits for each company
+      for (const companyId of ids) {
+        const { data: existing } = await supabase
+          .from('company_limits')
+          .select('id')
+          .eq('company_id', companyId)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('company_limits').insert({
+            company_id: companyId,
+            max_internships: 10,
+            max_active_internships: 5,
+            max_applications_per_internship: 100,
+            can_post_paid_internships: true,
+            can_post_free_internships: true,
+            can_view_student_contact: true,
+            can_view_resumes: true,
+            can_feature_listings: false,
+            set_by: user?.id,
+          });
+        }
+      }
+
+      // Bulk approve
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_verified: true })
+        .in('id', ids);
+
+      if (error) throw error;
+      toast.success(`${ids.length} companies approved with default limits`);
+      setSelectedPending(new Set());
+      setVerificationStates(prev => {
+        const newState = { ...prev };
+        ids.forEach(id => delete newState[id]);
+        return newState;
+      });
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Bulk approval failed: ' + error.message);
+    } finally {
+      setBulkApproving(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedPending.size === 0) return;
+    try {
+      const ids = Array.from(selectedPending);
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_verified: false })
+        .in('id', ids);
+
+      if (error) throw error;
+      toast.success(`${ids.length} companies rejected`);
+      setSelectedPending(new Set());
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Bulk reject failed: ' + error.message);
+    }
+  };
+
   const handleAddCompany = async () => {
     if (!newCompany.email || !newCompany.password || !newCompany.name) {
       toast.error('Please fill in required fields (Email, Password, Company Name)');
