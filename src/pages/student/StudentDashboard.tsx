@@ -146,6 +146,8 @@ const StudentDashboard = () => {
     />
   );
 
+  const activeLabel = sidebarItems.find(i => i.id === activeSection)?.label || 'Dashboard';
+
   return (
     <DashboardLayout
       sidebar={
@@ -156,6 +158,9 @@ const StudentDashboard = () => {
           onNavigate={(id) => setActiveSection(id as ActiveSection)}
         />
       }
+      dashboardLabel="Student"
+      activeLabel={activeLabel}
+      onDashboardClick={() => setActiveSection('dashboard')}
     >
       {renderContent()}
       {chatbotEnabled && <CareerChatbot />}
