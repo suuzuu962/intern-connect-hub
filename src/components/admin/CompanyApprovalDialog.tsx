@@ -235,9 +235,9 @@ export const CompanyApprovalDialog = ({
                 <Input
                   id="max-internships"
                   type="number"
-                  min={0}
-                  value={limits.max_internships}
-                  onChange={e => setLimits({ ...limits, max_internships: parseInt(e.target.value) || 0 })}
+                  min={1}
+                  value={limits.max_internships === 0 ? '' : limits.max_internships}
+                  onChange={e => setLimits({ ...limits, max_internships: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                 />
               </div>
               <div className="space-y-1.5">
@@ -245,9 +245,9 @@ export const CompanyApprovalDialog = ({
                 <Input
                   id="max-active"
                   type="number"
-                  min={0}
-                  value={limits.max_active_internships}
-                  onChange={e => setLimits({ ...limits, max_active_internships: parseInt(e.target.value) || 0 })}
+                  min={1}
+                  value={limits.max_active_internships === 0 ? '' : limits.max_active_internships}
+                  onChange={e => setLimits({ ...limits, max_active_internships: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                 />
               </div>
               <div className="space-y-1.5">
@@ -255,9 +255,9 @@ export const CompanyApprovalDialog = ({
                 <Input
                   id="max-apps"
                   type="number"
-                  min={0}
-                  value={limits.max_applications_per_internship}
-                  onChange={e => setLimits({ ...limits, max_applications_per_internship: parseInt(e.target.value) || 0 })}
+                  min={1}
+                  value={limits.max_applications_per_internship === 0 ? '' : limits.max_applications_per_internship}
+                  onChange={e => setLimits({ ...limits, max_applications_per_internship: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                 />
               </div>
             </div>
