@@ -1236,8 +1236,8 @@ export const AdminOrgChart = () => {
                                                 {collegeStudents.length === 0 ? (
                                                   <p className="text-xs text-muted-foreground italic">No students</p>
                                                 ) : (
-                                                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                                                    {collegeStudents.slice(0, 5).map((student) => (
+                                                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                                                    {collegeStudents.map((student) => (
                                                       <div
                                                         key={student.id}
                                                         className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
@@ -1251,11 +1251,6 @@ export const AdminOrgChart = () => {
                                                         )}
                                                       </div>
                                                     ))}
-                                                    {collegeStudents.length > 5 && (
-                                                      <p className="text-xs text-muted-foreground text-center py-1">
-                                                        +{collegeStudents.length - 5} more students
-                                                      </p>
-                                                    )}
                                                   </div>
                                                 )}
                                           </div>
