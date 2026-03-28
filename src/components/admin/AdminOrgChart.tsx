@@ -62,10 +62,35 @@ interface Student {
   id: string;
   user_id: string;
   name: string;
+  email: string | null;
+  phone: string | null;
+  avatar_url: string | null;
   usn: string | null;
   department: string | null;
   course: string | null;
   college_id: string | null;
+  degree: string | null;
+  specialization: string | null;
+  semester: number | null;
+  year_of_study: number | null;
+  graduation_year: number | null;
+  gender: string | null;
+  dob: string | null;
+  bio: string | null;
+  about_me: string | null;
+  skills: string[] | null;
+  interested_domains: string[] | null;
+  domain: string | null;
+  university: string | null;
+  college: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  resume_url: string | null;
+  created_at: string;
 }
 
 interface OrgData {
