@@ -155,6 +155,14 @@ const AdminDashboard = () => {
     />
   );
 
+  const getActiveLabel = () => {
+    for (const group of sidebarGroups) {
+      const item = group.items.find(i => i.id === activeSection);
+      if (item) return item.label;
+    }
+    return 'Dashboard';
+  };
+
   return (
     <DashboardLayout
       sidebar={
@@ -165,6 +173,9 @@ const AdminDashboard = () => {
           onNavigate={handleNavigate}
         />
       }
+      dashboardLabel="Admin"
+      activeLabel={getActiveLabel()}
+      onDashboardClick={() => handleNavigate('overview')}
     >
       {renderContent()}
     </DashboardLayout>

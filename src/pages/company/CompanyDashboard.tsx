@@ -176,6 +176,8 @@ const CompanyDashboard = () => {
     />
   );
 
+  const activeLabel = sidebarItems.find(i => i.id === activeSection)?.label || 'Dashboard';
+
   return (
     <DashboardLayout
       sidebar={
@@ -186,6 +188,9 @@ const CompanyDashboard = () => {
           onNavigate={(id) => setActiveSection(id as ActiveSection)}
         />
       }
+      dashboardLabel="Company"
+      activeLabel={activeLabel}
+      onDashboardClick={() => setActiveSection('dashboard')}
     >
       {renderContent()}
     </DashboardLayout>

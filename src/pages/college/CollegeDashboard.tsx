@@ -173,6 +173,8 @@ const CollegeDashboard = () => {
     />
   );
 
+  const activeLabel = sidebarItems.find(i => i.id === activeSection)?.label || 'Dashboard';
+
   return (
     <DashboardLayout
       sidebar={
@@ -183,6 +185,9 @@ const CollegeDashboard = () => {
           onNavigate={handleNavigate}
         />
       }
+      dashboardLabel="College"
+      activeLabel={activeLabel}
+      onDashboardClick={() => handleNavigate('dashboard')}
     >
       {renderContent()}
     </DashboardLayout>
