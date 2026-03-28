@@ -1071,10 +1071,65 @@ export const CompanyApprovalManagement = () => {
       {/* Pending Approvals */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            Pending Company Approvals ({pendingCompanies.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              Pending Company Approvals ({pendingCompanies.length})
+            </CardTitle>
+            {pendingCompanies.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedPending.size === pendingCompanies.length && pendingCompanies.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPending(new Set(pendingCompanies.map(c => c.id)));
+                      } else {
+                        setSelectedPending(new Set());
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">Select All</span>
+                </div>
+                {selectedPending.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{selectedPending.size} selected</Badge>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleBulkApprove}
+                      disabled={bulkApproving}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      {bulkApproving ? 'Approving...' : `Approve (${selectedPending.size})`}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive">
+                          <X className="h-4 w-4 mr-1" />
+                          Reject ({selectedPending.size})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Bulk Reject Companies</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to reject {selectedPending.size} companies? They will be marked as not verified.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleBulkReject} className="bg-destructive hover:bg-destructive/90">
+                            Reject All
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {pendingCompanies.length === 0 ? (
@@ -1082,7 +1137,23 @@ export const CompanyApprovalManagement = () => {
           ) : (
             <div className="space-y-4">
               {pendingCompanies.map((company) => (
-                <CompanyDetailsCard key={company.id} company={company} isPending={true} />
+                <div key={company.id} className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedPending.has(company.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedPending(prev => {
+                        const newSet = new Set(prev);
+                        if (checked) newSet.add(company.id);
+                        else newSet.delete(company.id);
+                        return newSet;
+                      });
+                    }}
+                    className="mt-6"
+                  />
+                  <div className="flex-1">
+                    <CompanyDetailsCard company={company} isPending={true} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
