@@ -107,6 +107,8 @@ export const CompanyApprovalManagement = () => {
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [selectedPending, setSelectedPending] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
@@ -198,6 +200,77 @@ export const CompanyApprovalManagement = () => {
     } catch (error: any) {
       toast.error('Failed to delete company');
       console.error('Error deleting company:', error);
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedPending.size === 0) return;
+    setBulkApproving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const ids = Array.from(selectedPending);
+
+      // Create default limits for each company
+      for (const companyId of ids) {
+        const { data: existing } = await supabase
+          .from('company_limits')
+          .select('id')
+          .eq('company_id', companyId)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from('company_limits').insert({
+            company_id: companyId,
+            max_internships: 10,
+            max_active_internships: 5,
+            max_applications_per_internship: 100,
+            can_post_paid_internships: true,
+            can_post_free_internships: true,
+            can_view_student_contact: true,
+            can_view_resumes: true,
+            can_feature_listings: false,
+            set_by: user?.id,
+          });
+        }
+      }
+
+      // Bulk approve
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_verified: true })
+        .in('id', ids);
+
+      if (error) throw error;
+      toast.success(`${ids.length} companies approved with default limits`);
+      setSelectedPending(new Set());
+      setVerificationStates(prev => {
+        const newState = { ...prev };
+        ids.forEach(id => delete newState[id]);
+        return newState;
+      });
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Bulk approval failed: ' + error.message);
+    } finally {
+      setBulkApproving(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedPending.size === 0) return;
+    try {
+      const ids = Array.from(selectedPending);
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_verified: false })
+        .in('id', ids);
+
+      if (error) throw error;
+      toast.success(`${ids.length} companies rejected`);
+      setSelectedPending(new Set());
+      fetchCompanies();
+    } catch (error: any) {
+      toast.error('Bulk reject failed: ' + error.message);
     }
   };
 
@@ -998,10 +1071,65 @@ export const CompanyApprovalManagement = () => {
       {/* Pending Approvals */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            Pending Company Approvals ({pendingCompanies.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              Pending Company Approvals ({pendingCompanies.length})
+            </CardTitle>
+            {pendingCompanies.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedPending.size === pendingCompanies.length && pendingCompanies.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPending(new Set(pendingCompanies.map(c => c.id)));
+                      } else {
+                        setSelectedPending(new Set());
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">Select All</span>
+                </div>
+                {selectedPending.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{selectedPending.size} selected</Badge>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleBulkApprove}
+                      disabled={bulkApproving}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      {bulkApproving ? 'Approving...' : `Approve (${selectedPending.size})`}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive">
+                          <X className="h-4 w-4 mr-1" />
+                          Reject ({selectedPending.size})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Bulk Reject Companies</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to reject {selectedPending.size} companies? They will be marked as not verified.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleBulkReject} className="bg-destructive hover:bg-destructive/90">
+                            Reject All
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {pendingCompanies.length === 0 ? (
@@ -1009,7 +1137,23 @@ export const CompanyApprovalManagement = () => {
           ) : (
             <div className="space-y-4">
               {pendingCompanies.map((company) => (
-                <CompanyDetailsCard key={company.id} company={company} isPending={true} />
+                <div key={company.id} className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedPending.has(company.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedPending(prev => {
+                        const newSet = new Set(prev);
+                        if (checked) newSet.add(company.id);
+                        else newSet.delete(company.id);
+                        return newSet;
+                      });
+                    }}
+                    className="mt-6"
+                  />
+                  <div className="flex-1">
+                    <CompanyDetailsCard company={company} isPending={true} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
