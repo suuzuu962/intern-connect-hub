@@ -920,7 +920,12 @@ export const AdminOrgChart = () => {
                                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                                   )}
                                                   <School className="h-4 w-4 text-primary" />
-                                                  <span className="font-medium">{highlightMatch(college.name)}</span>
+                                                  <span 
+                                                    className="font-medium hover:text-primary hover:underline cursor-pointer"
+                                                    onClick={(e) => { e.stopPropagation(); handleItemClick('college', college); }}
+                                                  >
+                                                    {highlightMatch(college.name)}
+                                                  </span>
                                                 </div>
                                                 <Badge variant="outline" className="text-xs">
                                                   <GraduationCap className="h-3 w-3 mr-1" />
