@@ -107,6 +107,8 @@ export const CompanyApprovalManagement = () => {
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [approvalCompany, setApprovalCompany] = useState<Company | null>(null);
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [selectedPending, setSelectedPending] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
   const [newCompany, setNewCompany] = useState({
     email: '',
     password: '',
