@@ -130,15 +130,21 @@ export const AdminOrgChart = () => {
       const [universitiesRes, collegesRes, studentsRes, profilesRes] = await Promise.all([
         supabase.from('universities').select('*').order('name'),
         supabase.from('colleges').select('*').order('name'),
-        supabase.from('students').select('id, user_id, usn, department, course, college_id'),
-        supabase.from('profiles').select('user_id, full_name'),
+        supabase.from('students').select('*'),
+        supabase.from('profiles').select('user_id, full_name, email, phone_number, avatar_url'),
       ]);
 
-      const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p.full_name]));
-      const studentsWithNames = (studentsRes.data || []).map(s => ({
-        ...s,
-        name: profileMap.get(s.user_id) || 'Unknown',
-      }));
+      const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p]));
+      const studentsWithNames = (studentsRes.data || []).map(s => {
+        const profile = profileMap.get(s.user_id);
+        return {
+          ...s,
+          name: profile?.full_name || 'Unknown',
+          email: profile?.email || null,
+          phone: profile?.phone_number || null,
+          avatar_url: profile?.avatar_url || null,
+        };
+      });
 
       setData({
         universities: universitiesRes.data || [],
