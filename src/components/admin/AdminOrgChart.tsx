@@ -129,6 +129,7 @@ export const AdminOrgChart = () => {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [collegeStudentSearch, setCollegeStudentSearch] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchOrgData();
@@ -1229,30 +1230,102 @@ export const AdminOrgChart = () => {
 
                                         <CollapsibleContent>
                                           <div className="border-t p-3 bg-muted/10">
-                                            <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
-                                                  <GraduationCap className="h-4 w-4" />
-                                                  Students ({collegeStudents.length})
-                                                </h5>
-                                                {collegeStudents.length === 0 ? (
-                                                  <p className="text-xs text-muted-foreground italic">No students</p>
-                                                ) : (
-                                                  <div className="space-y-1 max-h-64 overflow-y-auto">
-                                                    {collegeStudents.map((student) => (
-                                                      <div
-                                                        key={student.id}
-                                                        className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
-                                                        onClick={() => handleItemClick('student', student)}
-                                                      >
-                                                        <span className="text-sm">{highlightMatch(student.name)}</span>
-                                                        {student.department && (
-                                                          <Badge variant="outline" className="text-xs">
-                                                            {student.department}
+                                            {/* Department Summary */}
+                                            {(() => {
+                                              const deptCounts = collegeStudents.reduce<Record<string, number>>((acc, s) => {
+                                                const dept = s.department || 'Unassigned';
+                                                acc[dept] = (acc[dept] || 0) + 1;
+                                                return acc;
+                                              }, {});
+                                              const localSearch = (collegeStudentSearch[college.id] || '').toLowerCase();
+                                              const filteredStudentsList = localSearch
+                                                ? collegeStudents.filter(s =>
+                                                    s.name.toLowerCase().includes(localSearch) ||
+                                                    s.usn?.toLowerCase().includes(localSearch) ||
+                                                    s.department?.toLowerCase().includes(localSearch) ||
+                                                    s.course?.toLowerCase().includes(localSearch) ||
+                                                    s.email?.toLowerCase().includes(localSearch)
+                                                  )
+                                                : collegeStudents;
+
+                                              return (
+                                                <>
+                                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
+                                                    <GraduationCap className="h-4 w-4" />
+                                                    Students ({collegeStudents.length})
+                                                  </h5>
+
+                                                  {/* Department breakdown badges */}
+                                                  {Object.keys(deptCounts).length > 0 && collegeStudents.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mb-3">
+                                                      {Object.entries(deptCounts)
+                                                        .sort((a, b) => b[1] - a[1])
+                                                        .map(([dept, count]) => (
+                                                          <Badge key={dept} variant="secondary" className="text-xs">
+                                                            {dept}: {count}
                                                           </Badge>
-                                                        )}
+                                                        ))}
+                                                    </div>
+                                                  )}
+
+                                                  {/* Search filter */}
+                                                  {collegeStudents.length > 3 && (
+                                                    <div className="relative mb-2">
+                                                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                                      <Input
+                                                        placeholder="Search students by name, USN, dept..."
+                                                        className="h-8 pl-7 pr-7 text-xs"
+                                                        value={collegeStudentSearch[college.id] || ''}
+                                                        onChange={(e) => setCollegeStudentSearch(prev => ({ ...prev, [college.id]: e.target.value }))}
+                                                      />
+                                                      {collegeStudentSearch[college.id] && (
+                                                        <button
+                                                          className="absolute right-2 top-1/2 -translate-y-1/2"
+                                                          onClick={() => setCollegeStudentSearch(prev => ({ ...prev, [college.id]: '' }))}
+                                                        >
+                                                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  )}
+
+                                                  {collegeStudents.length === 0 ? (
+                                                    <p className="text-xs text-muted-foreground italic">No students</p>
+                                                  ) : filteredStudentsList.length === 0 ? (
+                                                    <p className="text-xs text-muted-foreground italic">No students match "{collegeStudentSearch[college.id]}"</p>
+                                                  ) : (
+                                                    <>
+                                                      {localSearch && (
+                                                        <p className="text-xs text-muted-foreground mb-1">
+                                                          Showing {filteredStudentsList.length} of {collegeStudents.length} students
+                                                        </p>
+                                                      )}
+                                                      <div className="space-y-1 max-h-64 overflow-y-auto">
+                                                        {filteredStudentsList.map((student) => (
+                                                          <div
+                                                            key={student.id}
+                                                            className="flex items-center justify-between p-2 rounded bg-background border cursor-pointer hover:bg-muted/50"
+                                                            onClick={() => handleItemClick('student', student)}
+                                                          >
+                                                            <div className="flex flex-col">
+                                                              <span className="text-sm">{highlightMatch(student.name)}</span>
+                                                              {student.usn && (
+                                                                <span className="text-xs text-muted-foreground">{student.usn}</span>
+                                                              )}
+                                                            </div>
+                                                            {student.department && (
+                                                              <Badge variant="outline" className="text-xs">
+                                                                {student.department}
+                                                              </Badge>
+                                                            )}
+                                                          </div>
+                                                        ))}
                                                       </div>
-                                                    ))}
-                                                  </div>
-                                                )}
+                                                    </>
+                                                  )}
+                                                </>
+                                              );
+                                            })()}
                                           </div>
                                         </CollapsibleContent>
                                       </div>
