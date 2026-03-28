@@ -1009,13 +1009,31 @@ export const AdminOrgChart = () => {
               <Network className="h-5 w-5" />
               Platform Organization Chart
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={expandAll}>
                 Expand All
               </Button>
               <Button variant="outline" size="sm" onClick={collapseAll}>
                 Collapse All
               </Button>
+              <Separator orientation="vertical" className="h-8" />
+              <Select onValueChange={(v) => {
+                if (v === 'all') exportAll();
+                else if (v === 'universities') exportUniversities();
+                else if (v === 'colleges') exportColleges();
+                else if (v === 'students') exportStudents();
+              }}>
+                <SelectTrigger className="w-[160px] h-8">
+                  <Download className="h-3.5 w-3.5 mr-1" />
+                  <span className="text-sm">Export CSV</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Export All</SelectItem>
+                  <SelectItem value="universities">Universities</SelectItem>
+                  <SelectItem value="colleges">Colleges</SelectItem>
+                  <SelectItem value="students">Students</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
