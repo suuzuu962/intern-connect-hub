@@ -859,7 +859,12 @@ export const AdminOrgChart = () => {
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                   )}
                                   <Building2 className="h-5 w-5 text-primary" />
-                                  <span className="font-semibold">{highlightMatch(university.name)}</span>
+                                  <span 
+                                    className="font-semibold hover:text-primary hover:underline cursor-pointer"
+                                    onClick={(e) => { e.stopPropagation(); handleItemClick('university', university); }}
+                                  >
+                                    {highlightMatch(university.name)}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">
