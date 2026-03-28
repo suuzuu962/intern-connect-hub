@@ -56,8 +56,8 @@ const COMPANY_FEATURES = [
 ];
 
 const defaultLimits: CompanyLimits = {
-  max_internships: 5,
-  max_active_internships: 3,
+  max_internships: 10,
+  max_active_internships: 5,
   max_applications_per_internship: 100,
   can_post_paid_internships: true,
   can_post_free_internships: true,
