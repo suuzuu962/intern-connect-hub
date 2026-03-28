@@ -212,7 +212,158 @@ export const AdminOrgChart = () => {
   };
 
   const handleItemClick = (type: DetailType, item: any) => {
+    setEditMode(false);
+    setEditData({});
     setSelectedItem({ type, data: item });
+  };
+
+  const startEditing = () => {
+    if (!selectedItem) return;
+    setEditData({ ...selectedItem.data });
+    setEditMode(true);
+  };
+
+  const cancelEditing = () => {
+    setEditMode(false);
+    setEditData({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedItem) return;
+    setSaving(true);
+    try {
+      const { type } = selectedItem;
+      if (type === 'university') {
+        const { error } = await supabase.from('universities').update({
+          name: editData.name,
+          email: editData.email,
+          address: editData.address,
+          contact_person_name: editData.contact_person_name,
+          contact_person_email: editData.contact_person_email,
+          contact_person_phone: editData.contact_person_phone,
+          contact_person_designation: editData.contact_person_designation,
+        }).eq('id', editData.id);
+        if (error) throw error;
+      } else if (type === 'college') {
+        const { error } = await supabase.from('colleges').update({
+          name: editData.name,
+          email: editData.email,
+          address: editData.address,
+          contact_person_name: editData.contact_person_name,
+          contact_person_email: editData.contact_person_email,
+          contact_person_phone: editData.contact_person_phone,
+        }).eq('id', editData.id);
+        if (error) throw error;
+      } else if (type === 'student') {
+        // Update student table
+        const { error } = await supabase.from('students').update({
+          department: editData.department,
+          course: editData.course,
+          specialization: editData.specialization,
+          domain: editData.domain,
+          semester: editData.semester ? Number(editData.semester) : null,
+          year_of_study: editData.year_of_study ? Number(editData.year_of_study) : null,
+          graduation_year: editData.graduation_year ? Number(editData.graduation_year) : null,
+          bio: editData.bio,
+          about_me: editData.about_me,
+          address: editData.address,
+          city: editData.city,
+          state: editData.state,
+          country: editData.country,
+          usn: editData.usn,
+        }).eq('id', editData.id);
+        if (error) throw error;
+
+        // Update profile name/phone
+        const { error: profileError } = await supabase.from('profiles').update({
+          full_name: editData.name,
+          phone_number: editData.phone,
+        }).eq('user_id', editData.user_id);
+        if (profileError) throw profileError;
+      }
+
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated successfully`);
+      setEditMode(false);
+      setSelectedItem({ ...selectedItem, data: { ...editData } as any });
+      fetchOrgData();
+    } catch (error: any) {
+      toast.error('Failed to save: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // CSV Export functions
+  const exportUniversities = () => {
+    const rows = filteredData.universities.map(u => ({
+      name: u.name,
+      email: u.email,
+      address: u.address || '',
+      contact_person_name: u.contact_person_name || '',
+      contact_person_email: u.contact_person_email || '',
+      contact_person_phone: u.contact_person_phone || '',
+      is_verified: u.is_verified ? 'Yes' : 'No',
+      is_active: u.is_active ? 'Yes' : 'No',
+      colleges: getCollegesForUniversity(u.id).length.toString(),
+      students: getCollegesForUniversity(u.id).reduce((sum, c) => sum + getStudentsForCollege(c.id).length, 0).toString(),
+      created_at: new Date(u.created_at).toLocaleDateString(),
+    }));
+    exportToCSV(rows, 'universities', ['Name', 'Email', 'Address', 'Contact_Person_Name', 'Contact_Person_Email', 'Contact_Person_Phone', 'Is_Verified', 'Is_Active', 'Colleges', 'Students', 'Created_At']);
+    toast.success('Universities exported');
+  };
+
+  const exportColleges = () => {
+    const rows = filteredData.colleges.map(c => {
+      const uni = data.universities.find(u => u.id === c.university_id);
+      return {
+        name: c.name,
+        email: c.email || '',
+        university: uni?.name || '',
+        address: c.address || '',
+        contact_person_name: c.contact_person_name || '',
+        contact_person_email: c.contact_person_email || '',
+        contact_person_phone: c.contact_person_phone || '',
+        is_active: c.is_active ? 'Yes' : 'No',
+        students: getStudentsForCollege(c.id).length.toString(),
+      };
+    });
+    exportToCSV(rows, 'colleges', ['Name', 'Email', 'University', 'Address', 'Contact_Person_Name', 'Contact_Person_Email', 'Contact_Person_Phone', 'Is_Active', 'Students']);
+    toast.success('Colleges exported');
+  };
+
+  const exportStudents = () => {
+    const rows = filteredData.students.map(s => {
+      const college = data.colleges.find(c => c.id === s.college_id);
+      const uni = college ? data.universities.find(u => u.id === college.university_id) : null;
+      return {
+        name: s.name,
+        email: s.email || '',
+        phone: s.phone || '',
+        usn: s.usn || '',
+        department: s.department || '',
+        course: s.course || '',
+        specialization: s.specialization || '',
+        domain: s.domain || '',
+        degree: s.degree || '',
+        semester: s.semester?.toString() || '',
+        year_of_study: s.year_of_study?.toString() || '',
+        graduation_year: s.graduation_year?.toString() || '',
+        college: college?.name || '',
+        university: uni?.name || '',
+        city: s.city || '',
+        state: s.state || '',
+        country: s.country || '',
+        skills: s.skills?.join('; ') || '',
+      };
+    });
+    exportToCSV(rows, 'students', ['Name', 'Email', 'Phone', 'Usn', 'Department', 'Course', 'Specialization', 'Domain', 'Degree', 'Semester', 'Year_Of_Study', 'Graduation_Year', 'College', 'University', 'City', 'State', 'Country', 'Skills']);
+    toast.success('Students exported');
+  };
+
+  const exportAll = () => {
+    exportUniversities();
+    setTimeout(() => exportColleges(), 300);
+    setTimeout(() => exportStudents(), 600);
   };
 
   // Filter and search logic
