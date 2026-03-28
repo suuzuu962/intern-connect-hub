@@ -2,14 +2,18 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { InstitutionalWorkflowDiagram } from './InstitutionalWorkflowDiagram';
+import { exportToCSV } from '@/lib/export-utils';
+import { toast } from 'sonner';
 import { 
   Loader2, 
   Building2, 
@@ -29,7 +33,10 @@ import {
   Search,
   X,
   Filter,
-  FileText
+  FileText,
+  Download,
+  Pencil,
+  Save
 } from 'lucide-react';
 
 interface University {
@@ -119,6 +126,9 @@ export const AdminOrgChart = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [showWorkflowDiagram, setShowWorkflowDiagram] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState<Record<string, any>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchOrgData();
@@ -202,7 +212,158 @@ export const AdminOrgChart = () => {
   };
 
   const handleItemClick = (type: DetailType, item: any) => {
+    setEditMode(false);
+    setEditData({});
     setSelectedItem({ type, data: item });
+  };
+
+  const startEditing = () => {
+    if (!selectedItem) return;
+    setEditData({ ...selectedItem.data });
+    setEditMode(true);
+  };
+
+  const cancelEditing = () => {
+    setEditMode(false);
+    setEditData({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedItem) return;
+    setSaving(true);
+    try {
+      const { type } = selectedItem;
+      if (type === 'university') {
+        const { error } = await supabase.from('universities').update({
+          name: editData.name,
+          email: editData.email,
+          address: editData.address,
+          contact_person_name: editData.contact_person_name,
+          contact_person_email: editData.contact_person_email,
+          contact_person_phone: editData.contact_person_phone,
+          contact_person_designation: editData.contact_person_designation,
+        }).eq('id', editData.id);
+        if (error) throw error;
+      } else if (type === 'college') {
+        const { error } = await supabase.from('colleges').update({
+          name: editData.name,
+          email: editData.email,
+          address: editData.address,
+          contact_person_name: editData.contact_person_name,
+          contact_person_email: editData.contact_person_email,
+          contact_person_phone: editData.contact_person_phone,
+        }).eq('id', editData.id);
+        if (error) throw error;
+      } else if (type === 'student') {
+        // Update student table
+        const { error } = await supabase.from('students').update({
+          department: editData.department,
+          course: editData.course,
+          specialization: editData.specialization,
+          domain: editData.domain,
+          semester: editData.semester ? Number(editData.semester) : null,
+          year_of_study: editData.year_of_study ? Number(editData.year_of_study) : null,
+          graduation_year: editData.graduation_year ? Number(editData.graduation_year) : null,
+          bio: editData.bio,
+          about_me: editData.about_me,
+          address: editData.address,
+          city: editData.city,
+          state: editData.state,
+          country: editData.country,
+          usn: editData.usn,
+        }).eq('id', editData.id);
+        if (error) throw error;
+
+        // Update profile name/phone
+        const { error: profileError } = await supabase.from('profiles').update({
+          full_name: editData.name,
+          phone_number: editData.phone,
+        }).eq('user_id', editData.user_id);
+        if (profileError) throw profileError;
+      }
+
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated successfully`);
+      setEditMode(false);
+      setSelectedItem({ ...selectedItem, data: { ...editData } as any });
+      fetchOrgData();
+    } catch (error: any) {
+      toast.error('Failed to save: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // CSV Export functions
+  const exportUniversities = () => {
+    const rows = filteredData.universities.map(u => ({
+      name: u.name,
+      email: u.email,
+      address: u.address || '',
+      contact_person_name: u.contact_person_name || '',
+      contact_person_email: u.contact_person_email || '',
+      contact_person_phone: u.contact_person_phone || '',
+      is_verified: u.is_verified ? 'Yes' : 'No',
+      is_active: u.is_active ? 'Yes' : 'No',
+      colleges: getCollegesForUniversity(u.id).length.toString(),
+      students: getCollegesForUniversity(u.id).reduce((sum, c) => sum + getStudentsForCollege(c.id).length, 0).toString(),
+      created_at: new Date(u.created_at).toLocaleDateString(),
+    }));
+    exportToCSV(rows, 'universities', ['Name', 'Email', 'Address', 'Contact_Person_Name', 'Contact_Person_Email', 'Contact_Person_Phone', 'Is_Verified', 'Is_Active', 'Colleges', 'Students', 'Created_At']);
+    toast.success('Universities exported');
+  };
+
+  const exportColleges = () => {
+    const rows = filteredData.colleges.map(c => {
+      const uni = data.universities.find(u => u.id === c.university_id);
+      return {
+        name: c.name,
+        email: c.email || '',
+        university: uni?.name || '',
+        address: c.address || '',
+        contact_person_name: c.contact_person_name || '',
+        contact_person_email: c.contact_person_email || '',
+        contact_person_phone: c.contact_person_phone || '',
+        is_active: c.is_active ? 'Yes' : 'No',
+        students: getStudentsForCollege(c.id).length.toString(),
+      };
+    });
+    exportToCSV(rows, 'colleges', ['Name', 'Email', 'University', 'Address', 'Contact_Person_Name', 'Contact_Person_Email', 'Contact_Person_Phone', 'Is_Active', 'Students']);
+    toast.success('Colleges exported');
+  };
+
+  const exportStudents = () => {
+    const rows = filteredData.students.map(s => {
+      const college = data.colleges.find(c => c.id === s.college_id);
+      const uni = college ? data.universities.find(u => u.id === college.university_id) : null;
+      return {
+        name: s.name,
+        email: s.email || '',
+        phone: s.phone || '',
+        usn: s.usn || '',
+        department: s.department || '',
+        course: s.course || '',
+        specialization: s.specialization || '',
+        domain: s.domain || '',
+        degree: s.degree || '',
+        semester: s.semester?.toString() || '',
+        year_of_study: s.year_of_study?.toString() || '',
+        graduation_year: s.graduation_year?.toString() || '',
+        college: college?.name || '',
+        university: uni?.name || '',
+        city: s.city || '',
+        state: s.state || '',
+        country: s.country || '',
+        skills: s.skills?.join('; ') || '',
+      };
+    });
+    exportToCSV(rows, 'students', ['Name', 'Email', 'Phone', 'Usn', 'Department', 'Course', 'Specialization', 'Domain', 'Degree', 'Semester', 'Year_Of_Study', 'Graduation_Year', 'College', 'University', 'City', 'State', 'Country', 'Skills']);
+    toast.success('Students exported');
+  };
+
+  const exportAll = () => {
+    exportUniversities();
+    setTimeout(() => exportColleges(), 300);
+    setTimeout(() => exportStudents(), 600);
   };
 
   // Filter and search logic
@@ -310,32 +471,136 @@ export const AdminOrgChart = () => {
     );
   };
 
+  const EditField = ({ label, field, type = 'text', multiline = false }: { label: string; field: string; type?: string; multiline?: boolean }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      {multiline ? (
+        <Textarea value={editData[field] || ''} onChange={e => setEditData({ ...editData, [field]: e.target.value })} rows={2} />
+      ) : (
+        <Input type={type} value={editData[field] || ''} onChange={e => setEditData({ ...editData, [field]: e.target.value })} />
+      )}
+    </div>
+  );
+
   const renderDetailDialog = () => {
     if (!selectedItem) return null;
 
     const { type, data: itemData } = selectedItem;
 
     return (
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setEditMode(false); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {type === 'university' && <Building2 className="h-5 w-5" />}
-              {type === 'college' && <School className="h-5 w-5" />}
-              {type === 'student' && <GraduationCap className="h-5 w-5" />}
-              {type.charAt(0).toUpperCase() + type.slice(1)} Details
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                {type === 'university' && <Building2 className="h-5 w-5" />}
+                {type === 'college' && <School className="h-5 w-5" />}
+                {type === 'student' && <GraduationCap className="h-5 w-5" />}
+                {editMode ? `Edit ${type.charAt(0).toUpperCase() + type.slice(1)}` : `${type.charAt(0).toUpperCase() + type.slice(1)} Details`}
+              </DialogTitle>
+              {!editMode && (
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           <div className="space-y-4">
-            {type === 'university' && renderUniversityDetails(itemData as University)}
-            {type === 'college' && renderCollegeDetails(itemData as College)}
-            {type === 'student' && renderStudentDetails(itemData as Student)}
+            {editMode ? (
+              <>
+                {type === 'university' && renderUniversityEdit()}
+                {type === 'college' && renderCollegeEdit()}
+                {type === 'student' && renderStudentEdit()}
+              </>
+            ) : (
+              <>
+                {type === 'university' && renderUniversityDetails(itemData as University)}
+                {type === 'college' && renderCollegeDetails(itemData as College)}
+                {type === 'student' && renderStudentDetails(itemData as Student)}
+              </>
+            )}
           </div>
+
+          {editMode && (
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={cancelEditing} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSaveEdit} disabled={saving}>
+                <Save className="h-4 w-4 mr-1" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     );
   };
+
+  const renderUniversityEdit = () => (
+    <div className="space-y-3">
+      <EditField label="University Name" field="name" />
+      <EditField label="Email" field="email" type="email" />
+      <EditField label="Address" field="address" multiline />
+      <Separator />
+      <h4 className="text-sm font-medium">Contact Person</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Name" field="contact_person_name" />
+        <EditField label="Designation" field="contact_person_designation" />
+        <EditField label="Email" field="contact_person_email" type="email" />
+        <EditField label="Phone" field="contact_person_phone" />
+      </div>
+    </div>
+  );
+
+  const renderCollegeEdit = () => (
+    <div className="space-y-3">
+      <EditField label="College Name" field="name" />
+      <EditField label="Email" field="email" type="email" />
+      <EditField label="Address" field="address" multiline />
+      <Separator />
+      <h4 className="text-sm font-medium">Contact Person</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Name" field="contact_person_name" />
+        <EditField label="Email" field="contact_person_email" type="email" />
+        <EditField label="Phone" field="contact_person_phone" />
+      </div>
+    </div>
+  );
+
+  const renderStudentEdit = () => (
+    <div className="space-y-3">
+      <EditField label="Full Name" field="name" />
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Email" field="email" type="email" />
+        <EditField label="Phone" field="phone" />
+        <EditField label="USN" field="usn" />
+        <EditField label="Gender" field="gender" />
+      </div>
+      <Separator />
+      <h4 className="text-sm font-medium">Academics</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Department" field="department" />
+        <EditField label="Course" field="course" />
+        <EditField label="Specialization" field="specialization" />
+        <EditField label="Domain" field="domain" />
+        <EditField label="Degree" field="degree" />
+        <EditField label="Semester" field="semester" type="number" />
+        <EditField label="Year of Study" field="year_of_study" type="number" />
+        <EditField label="Graduation Year" field="graduation_year" type="number" />
+      </div>
+      <Separator />
+      <h4 className="text-sm font-medium">Location</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Address" field="address" />
+        <EditField label="City" field="city" />
+        <EditField label="State" field="state" />
+        <EditField label="Country" field="country" />
+      </div>
+      <Separator />
+      <EditField label="Bio" field="bio" multiline />
+      <EditField label="About Me" field="about_me" multiline />
+    </div>
+  );
 
   const renderUniversityDetails = (uni: University) => (
     <div className="space-y-4">
@@ -744,13 +1009,31 @@ export const AdminOrgChart = () => {
               <Network className="h-5 w-5" />
               Platform Organization Chart
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={expandAll}>
                 Expand All
               </Button>
               <Button variant="outline" size="sm" onClick={collapseAll}>
                 Collapse All
               </Button>
+              <Separator orientation="vertical" className="h-8" />
+              <Select onValueChange={(v) => {
+                if (v === 'all') exportAll();
+                else if (v === 'universities') exportUniversities();
+                else if (v === 'colleges') exportColleges();
+                else if (v === 'students') exportStudents();
+              }}>
+                <SelectTrigger className="w-[160px] h-8">
+                  <Download className="h-3.5 w-3.5 mr-1" />
+                  <span className="text-sm">Export CSV</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Export All</SelectItem>
+                  <SelectItem value="universities">Universities</SelectItem>
+                  <SelectItem value="colleges">Colleges</SelectItem>
+                  <SelectItem value="students">Students</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
