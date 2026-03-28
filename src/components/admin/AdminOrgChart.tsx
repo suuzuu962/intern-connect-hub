@@ -125,6 +125,7 @@ export const AdminOrgChart = () => {
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [showWorkflowDiagram, setShowWorkflowDiagram] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
