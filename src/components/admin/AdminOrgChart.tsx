@@ -471,32 +471,136 @@ export const AdminOrgChart = () => {
     );
   };
 
+  const EditField = ({ label, field, type = 'text', multiline = false }: { label: string; field: string; type?: string; multiline?: boolean }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      {multiline ? (
+        <Textarea value={editData[field] || ''} onChange={e => setEditData({ ...editData, [field]: e.target.value })} rows={2} />
+      ) : (
+        <Input type={type} value={editData[field] || ''} onChange={e => setEditData({ ...editData, [field]: e.target.value })} />
+      )}
+    </div>
+  );
+
   const renderDetailDialog = () => {
     if (!selectedItem) return null;
 
     const { type, data: itemData } = selectedItem;
 
     return (
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setEditMode(false); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {type === 'university' && <Building2 className="h-5 w-5" />}
-              {type === 'college' && <School className="h-5 w-5" />}
-              {type === 'student' && <GraduationCap className="h-5 w-5" />}
-              {type.charAt(0).toUpperCase() + type.slice(1)} Details
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                {type === 'university' && <Building2 className="h-5 w-5" />}
+                {type === 'college' && <School className="h-5 w-5" />}
+                {type === 'student' && <GraduationCap className="h-5 w-5" />}
+                {editMode ? `Edit ${type.charAt(0).toUpperCase() + type.slice(1)}` : `${type.charAt(0).toUpperCase() + type.slice(1)} Details`}
+              </DialogTitle>
+              {!editMode && (
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           <div className="space-y-4">
-            {type === 'university' && renderUniversityDetails(itemData as University)}
-            {type === 'college' && renderCollegeDetails(itemData as College)}
-            {type === 'student' && renderStudentDetails(itemData as Student)}
+            {editMode ? (
+              <>
+                {type === 'university' && renderUniversityEdit()}
+                {type === 'college' && renderCollegeEdit()}
+                {type === 'student' && renderStudentEdit()}
+              </>
+            ) : (
+              <>
+                {type === 'university' && renderUniversityDetails(itemData as University)}
+                {type === 'college' && renderCollegeDetails(itemData as College)}
+                {type === 'student' && renderStudentDetails(itemData as Student)}
+              </>
+            )}
           </div>
+
+          {editMode && (
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={cancelEditing} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSaveEdit} disabled={saving}>
+                <Save className="h-4 w-4 mr-1" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     );
   };
+
+  const renderUniversityEdit = () => (
+    <div className="space-y-3">
+      <EditField label="University Name" field="name" />
+      <EditField label="Email" field="email" type="email" />
+      <EditField label="Address" field="address" multiline />
+      <Separator />
+      <h4 className="text-sm font-medium">Contact Person</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Name" field="contact_person_name" />
+        <EditField label="Designation" field="contact_person_designation" />
+        <EditField label="Email" field="contact_person_email" type="email" />
+        <EditField label="Phone" field="contact_person_phone" />
+      </div>
+    </div>
+  );
+
+  const renderCollegeEdit = () => (
+    <div className="space-y-3">
+      <EditField label="College Name" field="name" />
+      <EditField label="Email" field="email" type="email" />
+      <EditField label="Address" field="address" multiline />
+      <Separator />
+      <h4 className="text-sm font-medium">Contact Person</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Name" field="contact_person_name" />
+        <EditField label="Email" field="contact_person_email" type="email" />
+        <EditField label="Phone" field="contact_person_phone" />
+      </div>
+    </div>
+  );
+
+  const renderStudentEdit = () => (
+    <div className="space-y-3">
+      <EditField label="Full Name" field="name" />
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Email" field="email" type="email" />
+        <EditField label="Phone" field="phone" />
+        <EditField label="USN" field="usn" />
+        <EditField label="Gender" field="gender" />
+      </div>
+      <Separator />
+      <h4 className="text-sm font-medium">Academics</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Department" field="department" />
+        <EditField label="Course" field="course" />
+        <EditField label="Specialization" field="specialization" />
+        <EditField label="Domain" field="domain" />
+        <EditField label="Degree" field="degree" />
+        <EditField label="Semester" field="semester" type="number" />
+        <EditField label="Year of Study" field="year_of_study" type="number" />
+        <EditField label="Graduation Year" field="graduation_year" type="number" />
+      </div>
+      <Separator />
+      <h4 className="text-sm font-medium">Location</h4>
+      <div className="grid grid-cols-2 gap-3">
+        <EditField label="Address" field="address" />
+        <EditField label="City" field="city" />
+        <EditField label="State" field="state" />
+        <EditField label="Country" field="country" />
+      </div>
+      <Separator />
+      <EditField label="Bio" field="bio" multiline />
+      <EditField label="About Me" field="about_me" multiline />
+    </div>
+  );
 
   const renderUniversityDetails = (uni: University) => (
     <div className="space-y-4">
