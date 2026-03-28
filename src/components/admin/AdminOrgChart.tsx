@@ -506,33 +506,184 @@ export const AdminOrgChart = () => {
   const renderStudentDetails = (student: Student) => {
     const college = data.colleges.find(c => c.id === student.college_id);
     const university = college ? data.universities.find(u => u.id === college.university_id) : null;
+    const fullAddress = [student.address, student.city, student.state, student.country].filter(Boolean).join(', ');
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{student.name}</h3>
-          {student.usn && <Badge variant="outline">{student.usn}</Badge>}
-        </div>
-        
-        <Separator />
-        
-        <div className="grid gap-3">
-          {student.department && (
-            <div className="flex items-center gap-2 text-sm">
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
-              <span>Department: {student.department}</span>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          {student.avatar_url ? (
+            <img src={student.avatar_url} alt={student.name} className="h-16 w-16 rounded-full object-cover border" />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <GraduationCap className="h-8 w-8 text-primary" />
             </div>
           )}
-          {student.course && (
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>Course: {student.course}</span>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold">{student.name}</h3>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {student.usn && <Badge variant="outline">{student.usn}</Badge>}
+              {student.gender && <Badge variant="secondary">{student.gender}</Badge>}
+              {student.degree && <Badge variant="secondary">{student.degree}</Badge>}
             </div>
-          )}
+          </div>
         </div>
 
         <Separator />
-        
+
+        {/* Contact */}
+        <div>
+          <h4 className="font-medium mb-2">Contact</h4>
+          <div className="grid gap-2 text-sm">
+            {student.email && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="select-all">{student.email}</span>
+              </div>
+            )}
+            {student.phone && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span className="select-all">{student.phone}</span>
+              </div>
+            )}
+            {fullAddress && (
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <span>{fullAddress}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Academic Info */}
+        <div>
+          <h4 className="font-medium mb-2">Academics</h4>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {student.department && (
+              <div>
+                <p className="text-xs text-muted-foreground">Department</p>
+                <p className="font-medium">{student.department}</p>
+              </div>
+            )}
+            {student.course && (
+              <div>
+                <p className="text-xs text-muted-foreground">Course</p>
+                <p className="font-medium">{student.course}</p>
+              </div>
+            )}
+            {student.specialization && (
+              <div>
+                <p className="text-xs text-muted-foreground">Specialization</p>
+                <p className="font-medium">{student.specialization}</p>
+              </div>
+            )}
+            {student.domain && (
+              <div>
+                <p className="text-xs text-muted-foreground">Domain</p>
+                <p className="font-medium">{student.domain}</p>
+              </div>
+            )}
+            {student.semester && (
+              <div>
+                <p className="text-xs text-muted-foreground">Semester</p>
+                <p className="font-medium">{student.semester}</p>
+              </div>
+            )}
+            {student.year_of_study && (
+              <div>
+                <p className="text-xs text-muted-foreground">Year of Study</p>
+                <p className="font-medium">{student.year_of_study}</p>
+              </div>
+            )}
+            {student.graduation_year && (
+              <div>
+                <p className="text-xs text-muted-foreground">Graduation Year</p>
+                <p className="font-medium">{student.graduation_year}</p>
+              </div>
+            )}
+            {student.dob && (
+              <div>
+                <p className="text-xs text-muted-foreground">Date of Birth</p>
+                <p className="font-medium">{new Date(student.dob).toLocaleDateString()}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Skills & Interests */}
+        {((student.skills && student.skills.length > 0) || (student.interested_domains && student.interested_domains.length > 0)) && (
+          <>
+            <Separator />
+            <div>
+              <h4 className="font-medium mb-2">Skills & Interests</h4>
+              {student.skills && student.skills.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs text-muted-foreground mb-1">Skills</p>
+                  <div className="flex flex-wrap gap-1">
+                    {student.skills.map((s, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{s}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {student.interested_domains && student.interested_domains.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Interested Domains</p>
+                  <div className="flex flex-wrap gap-1">
+                    {student.interested_domains.map((d, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">{d}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Bio / About */}
+        {(student.bio || student.about_me) && (
+          <>
+            <Separator />
+            <div>
+              <h4 className="font-medium mb-2">About</h4>
+              <p className="text-sm text-muted-foreground">{student.about_me || student.bio}</p>
+            </div>
+          </>
+        )}
+
+        {/* Links */}
+        {(student.linkedin_url || student.github_url || student.resume_url) && (
+          <>
+            <Separator />
+            <div>
+              <h4 className="font-medium mb-2">Links</h4>
+              <div className="grid gap-2 text-sm">
+                {student.linkedin_url && (
+                  <a href={student.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-2">
+                    <User className="h-4 w-4" /> LinkedIn
+                  </a>
+                )}
+                {student.github_url && (
+                  <a href={student.github_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-2">
+                    <User className="h-4 w-4" /> GitHub
+                  </a>
+                )}
+                {student.resume_url && (
+                  <a href={student.resume_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Resume
+                  </a>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        <Separator />
+
+        {/* Institution */}
         <div>
           <h4 className="font-medium mb-2">Institution</h4>
           <div className="grid gap-2 text-sm">
@@ -550,6 +701,13 @@ export const AdminOrgChart = () => {
             )}
           </div>
         </div>
+
+        {student.created_at && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            Registered: {new Date(student.created_at).toLocaleDateString()}
+          </div>
+        )}
       </div>
     );
   };
