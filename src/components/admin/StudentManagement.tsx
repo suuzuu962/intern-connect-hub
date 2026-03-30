@@ -498,6 +498,7 @@ export const StudentManagement = () => {
                       Personal Information
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <InfoItem label="Platform ID" value={student.profile?.platform_user_id} />
                       <InfoItem label="Full Name" value={student.profile?.full_name} />
                       <InfoItem label="Email" value={student.profile?.email} icon={<Mail className="h-3 w-3" />} />
                       <InfoItem label="Phone" value={student.profile?.phone_number} icon={<Phone className="h-3 w-3" />} />
