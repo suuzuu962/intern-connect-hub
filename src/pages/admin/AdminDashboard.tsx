@@ -45,7 +45,7 @@ type ActiveSection =
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests'
-  | 'landing-content' | 'documentation' | 'university-user-requests';
+  | 'landing-content' | 'documentation' | 'university-user-requests' | 'backend-health';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
