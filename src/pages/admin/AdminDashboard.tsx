@@ -100,6 +100,7 @@ const AdminDashboard = () => {
     {
       label: 'System',
       items: [
+        { id: 'backend-health', label: 'Backend Health', icon: HeartPulse },
         { id: 'api-integration', label: 'API Integration', icon: Plug },
         { id: 'plugins', label: 'Plugins', icon: Puzzle },
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
