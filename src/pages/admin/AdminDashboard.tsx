@@ -27,11 +27,12 @@ import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsMan
 import { LandingPageContentManager } from '@/components/admin/LandingPageContentManager';
 import { UniversityUserRequests } from '@/components/admin/UniversityUserRequests';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
+import { BackendHealthDashboard } from '@/components/admin/BackendHealthDashboard';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen, UserPlus
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen, UserPlus, HeartPulse
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
@@ -44,7 +45,7 @@ type ActiveSection =
   | 'security'
   | 'api-integration' | 'benchmarking' | 'custom-reports'
   | 'settings' | 'notifications' | 'reports' | 'feature-map' | 'sitemap' | 'plugins' | 'upgrade-requests'
-  | 'landing-content' | 'documentation' | 'university-user-requests';
+  | 'landing-content' | 'documentation' | 'university-user-requests' | 'backend-health';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -99,6 +100,7 @@ const AdminDashboard = () => {
     {
       label: 'System',
       items: [
+        { id: 'backend-health', label: 'Backend Health', icon: HeartPulse },
         { id: 'api-integration', label: 'API Integration', icon: Plug },
         { id: 'plugins', label: 'Plugins', icon: Puzzle },
         { id: 'custom-reports', label: 'Custom Reports', icon: FileBarChart },
@@ -131,6 +133,7 @@ const AdminDashboard = () => {
       case 'payments': return <PaymentsManagement />;
       
       case 'security': return <SecurityLogs />;
+      case 'backend-health': return <BackendHealthDashboard />;
       case 'api-integration': return <ApiIntegration />;
       case 'plugins': return <PluginManagement />;
       case 'custom-reports': return <CustomReports />;
