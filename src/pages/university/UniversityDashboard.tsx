@@ -46,9 +46,11 @@ const UniversityDashboard = () => {
       if (error) console.error('Error fetching university:', error);
       else {
         setUniversity(data);
-        // Fetch college IDs for this university
         const { data: colleges } = await supabase.from('colleges').select('id').eq('university_id', data.id);
         setCollegeIds(colleges?.map(c => c.id) || []);
+        // Fetch platform user ID
+        const { data: profileData } = await supabase.from('profiles').select('platform_user_id').eq('user_id', user!.id).maybeSingle();
+        if (profileData?.platform_user_id) setPlatformUserId(profileData.platform_user_id);
       }
       setLoading(false);
     };
