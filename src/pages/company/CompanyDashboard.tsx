@@ -178,6 +178,7 @@ const CompanyDashboard = () => {
       websiteUrl={company?.website}
       twitterUrl={company?.twitter_url}
       role="company"
+      platformUserId={platformUserId}
     />
   );
 
