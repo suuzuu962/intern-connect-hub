@@ -118,6 +118,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [aboutMe, setAboutMe] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [platformUserId, setPlatformUserId] = useState('');
 
   // Academic Info
   const [usn, setUsn] = useState('');
