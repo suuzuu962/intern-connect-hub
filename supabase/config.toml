@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.career-chat]
 verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false
+
+[functions.generate-report]
+verify_jwt = false
+
+[functions.bulk-export]
+verify_jwt = false
