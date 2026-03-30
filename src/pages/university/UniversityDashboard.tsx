@@ -153,6 +153,7 @@ const UniversityDashboard = () => {
       avatarFallback={<GraduationCap className="h-5 w-5 text-primary" />}
       verified={university.is_verified}
       role="university"
+      platformUserId={platformUserId}
     />
   );
 
