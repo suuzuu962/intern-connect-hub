@@ -133,6 +133,14 @@ export const StudentProfileView = ({ data, onEdit }: StudentProfileViewProps) =>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {data.platformUserId && (
+            <div className="mb-2">
+              <Badge variant="secondary" className="font-mono text-xs gap-1">
+                <User className="h-3 w-3" />
+                {data.platformUserId}
+              </Badge>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem label="Full Name" value={data.fullName} />
             <InfoItem label="Email" value={data.email} />
