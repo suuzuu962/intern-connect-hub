@@ -82,6 +82,7 @@ interface Student {
     email: string;
     avatar_url: string | null;
     phone_number: string | null;
+    platform_user_id: string | null;
   } | null;
   college_data?: {
     name: string;
