@@ -91,6 +91,10 @@ const CompanyDashboard = () => {
       const { data: roleData } = await supabase.from('user_roles').select('id').eq('user_id', user?.id).single();
       if (!roleData) await supabase.from('user_roles').insert({ user_id: user?.id, role: 'company' });
 
+      // Fetch platform user ID
+      const { data: profileData } = await supabase.from('profiles').select('platform_user_id').eq('user_id', user?.id).maybeSingle();
+      if (profileData?.platform_user_id) setPlatformUserId(profileData.platform_user_id);
+
       if (companyData) {
         setCompany(companyData);
         const { data: internships } = await supabase.from('internships').select('id, is_active').eq('company_id', companyData.id);
