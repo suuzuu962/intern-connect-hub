@@ -133,6 +133,7 @@ const AdminDashboard = () => {
       case 'payments': return <PaymentsManagement />;
       
       case 'security': return <SecurityLogs />;
+      case 'backend-health': return <BackendHealthDashboard />;
       case 'api-integration': return <ApiIntegration />;
       case 'plugins': return <PluginManagement />;
       case 'custom-reports': return <CustomReports />;
