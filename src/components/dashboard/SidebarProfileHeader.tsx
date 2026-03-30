@@ -70,12 +70,19 @@ export const SidebarProfileHeader = ({
         </div>
       </div>
 
-      {roleInfo && (
-        <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 gap-1 w-fit", roleInfo.className)}>
-          <roleInfo.icon className="h-3 w-3" />
-          {roleInfo.label}
-        </Badge>
-      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        {roleInfo && (
+          <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 gap-1 w-fit", roleInfo.className)}>
+            <roleInfo.icon className="h-3 w-3" />
+            {roleInfo.label}
+          </Badge>
+        )}
+        {platformUserId && (
+          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 gap-1 w-fit font-mono">
+            {platformUserId}
+          </Badge>
+        )}
+      </div>
 
       {hasSocials && (
         <div className="flex items-center gap-2 pt-1">
