@@ -57,6 +57,7 @@ const CompanyDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const { isLocked, getMessage } = useFeatureAccess('company');
 
   useEffect(() => {
@@ -89,6 +90,10 @@ const CompanyDashboard = () => {
 
       const { data: roleData } = await supabase.from('user_roles').select('id').eq('user_id', user?.id).single();
       if (!roleData) await supabase.from('user_roles').insert({ user_id: user?.id, role: 'company' });
+
+      // Fetch platform user ID
+      const { data: profileData } = await supabase.from('profiles').select('platform_user_id').eq('user_id', user?.id).maybeSingle();
+      if (profileData?.platform_user_id) setPlatformUserId(profileData.platform_user_id);
 
       if (companyData) {
         setCompany(companyData);
@@ -173,6 +178,7 @@ const CompanyDashboard = () => {
       websiteUrl={company?.website}
       twitterUrl={company?.twitter_url}
       role="company"
+      platformUserId={platformUserId}
     />
   );
 

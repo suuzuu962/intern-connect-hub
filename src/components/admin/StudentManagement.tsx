@@ -82,6 +82,7 @@ interface Student {
     email: string;
     avatar_url: string | null;
     phone_number: string | null;
+    platform_user_id: string | null;
   } | null;
   college_data?: {
     name: string;
@@ -185,7 +186,7 @@ export const StudentManagement = () => {
       const userIds = (studentsResult.data || []).map(s => s.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email, avatar_url, phone_number')
+        .select('user_id, full_name, email, avatar_url, phone_number, platform_user_id')
         .in('user_id', userIds);
 
       if (profilesError) throw profilesError;
@@ -417,6 +418,9 @@ export const StudentManagement = () => {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{student.profile?.email}</p>
+                {student.profile?.platform_user_id && (
+                  <Badge variant="secondary" className="text-[9px] font-mono mt-0.5 w-fit">{student.profile.platform_user_id}</Badge>
+                )}
               </div>
             </div>
           </TableCell>
@@ -494,6 +498,7 @@ export const StudentManagement = () => {
                       Personal Information
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <InfoItem label="Platform ID" value={student.profile?.platform_user_id} />
                       <InfoItem label="Full Name" value={student.profile?.full_name} />
                       <InfoItem label="Email" value={student.profile?.email} icon={<Mail className="h-3 w-3" />} />
                       <InfoItem label="Phone" value={student.profile?.phone_number} icon={<Phone className="h-3 w-3" />} />

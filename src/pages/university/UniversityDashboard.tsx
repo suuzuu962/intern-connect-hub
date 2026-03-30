@@ -29,6 +29,7 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [collegeIds, setCollegeIds] = useState<string[]>([]);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const [pendingDiaryCount, setPendingDiaryCount] = useState(0);
   const { user } = useAuth();
   const { isLocked, getMessage } = useFeatureAccess('university');
@@ -45,9 +46,11 @@ const UniversityDashboard = () => {
       if (error) console.error('Error fetching university:', error);
       else {
         setUniversity(data);
-        // Fetch college IDs for this university
         const { data: colleges } = await supabase.from('colleges').select('id').eq('university_id', data.id);
         setCollegeIds(colleges?.map(c => c.id) || []);
+        // Fetch platform user ID
+        const { data: profileData } = await supabase.from('profiles').select('platform_user_id').eq('user_id', user!.id).maybeSingle();
+        if (profileData?.platform_user_id) setPlatformUserId(profileData.platform_user_id);
       }
       setLoading(false);
     };
@@ -150,6 +153,7 @@ const UniversityDashboard = () => {
       avatarFallback={<GraduationCap className="h-5 w-5 text-primary" />}
       verified={university.is_verified}
       role="university"
+      platformUserId={platformUserId}
     />
   );
 

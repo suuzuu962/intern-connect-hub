@@ -42,6 +42,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
   const { isLocked, getMessage } = useFeatureAccess('student');
 
@@ -61,11 +62,12 @@ const StudentDashboard = () => {
   const fetchProfileName = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('full_name, avatar_url')
+      .select('full_name, avatar_url, platform_user_id')
       .eq('user_id', user?.id)
       .maybeSingle();
     if (data?.full_name) setProfileName(data.full_name);
     if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+    if (data?.platform_user_id) setPlatformUserId(data.platform_user_id);
   };
 
   const fetchStudentData = async () => {
@@ -143,6 +145,7 @@ const StudentDashboard = () => {
       linkedinUrl={student?.linkedin_url}
       twitterUrl={student?.twitter_url}
       role="student"
+      platformUserId={platformUserId}
     />
   );
 

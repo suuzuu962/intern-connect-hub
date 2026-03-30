@@ -118,6 +118,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
   const [aboutMe, setAboutMe] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [platformUserId, setPlatformUserId] = useState('');
 
   // Academic Info
   const [usn, setUsn] = useState('');
@@ -274,6 +275,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
         setEmail(profileData.email || '');
         setPhoneNumber(profileData.phone_number || '');
         setAvatarUrl(profileData.avatar_url || '');
+        setPlatformUserId((profileData as any).platform_user_id || '');
       }
 
       // Fetch student data
@@ -579,6 +581,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           aboutMe,
           avatarUrl,
           coverImageUrl,
+          platformUserId,
           usn,
           college,
           university,
