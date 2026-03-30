@@ -581,6 +581,7 @@ export const StudentProfileForm = ({ onSuccess }: StudentProfileFormProps) => {
           aboutMe,
           avatarUrl,
           coverImageUrl,
+          platformUserId,
           usn,
           college,
           university,
