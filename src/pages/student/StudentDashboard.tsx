@@ -42,6 +42,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const { enabled: chatbotEnabled } = usePluginEnabled('career-chatbot');
   const { isLocked, getMessage } = useFeatureAccess('student');
 
