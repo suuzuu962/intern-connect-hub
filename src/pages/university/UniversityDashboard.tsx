@@ -29,6 +29,7 @@ const UniversityDashboard = () => {
   const [university, setUniversity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [collegeIds, setCollegeIds] = useState<string[]>([]);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const [pendingDiaryCount, setPendingDiaryCount] = useState(0);
   const { user } = useAuth();
   const { isLocked, getMessage } = useFeatureAccess('university');
