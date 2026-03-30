@@ -15,6 +15,7 @@ interface StudentData {
   aboutMe?: string;
   avatarUrl?: string;
   coverImageUrl?: string;
+  platformUserId?: string;
   usn: string;
   college: string;
   university: string;
