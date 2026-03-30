@@ -37,6 +37,7 @@ export const SidebarProfileHeader = ({
   websiteUrl,
   twitterUrl,
   role,
+  platformUserId,
   className,
 }: SidebarProfileHeaderProps) => {
   const hasSocials = linkedinUrl || websiteUrl || twitterUrl;
