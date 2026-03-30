@@ -418,6 +418,9 @@ export const StudentManagement = () => {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{student.profile?.email}</p>
+                {student.profile?.platform_user_id && (
+                  <Badge variant="secondary" className="text-[9px] font-mono mt-0.5 w-fit">{student.profile.platform_user_id}</Badge>
+                )}
               </div>
             </div>
           </TableCell>
