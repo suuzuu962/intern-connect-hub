@@ -27,11 +27,12 @@ import { UpgradeRequestsManagement } from '@/components/admin/UpgradeRequestsMan
 import { LandingPageContentManager } from '@/components/admin/LandingPageContentManager';
 import { UniversityUserRequests } from '@/components/admin/UniversityUserRequests';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
+import { BackendHealthDashboard } from '@/components/admin/BackendHealthDashboard';
 import {
   Shield, LayoutDashboard, Building2, Briefcase, Users, Bell,
   Download, GraduationCap, School, Network, Settings,
   CreditCard, FileText, BarChart3, ShieldCheck,
-  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen, UserPlus
+  Plug, Target, FileBarChart, Map, MapPin, Puzzle, ArrowUpCircle, FileEdit, BookOpen, UserPlus, HeartPulse
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardSidebar, SidebarGroup } from '@/components/dashboard/DashboardSidebar';
