@@ -57,6 +57,7 @@ const CompanyDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const [platformUserId, setPlatformUserId] = useState<string | null>(null);
   const { isLocked, getMessage } = useFeatureAccess('company');
 
   useEffect(() => {
