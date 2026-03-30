@@ -23,6 +23,7 @@ interface SidebarProfileHeaderProps {
   websiteUrl?: string | null;
   twitterUrl?: string | null;
   role?: RoleIndicator;
+  platformUserId?: string | null;
   className?: string;
 }
 
