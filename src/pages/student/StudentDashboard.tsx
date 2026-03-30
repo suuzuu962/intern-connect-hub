@@ -145,6 +145,7 @@ const StudentDashboard = () => {
       linkedinUrl={student?.linkedin_url}
       twitterUrl={student?.twitter_url}
       role="student"
+      platformUserId={platformUserId}
     />
   );
 
