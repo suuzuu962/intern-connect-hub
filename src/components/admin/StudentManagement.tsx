@@ -186,7 +186,7 @@ export const StudentManagement = () => {
       const userIds = (studentsResult.data || []).map(s => s.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email, avatar_url, phone_number')
+        .select('user_id, full_name, email, avatar_url, phone_number, platform_user_id')
         .in('user_id', userIds);
 
       if (profilesError) throw profilesError;
